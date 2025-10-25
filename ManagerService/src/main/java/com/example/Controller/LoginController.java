@@ -1,13 +1,11 @@
-package Controller;
+package com.example.Controller;
 
-import pojo.LoginRequest;
+import com.example.pojo.dto.LoginRequest;
 import utils.JwtUtil;
-import jakarta.servlet.http.HttpSession;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.HashMap;
@@ -17,14 +15,13 @@ import java.util.Map;
  * 从前端获取密码，和写死的密码对比，成功则返回jwt，不成功返回失败信息
  */
 @RestController //自动将返回值转为JSON
-@RequestMapping("/api")
 public class LoginController {
 
     // 正确的密码常量
     private static final String CORRECT_PASSWORD = "082109Zhr";
 
     @PostMapping(value = "/login")
-    public ResponseEntity<Map<String, Object>> login(@RequestBody LoginRequest loginRequest, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> login(@RequestBody LoginRequest loginRequest) {
         //TODO 测试信息，要删掉
         System.out.println("hello world");
 

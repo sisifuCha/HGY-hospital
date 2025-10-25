@@ -1,6 +1,4 @@
-package pojo;
-
-// 这个类定义了您希望从JSON中接收哪些字段
+package com.example.pojo.dto;
 public class LoginRequest {
     private String password;
 
