@@ -1,5 +1,6 @@
 package com.example.Controller;
 
+import com.example.Service.DoctorService;
 import com.example.conmon.result.Result;
 import com.example.pojo.dto.DoctorDTO;
 import org.springframework.beans.factory.annotation.Autowired;

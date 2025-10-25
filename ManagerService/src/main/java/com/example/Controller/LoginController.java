@@ -1,7 +1,7 @@
 package com.example.Controller;
 
 import com.example.pojo.dto.LoginRequest;
-import utils.JwtUtil;
+import com.example.utils.JwtUtil;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.PostMapping;
