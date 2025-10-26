@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hospital.mapper.DoctorMapper">
+
+    <resultMap id="BaseResultMap" type="com.hospital.entity.Doctor">
+        <id column="id" property="id"/>
+        <result column="account_name" property="accountName"/>
+        <result column="name" property="name"/>
+        <result column="gender" property="gender"/>
+        <result column="password" property="password"/>
+        <result column="title" property="title"/>
+        <result column="department" property="department"/>
+        <result column="email" property="email"/>
+        <result column="phone" property="phone"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <update id="updateDoctor" parameterType="com.hospital.entity.Doctor">
+        UPDATE doctor
+        SET account_name = #{accountName},
+        name = #{name},
+        gender = #{gender},
+        password = #{password},
+        title = #{title},
+        department = #{department},
+        email = #{email},
+        phone = #{phone},
+        update_time = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <select id="selectById" parameterType="string" resultMap="BaseResultMap">
+        SELECT * FROM doctor WHERE id = #{id}
+    </select>
+
+    <select id="checkAccountNameExists" resultType="int">
+        SELECT COUNT(*) FROM doctor
+        WHERE account_name = #{accountName} AND id != #{id}
+    </select>
+
+</mapper>
