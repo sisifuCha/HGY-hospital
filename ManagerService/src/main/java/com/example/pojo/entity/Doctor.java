@@ -1,39 +1,28 @@
 package com.example.pojo.entity;
 
-import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
-import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
-
-import java.time.LocalDateTime;
+import lombok.EqualsAndHashCode;
 
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
-@TableName("`doctor`")
-public class Doctor {
+@EqualsAndHashCode(callSuper = true) // 【关键】让Lombok在生成方法时包含父类字段
+@TableName("`doctor`") // 指定此类映射到 doctor 表
+public class Doctor extends User { // 继承 BaseUser
 
-    private String userName;
-
-    private String userId;
-
-    private String userGender;
-
-    private String userAccount;
-
-    private String userEmail;
-
-    private String userPassword;
-
-    private String userPhone;
-
-    private String doctorId;
-
+    @TableField("doc_title_id")
     private String titleId;
 
+    @TableField("clinic_id")
     private String departmentId;
 
+    @TableField("status")
     private String doctorStatus;
+
+    @TableField("details")
+    private String doctorDetails;
+
+    @TableField("speciality")
+    private String doctorSpeciality;
+
 }

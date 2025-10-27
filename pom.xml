@@ -81,17 +81,6 @@
 			<scope>test</scope>
 		</dependency>
         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-data-jpa</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.postgresql</groupId>
-            <artifactId>postgresql</artifactId>
-            <scope>runtime</scope>
-        </dependency>
-
-        <dependency>
             <groupId>mysql</groupId>
             <artifactId>mysql-connector-java</artifactId>
             <version>8.0.25</version>
@@ -99,9 +88,10 @@
         <!-- MyBatis-Plus Starter -->
         <dependency>
             <groupId>com.baomidou</groupId>
-            <artifactId>mybatis-plus-boot-starter</artifactId>
-            <version>3.5.3.1</version> <!-- 使用最新版本 -->
+            <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
+            <version>3.5.9</version>
         </dependency>
+
         <!-- 添加 Jakarta EE 依赖 -->
         <dependency>
             <groupId>jakarta.annotation</groupId>
