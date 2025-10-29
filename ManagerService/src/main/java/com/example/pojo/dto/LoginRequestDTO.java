@@ -1,9 +1,9 @@
 package com.example.pojo.dto;
-public class LoginRequest {
+public class LoginRequestDTO {
     private String password;
 
     // 必须有无参构造函数
-    public LoginRequest() {}
+    public LoginRequestDTO() {}
 
     // 必须有getter和setter方法
     public String getPassword() {
