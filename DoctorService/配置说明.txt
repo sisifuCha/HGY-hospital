@@ -1,0 +1,75 @@
+# 医生服务模块配置说明文档
+
+## 1. 基础配置信息
+
+### 服务器配置
+- 服务端口：8081
+- 上下文路径：/api/doctor
+- 完整基础URL：http://localhost:8081/api/doctor
+
+### 数据库配置
+- 数据库类型：PostgreSQL
+- 数据库地址：localhost:63333
+- 数据库名称：postgres
+- 用户名：postgres
+- 密码：postgres
+- 驱动类：org.postgresql.Driver
+
+## 2. CORS跨域配置
+
+### 应用配置文件（application.properties）中的CORS配置
+```properties
+spring.web.cors.allowed-origins=http://localhost:3000
+spring.web.cors.allowed-methods=GET,POST,PUT,DELETE,OPTIONS
+spring.web.cors.allowed-headers=*
+spring.web.cors.allow-credentials=true
+spring.web.cors.max-age=3600
+```
+
+### Java配置类（CorsConfig.java）
+- 位置：com.example.doctor.config.CorsConfig
+- 配置方式：实现WebMvcConfigurer接口
+- 允许来源：http://localhost:3000
+- 允许方法：GET, POST, PUT, DELETE, OPTIONS
+- 允许头部：所有
+- 允许认证：是
+- 预检有效期：3600秒（1小时）
+
+## 3. MyBatis Plus配置
+- Mapper XML文件位置：classpath:mapper/*.xml
+- 实体类包路径：com.example.doctor.entity
+- 驼峰命名转换：启用
+- SQL日志打印：启用
+
+## 4. 日志配置
+- 日志级别：DEBUG（com.example.doctor包）
+- 控制台日志格式：yyyy-MM-dd HH:mm:ss [线程] 级别 类名 - 消息
+
+## 5. 前端开发指南
+
+### 接口调用配置
+```javascript
+// 使用axios示例
+import axios from 'axios';
+
+const api = axios.create({
+  baseURL: 'http://localhost:8081/api/doctor',
+  withCredentials: true,  // 允许发送认证信息
+  headers: {
+    'Content-Type': 'application/json'
+  }
+});
+```
+
+### 注意事项
+1. 确保前端项目运行在http://localhost:3000
+2. API请求需要设置withCredentials: true
+3. 所有请求都需要添加Content-Type头部
+4. 预检请求（OPTIONS）会被缓存1小时
+5. 确保请求URL使用正确的上下文路径（/api/doctor）
+
+## 6. 安全建议
+1. 生产环境部署时修改数据库密码
+2. 生产环境应该限制CORS来源域名
+3. 考虑添加适当的请求频率限制
+4. 所有敏感操作都应该进行身份验证和授权

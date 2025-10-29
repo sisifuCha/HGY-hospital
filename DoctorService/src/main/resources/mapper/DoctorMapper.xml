@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.doctor.mapper.DoctorMapper">
+    
+    <resultMap id="DoctorDetailMap" type="com.example.doctor.entity.Doctor">
+        <id property="id" column="ID"/>
+        <result property="email" column="email"/>
+        <result property="name" column="name"/>
+        <result property="account" column="account"/>
+        <result property="sex" column="sex"/>
+        <result property="phoneNum" column="phone_num"/>
+        <result property="docTitleId" column="doc_title_ID"/>
+        <result property="status" column="status"/>
+        <result property="clinicId" column="clinic_ID"/>
+        <result property="departmentName" column="department_name"/>
+        <result property="clinicNumber" column="clinic_number"/>
+        <result property="clinicLocation" column="location"/>
+        <result property="numberSourceCount" column="number_source_count"/>
+        <result property="oriCost" column="ori_cost"/>
+    </resultMap>
+    
+    <select id="getDoctorProfile" resultMap="DoctorDetailMap">
+        SELECT 
+            d."ID",
+            u."email",
+            u."name",
+            u."account",
+            u."sex",
+            u."phone_num",
+            d."doc_title_ID",
+            d."status",
+            d."clinic_ID",
+            dep."name" as department_name,
+            c."clinic_number",
+            c."location",
+            tns."number_source_count",
+            tns."ori_cost"
+        FROM "doctor" d
+        JOIN "user" u ON d."ID" = u."ID"
+        JOIN "clinic" c ON d."clinic_ID" = c."ID"
+        JOIN "department" dep ON c."dep_ID" = dep."ID"
+        LEFT JOIN "title_number_source" tns ON d."doc_title_ID" = tns."ID"
+        WHERE d."ID" = #{docId}
+    </select>
+    
+</mapper>
