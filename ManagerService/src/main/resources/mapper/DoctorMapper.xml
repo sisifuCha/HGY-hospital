@@ -72,54 +72,54 @@
         AND id != #{userId}
     </select>
 
-    <!-- 新增：查询所有医生的完整信息 -->
-    <select id="selectAllFullDoctors" resultMap="FullDoctorResultMap">
+    <select id="getDoctorList" resultMap="FullDoctorResultMap">
         SELECT
-        d.id as d_id,
+        d.id,
         d.doc_title_id,
         d.clinic_id,
         d.status,
-        u.user_id,
-        u.user_name,
-        u.user_gender,
-        u.user_account,
-        u.user_email,
-        u.user_password,
-        u.user_phone
+        u.name,
+        u.sex,
+        u.account,
+        u.email,
+        u.pass,
+        u.phone_num
         FROM
         doctor d
-        INNER JOIN
-        user u ON d.user_id = u.user_id
-    </select>
-
-    <!-- 新增：根据条件动态查询医生信息 -->
-    <select id="selectDoctorsByCondition" parameterType="map" resultMap="FullDoctorResultMap">
-        SELECT
-        d.id as d_id,
-        d.doc_title_id,
-        d.clinic_id,
-        d.status,
-        u.user_id,
-        u.user_name,
-        u.user_gender,
-        u.user_account,
-        u.user_email,
-        u.user_password,
-        u.user_phone
-        FROM
-        doctor d
-        INNER JOIN
-        user u ON d.user_id = u.user_id
+        INNER JOIN "user" u ON d.id = u.id
         <where>
-            <if test="departmentId != null and departmentId != ''">
-                AND d.clinic_id = #{departmentId}
+            <!-- 原有的动态过滤条件 -->
+            <if test="filter_value != null and filter_value != ''">
+                <choose>
+                    <!-- 注意：确保这里的字段名（如clinic_id）与实际数据库列名一致 -->
+                    <when test="filter_name == 'clinic_id'">
+                        d.clinic_id = #{filter_value}
+                    </when>
+                    <when test="filter_name == 'doc_title_id'">
+                        d.doc_title_id = #{filter_value}
+                    </when>
+                </choose>
             </if>
-            <if test="doctorStatus != null and doctorStatus != ''">
-                AND d.status = #{doctorStatus}
-            </if>
-            <if test="userName != null and userName != ''">
-                AND u.user_name LIKE CONCAT('%', #{userName}, '%')
-            </if>
+            <!-- 可以继续添加其他公共或动态条件 -->
         </where>
+        ORDER BY d.id DESC
+    </select>
+    <select id="selectDoctorPage" resultMap="FullDoctorResultMap">
+        SELECT
+        d.id,
+        d.doc_title_id,
+        d.clinic_id,
+        d.status,
+        u.name,
+        u.sex,
+        u.account,
+        u.email,
+        u.pass,
+        u.phone_num
+        FROM
+        doctor d
+        INNER JOIN "user" u ON d.id = u.id
+        <!-- 使用 MyBatis-Plus 提供的 ${ew.customSqlSegment} 来注入 QueryWrapper 构造的条件 -->
+        ${ew.customSqlSegment}
     </select>
 </mapper>

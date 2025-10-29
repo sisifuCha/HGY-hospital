@@ -2,15 +2,19 @@ package com.example.Service;
 
 //import com.example.Mapper.DoctorMapper;
 //import com.example.pojo.entity.Doctor;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.example.Mapper.DoctorMapper;
-import com.example.conmon.result.Result;
+import com.example.Conmon.result.Result;
 import com.example.pojo.dto.DoctorDTO;
+import com.example.pojo.dto.DoctorsRequestDTO;
 import com.example.pojo.entity.Doctor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 public class DoctorServiceImpl implements DoctorService {
@@ -52,20 +56,28 @@ public class DoctorServiceImpl implements DoctorService {
         }
     }
 
-//    @Override
-//    public Result<Doctor> getDoctorById(String id) {
-//        try {
-//            Doctor doctor = DoctorMapper.selectById(id);
-//            if (doctor != null) {
-//                return Result.success(doctor);
-//            } else {
-//                return Result.fail(404, "医生信息不存在");
-//            }
-//        } catch (Exception e) {
-//            log.error("查询医生信息失败: {}", e.getMessage(), e);
-//            return Result.fail("系统异常，查询失败");
-//        }
-//    }
+    @Override
+    public Result<Doctor> getDoctorById(String id) {
+        return null;
+    }
+
+    @Override
+    public Result<IPage<Doctor>> getDoctorListWithPlus(int page, int num, String filterName, String filterValue) {
+        Page<Doctor> pageParam = new Page<>(page, num);
+
+        // 使用MyBatis-Plus的查询条件
+        QueryWrapper<Doctor> queryWrapper = new QueryWrapper<>();
+        if (filterValue != null && !filterValue.isEmpty()) {
+            if ("clinic".equals(filterName)) {
+                queryWrapper.eq("d.clinic_id", filterValue);
+            } else if ("title".equals(filterName)) {
+                queryWrapper.eq("d.doc_title_id", filterValue);
+            }
+        }
+        queryWrapper.orderByDesc("d.id");
+
+        return Result.success(DoctorMapper.selectDoctorPage(pageParam, queryWrapper));
+    }
 
     private Doctor convertToEntity(DoctorDTO dto) {
         Doctor doctor = new Doctor();
