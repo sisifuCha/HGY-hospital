@@ -1,15 +1,17 @@
-package com.example.doctor.service.impl;
+package com.example.service.impl;
 
-import com.example.doctor.dto.DoctorLoginRequest;
-import com.example.doctor.dto.PatientStatusRequest;
-import com.example.doctor.dto.ScheduleChangeRequest;
-import com.example.doctor.entity.Doctor;
-import com.example.doctor.mapper.DoctorMapper;
-import com.example.doctor.mapper.DocScheduleRecordMapper;
-import com.example.doctor.mapper.RegisterRecordMapper;
-import com.example.doctor.service.DoctorService;
+import com.example.dto.DoctorLoginRequest;
+import com.example.dto.PatientStatusRequest;
+import com.example.dto.ScheduleChangeRequest;
+import com.example.entity.Doctor;
+import com.example.utils.*;
+import com.example.mapper.DoctorMapper;
+import com.example.mapper.DocScheduleRecordMapper;
+import com.example.mapper.RegisterRecordMapper;
+import com.example.service.DoctorService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.util.Date;
@@ -32,14 +34,37 @@ public class DoctorServiceImpl implements DoctorService {
     private final ConcurrentHashMap<String, SseEmitter> notificationEmitters = new ConcurrentHashMap<>();
 
     @Override
-    public String login(DoctorLoginRequest request) {
-        // 实现登录逻辑，生成token
-        Doctor doctor = doctorMapper.getDoctorById(request.getDocID());
-        if (doctor != null) {
-            // TODO: 验证密码，生成token
-            return "mock-token-" + request.getDocID();
+    // Service 层只关注业务结果，可以返回一个封装了状态的对象，或者抛出业务异常。
+    public Result<String> login(DoctorLoginRequest request) {
+        // 1. 检查医生ID和密码是否为空 (业务输入验证)
+        if (!StringUtils.hasText(request.getDocID()) || !StringUtils.hasText(request.getPass())) {
+            return Result.fail(400, "医生ID或密码不能为空");
         }
-        return null;
+        
+        // 2. 查询医生信息 (协调数据访问)
+        Doctor doctor = doctorMapper.getDoctorById(request.getDocID());
+        
+        if (doctor == null) {
+            // 3. 医生不存在 (业务判断)
+            return Result.fail(401, "医生ID或密码错误");
+        }
+        
+        // 4. 验证密码 (核心业务逻辑)
+        if (!doctor.getPass().equals(request.getPass())) {
+            System.out.println("医生登录失败，医生ID: " + request.getDocID() + ", 输入密码错误");
+            return Result.fail(401, "医生ID或密码错误");
+        }
+        
+        // 5. 生成JWT令牌 (业务功能实现)
+        try {
+            String jwtToken = JwtUtil.generateToken(request.getDocID());
+            System.out.println("医生登录成功，医生ID: " + request.getDocID() + ", 生成的JWT: " + jwtToken);
+            return Result.success(jwtToken, "登录成功");
+            
+        } catch (Exception e) {
+            // JWT生成失败
+            return Result.fail(500, "系统错误，令牌生成失败");
+        }
     }
 
     @Override

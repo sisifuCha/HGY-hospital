@@ -1,20 +1,20 @@
-package com.example.doctor.entity;
+package com.example.entity;
 
-import com.baomidou.mybatisplus.annotation.TableName;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
+import lombok.experimental.Accessors;
+
 import java.io.Serializable;
 import java.util.Date;
 
 @Data
+@Accessors(chain = true)
 @TableName("add_number_source_record")
-public class AddNumberSourceRecord implements Serializable {
+public class AddNumberSourceRecordEntity implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    @TableId(value = "patient_ID", type = IdType.INPUT)
+    @TableId(value = "patient_ID")
     private String patientId;
 
     @TableField("sch_ID")

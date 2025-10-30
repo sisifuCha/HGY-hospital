@@ -1,4 +1,4 @@
-package com.example.doctor.dto;
+package com.example.dto;
 
 public class PatientStatusRequest {
     private String doctorID;

@@ -1,10 +1,15 @@
-package com.example.doctor.controller;
+package com.example.controller;
 
-import com.example.doctor.dto.DoctorLoginRequest;
-import com.example.doctor.dto.PatientStatusRequest;
-import com.example.doctor.dto.ScheduleChangeRequest;
-import com.example.doctor.service.DoctorService;
+import com.example.dto.DoctorLoginRequest;
+import com.example.dto.PatientStatusRequest;
+import com.example.dto.ScheduleChangeRequest;
+import com.example.service.DoctorService;
+import com.example.utils.Result;
+
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,9 +23,24 @@ public class DoctorController {
     private DoctorService doctorService;
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody DoctorLoginRequest request) {
-        String token = doctorService.login(request);
-        return ResponseEntity.ok(token);
+    public ResponseEntity<Map<String, Object>> doctorLogin(@RequestBody DoctorLoginRequest request) {
+        
+        Result<String> result = doctorService.login(request);
+        
+        // 根据 Service 返回的业务结果，决定 HTTP 状态码
+        if (result.isSuccess()) {
+            // 成功，返回 200 OK
+            return ResponseEntity.ok(result.toMap()); // 假设 Result 对象可以转换为 Map
+        } else if (result.getCode() == 400) {
+            // 输入错误，返回 400 Bad Request
+            return ResponseEntity.badRequest().body(result.toMap());
+        } else if (result.getCode() == 401) {
+            // 鉴权失败，返回 401 Unauthorized
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(result.toMap());
+        } else {
+            // 系统错误，返回 500 Internal Server Error
+            return ResponseEntity.internalServerError().body(result.toMap());
+        }
     }
 
     @GetMapping(value = "/add_number_notify_doctor", produces = MediaType.TEXT_EVENT_STREAM_VALUE)

@@ -1,6 +1,6 @@
-package com.example.doctor.mapper;
+package com.example.mapper;
 
-import com.example.doctor.entity.Doctor;
+import com.example.entity.Doctor;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;

@@ -1,4 +1,4 @@
-package com.example.doctor.config;
+package com.example.config;
 
 import com.baomidou.mybatisplus.annotation.DbType;
 import com.baomidou.mybatisplus.extension.plugins.MybatisPlusInterceptor;
@@ -6,9 +6,11 @@ import com.baomidou.mybatisplus.extension.plugins.inner.PaginationInnerIntercept
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 @Configuration
-@MapperScan("com.example.doctor.mapper")
+@EnableTransactionManagement
+@MapperScan("com.example.mapper")
 public class MybatisPlusConfig {
     
     @Bean
