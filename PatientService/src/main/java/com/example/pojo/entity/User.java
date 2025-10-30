@@ -10,7 +10,7 @@ import lombok.Data;
  * 包含所有用户类型（管理员、医生、患者）的通用信息
  */
 @Data
-@TableName("`user`") // 指定此类映射到数据库中的 user 表
+@TableName("\"user\"") // 指定此类映射到数据库中的 user 表
 public class User {
     // 用户公共属性
     @TableId("id")

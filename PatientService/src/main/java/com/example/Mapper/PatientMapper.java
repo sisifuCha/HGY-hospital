@@ -3,6 +3,7 @@ package com.example.Mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.example.pojo.entity.Patient;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Select;
 
 /**
  * 患者数据访问层
@@ -10,6 +11,6 @@ import org.apache.ibatis.annotations.Mapper;
  */
 @Mapper
 public interface PatientMapper extends BaseMapper<Patient> {
-    // 可以在此添加针对 Patient 表的特定查询方法
+    @Select("SELECT count(*) FROM \"patient\" WHERE identification_id = #{identificationId}")
+    int countByIdentificationId(String identificationId);
 }
-
