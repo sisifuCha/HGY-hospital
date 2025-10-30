@@ -1,5 +1,6 @@
 package com.example.pojo.entity;
 
+import com.baomidou.mybatisplus.annotation.TableId;
 import lombok.Data;
 import java.util.Date;
 
@@ -10,6 +11,7 @@ import java.util.Date;
 @Data
 public class Patient {
     // 患者ID，同时也是外键，关联到 user 表的 id
+    @TableId("patient_id")
     private String patientId;
 
     // 出生日期

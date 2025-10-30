@@ -13,8 +13,7 @@ import lombok.Data;
 @TableName("`user`") // 指定此类映射到数据库中的 user 表
 public class User {
     // 用户公共属性
-    @TableId // 主键
-    @TableField("id")
+    @TableId("id")
     private String userId;
 
     // 用户姓名
