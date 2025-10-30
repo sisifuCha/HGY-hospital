@@ -7,10 +7,11 @@
     <resultMap id="FullDoctorResultMap" type="com.example.pojo.entity.Doctor">
         <!-- 映射来自doctor表的字段（子类特有字段） -->
         <result column="doc_title_id" property="titleId"/>
-        <result column="clinic_id" property="departmentId"/>
+        <result column="clinic_id" property="clinicId"/>
         <result column="status" property="doctorStatus"/>
         <result column="details" property="doctorDetails"/>
         <result column="specialty" property="doctorSpecialty"/>
+        <result column="depart_id" property="doctorDepartId"/>
 
         <!-- 映射来自user表的字段（继承自User基类的字段） -->
         <result column="id" property="userId"/>
@@ -20,6 +21,7 @@
         <result column="email" property="userEmail"/>
         <result column="pass" property="userPassword"/>
         <result column="phone_num" property="userPhone"/>
+
     </resultMap>
 
     <!-- 根据医生ID查询完整信息（联表查询） -->
@@ -29,6 +31,7 @@
         d.doc_title_id,
         d.clinic_id,
         d.status,
+        d.depart_id,
         u.name,
         u.sex,
         u.account,
@@ -58,10 +61,11 @@
         <!-- 然后更新doctor表特有信息 -->
         UPDATE doctor
         SET doc_title_id = #{titleId},
-        clinic_id = #{departmentId},
+        clinic_id = #{clinicId},
         status = #{doctorStatus},
         details = #{doctorDetails},
-        specialty = #{doctorSpeciality}
+        specialty = #{doctorSpeciality},
+        depart_id = #{doctorDepartId}
         WHERE id = #{userId}
     </update>
 
@@ -71,41 +75,9 @@
         WHERE account = #{accountName}
         AND id != #{userId}
     </select>
-
-    <select id="getDoctorList" resultMap="FullDoctorResultMap">
-        SELECT
-        d.id,
-        d.doc_title_id,
-        d.clinic_id,
-        d.status,
-        u.name,
-        u.sex,
-        u.account,
-        u.email,
-        u.pass,
-        u.phone_num
-        FROM
-        doctor d
-        INNER JOIN "user" u ON d.id = u.id
-        <where>
-            <!-- 原有的动态过滤条件 -->
-            <if test="filter_value != null and filter_value != ''">
-                <choose>
-                    <!-- 注意：确保这里的字段名（如clinic_id）与实际数据库列名一致 -->
-                    <when test="filter_name == 'clinic_id'">
-                        d.clinic_id = #{filter_value}
-                    </when>
-                    <when test="filter_name == 'doc_title_id'">
-                        d.doc_title_id = #{filter_value}
-                    </when>
-                </choose>
-            </if>
-            <!-- 可以继续添加其他公共或动态条件 -->
-        </where>
-        ORDER BY d.id DESC
-    </select>
     <select id="selectDoctorPage" resultMap="FullDoctorResultMap">
         SELECT
+        d.depart_id,
         d.id,
         d.doc_title_id,
         d.clinic_id,
