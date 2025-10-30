@@ -4,11 +4,13 @@ import com.example.dto.PatientStatusRequest;
 import com.example.dto.ScheduleChangeRequest;
 import com.example.utils.Result;
 
+import java.util.Map;
+
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 public interface DoctorService {
     // 医生登录
-    Result<String> login(DoctorLoginRequest request);
+    Result<Map<String,String>> login(DoctorLoginRequest request);
 
     // 获取加号请求通知
     SseEmitter getAddNumberNotifications(String docID);

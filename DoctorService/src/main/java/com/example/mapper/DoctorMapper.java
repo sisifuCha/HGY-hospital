@@ -20,9 +20,9 @@ public interface DoctorMapper {
 
     @Select("SELECT d.*, u.\"name\", u.\"pass\" " +
            "FROM \"doctor\" d " +
-           "JOIN \"user\" u ON d.\"ID\" = u.\"ID\" " +
-           "WHERE d.\"ID\" = #{docId}")
-    Doctor getDoctorById(@Param("docId") String docId);
+           "JOIN \"user\" u ON d.\"id\" = u.\"id\" " +
+           "WHERE u.\"account\" = #{docAccount}")
+    Doctor getDoctorByAccount(@Param("docAccount") String docAccount);
 
     @Select("SELECT d.*, u.\"name\" " +
            "FROM \"doctor\" d " +

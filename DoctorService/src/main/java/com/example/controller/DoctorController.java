@@ -25,7 +25,7 @@ public class DoctorController {
     @PostMapping("/login")
     public ResponseEntity<Map<String, Object>> doctorLogin(@RequestBody DoctorLoginRequest request) {
         
-        Result<String> result = doctorService.login(request);
+        Result<Map<String,String>> result = doctorService.login(request);
         
         // 根据 Service 返回的业务结果，决定 HTTP 状态码
         if (result.isSuccess()) {

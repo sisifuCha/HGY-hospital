@@ -43,6 +43,14 @@ public class Result<T> implements Serializable {
     public static <T> Result<T> success(T data, String msg) {
         return new Result<>(200, msg, data);
     }
+    
+    // 登录成功（返回医生ID和JWT令牌）
+    public static Result<Map<String, String>> loginSuccess(String doctorId, String token) {
+        Map<String, String> loginData = new HashMap<>();
+        loginData.put("doctorId", doctorId);
+        loginData.put("token", token);
+        return new Result<>(200, "登录成功", loginData);
+    }
 
     // 失败/通用错误（自定义状态码和消息）
     public static <T> Result<T> fail(int code, String msg) {

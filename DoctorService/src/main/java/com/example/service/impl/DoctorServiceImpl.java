@@ -15,6 +15,8 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Service
@@ -35,31 +37,31 @@ public class DoctorServiceImpl implements DoctorService {
 
     @Override
     // Service 层只关注业务结果，可以返回一个封装了状态的对象，或者抛出业务异常。
-    public Result<String> login(DoctorLoginRequest request) {
+    public Result<Map<String, String>> login(DoctorLoginRequest request){
         // 1. 检查医生ID和密码是否为空 (业务输入验证)
-        if (!StringUtils.hasText(request.getDocID()) || !StringUtils.hasText(request.getPass())) {
-            return Result.fail(400, "医生ID或密码不能为空");
+        if (!StringUtils.hasText(request.getDocAccount()) || !StringUtils.hasText(request.getPass())) {
+            return Result.fail(400, "医生账号或密码不能为空");
         }
         
         // 2. 查询医生信息 (协调数据访问)
-        Doctor doctor = doctorMapper.getDoctorById(request.getDocID());
+        Doctor doctor = doctorMapper.getDoctorByAccount(request.getDocAccount());
         
         if (doctor == null) {
             // 3. 医生不存在 (业务判断)
-            return Result.fail(401, "医生ID或密码错误");
+            return Result.fail(401, "医生账号或密码错误");
         }
         
         // 4. 验证密码 (核心业务逻辑)
         if (!doctor.getPass().equals(request.getPass())) {
-            System.out.println("医生登录失败，医生ID: " + request.getDocID() + ", 输入密码错误");
-            return Result.fail(401, "医生ID或密码错误");
+            System.out.println("医生登录失败，医生ID: " + doctor.getId() + ", 输入密码错误");
+            return Result.fail(401, "医生账号或密码错误");
         }
         
         // 5. 生成JWT令牌 (业务功能实现)
         try {
-            String jwtToken = JwtUtil.generateToken(request.getDocID());
-            System.out.println("医生登录成功，医生ID: " + request.getDocID() + ", 生成的JWT: " + jwtToken);
-            return Result.success(jwtToken, "登录成功");
+            String jwtToken = JwtUtil.generateToken(doctor.getId());
+            System.out.println("医生登录成功，医生ID: " + doctor.getId() + ", 生成的JWT: " + jwtToken);
+            return Result.loginSuccess(doctor.getId(),jwtToken);
             
         } catch (Exception e) {
             // JWT生成失败
