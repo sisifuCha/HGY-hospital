@@ -58,7 +58,7 @@ public class DoctorServiceImpl implements DoctorService {
 
     @Override
     public Result<Doctor> getDoctorById(String id) {
-        return null;
+        return Result.success(DoctorMapper.selectById(id));
     }
 
     @Override
@@ -68,8 +68,8 @@ public class DoctorServiceImpl implements DoctorService {
         // 使用MyBatis-Plus的查询条件
         QueryWrapper<Doctor> queryWrapper = new QueryWrapper<>();
         if (filterValue != null && !filterValue.isEmpty()) {
-            if ("clinic".equals(filterName)) {
-                queryWrapper.eq("d.clinic_id", filterValue);
+            if ("depart".equals(filterName)) {
+                queryWrapper.eq("d.depart_id", filterValue);
             } else if ("title".equals(filterName)) {
                 queryWrapper.eq("d.doc_title_id", filterValue);
             }
