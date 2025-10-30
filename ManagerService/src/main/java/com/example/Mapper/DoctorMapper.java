@@ -2,7 +2,7 @@ package com.example.Mapper;
 
 import com.example.pojo.entity.Doctor;
 import org.apache.ibatis.annotations.Mapper;
-import org.springframework.data.repository.query.Param;
+import org.apache.ibatis.annotations.Param;
 
 @Mapper
 public interface DoctorMapper {

@@ -1,4 +1,4 @@
-package com.example.doctor.config;
+package com.example.config;
 
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.Session;

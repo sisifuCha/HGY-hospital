@@ -1,13 +1,14 @@
-package com.example.doctor.service;
+package com.example.service;
+import com.example.dto.DoctorLoginRequest;
+import com.example.dto.PatientStatusRequest;
+import com.example.dto.ScheduleChangeRequest;
+import com.example.utils.Result;
 
-import com.example.doctor.dto.DoctorLoginRequest;
-import com.example.doctor.dto.PatientStatusRequest;
-import com.example.doctor.dto.ScheduleChangeRequest;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 public interface DoctorService {
     // 医生登录
-    String login(DoctorLoginRequest request);
+    Result<String> login(DoctorLoginRequest request);
 
     // 获取加号请求通知
     SseEmitter getAddNumberNotifications(String docID);

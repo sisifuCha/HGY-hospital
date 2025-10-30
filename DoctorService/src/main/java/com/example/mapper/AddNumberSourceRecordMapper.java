@@ -1,7 +1,7 @@
-package com.example.doctor.mapper;
+package com.example.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.example.doctor.entity.AddNumberSourceRecord;
+import com.example.entity.AddNumberSourceRecord;
 import org.apache.ibatis.annotations.*;
 
 import java.util.List;
