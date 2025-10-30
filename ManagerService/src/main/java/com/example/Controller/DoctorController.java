@@ -18,6 +18,11 @@ public class DoctorController {
     @Autowired
     private DoctorService doctorService;
 
+    @GetMapping("getDoctor")
+    public Result<Doctor> getDoctor(@RequestParam String doctorId) {
+        return doctorService.getDoctorById(doctorId);
+    }
+
     @GetMapping("/getDoctors")
     public Result<IPage<Doctor>> getDoctors(@RequestBody DoctorsRequestDTO doctorsRequestDTO) {
         System.out.println(doctorService.getDoctorListWithPlus(doctorsRequestDTO.getPage(),

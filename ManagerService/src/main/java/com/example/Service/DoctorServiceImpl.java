@@ -58,7 +58,7 @@ public class DoctorServiceImpl implements DoctorService {
 
     @Override
     public Result<Doctor> getDoctorById(String id) {
-        return null;
+        return Result.success(DoctorMapper.selectById(id));
     }
 
     @Override

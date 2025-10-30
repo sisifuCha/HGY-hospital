@@ -20,6 +20,4 @@ public interface DoctorMapper extends BaseMapper<Doctor> {
     int checkAccountNameExists(@Param("accountName") String accountName, String userId);
 
     IPage<Doctor> selectDoctorPage(IPage<Doctor> page, @Param("ew") QueryWrapper<Doctor> queryWrapper);
-    //根据条件获取医生列表
-    List<Doctor> getDoctorList(String filter_name,String filter_value,Integer page,Integer num);
 }
