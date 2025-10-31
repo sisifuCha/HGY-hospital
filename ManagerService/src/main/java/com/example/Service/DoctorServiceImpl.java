@@ -1,7 +1,6 @@
 package com.example.Service;
 
-//import com.example.Mapper.DoctorMapper;
-//import com.example.pojo.entity.Doctor;
+
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -10,10 +9,14 @@ import com.example.Conmon.result.Result;
 import com.example.pojo.dto.DoctorDTO;
 import com.example.pojo.dto.DoctorsRequestDTO;
 import com.example.pojo.entity.Doctor;
+import com.example.pojo.entity.DoctorSchedule;
+import com.example.pojo.vo.ScheduleWeekVO;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -79,9 +82,71 @@ public class DoctorServiceImpl implements DoctorService {
         return Result.success(DoctorMapper.selectDoctorPage(pageParam, queryWrapper));
     }
 
+    @Override
+    public Result<ScheduleWeekVO> getScheduleWeek(Integer week, String departId) {
+        LocalDate currentDate = LocalDate.now();
+        LocalDate monday;
+        LocalDate sunday;
+
+        // 获取当前日期是星期几（1-7，1代表星期一，7代表星期日）
+        int dayOfWeek = currentDate.getDayOfWeek().getValue();
+
+        if (week == 0) {
+            // 获取本周周一和周日的日期
+            monday = currentDate.minusDays(dayOfWeek - 1); // 本周一
+            sunday = monday.plusDays(6); // 本周日
+            List<DoctorSchedule> doctorSchedules = DoctorMapper.selectDoctorSchedule(monday,sunday,departId);
+            //处理VO
+            return Result.success(getScheduleWeekVO(doctorSchedules));
+        } else if (week == 1) {
+            // 获取下周一到下周日的日期
+            LocalDate nextMonday = currentDate.plusDays(8 - dayOfWeek); // 下周一
+            monday = nextMonday;
+            sunday = nextMonday.plusDays(6); // 下周日
+            List<DoctorSchedule> doctorSchedules = DoctorMapper.selectDoctorSchedule(monday,sunday,departId);
+            //处理VO
+            return Result.success(getScheduleWeekVO(doctorSchedules));
+        } else {
+            return Result.fail("无效的周次");
+        }
+    }
+
     private Doctor convertToEntity(DoctorDTO dto) {
         Doctor doctor = new Doctor();
         BeanUtils.copyProperties(dto, doctor);
         return doctor;
+    }
+
+    private ScheduleWeekVO getScheduleWeekVO(List<DoctorSchedule> doctorSchedules){
+        ScheduleWeekVO res = new ScheduleWeekVO();
+        for (DoctorSchedule doctorSchedule : doctorSchedules) {
+            LocalDate date = doctorSchedule.getDate();
+            switch (date.getDayOfWeek().getValue()) {
+                case 1:
+                    res.getMon().add(doctorSchedule);
+                    break;
+                case 2:
+                    res.getTue().add(doctorSchedule);
+                    break;
+                case 3:
+                    res.getWed().add(doctorSchedule);
+                    break;
+                case 4:
+                    res.getThu().add(doctorSchedule);
+                    break;
+                case 5:
+                    res.getFri().add(doctorSchedule);
+                    break;
+                case 6:
+                    res.getSat().add(doctorSchedule);
+                    break;
+                case 7:
+                    res.getSun().add(doctorSchedule);
+                    break;
+                default:
+                    break;
+            }
+        }
+        return res;
     }
 }
