@@ -14,7 +14,7 @@ public class Doctor extends User { // 继承 BaseUser
     private String titleId;
 
     @TableField("clinic_id")
-    private String departmentId;
+    private String clinicId;
 
     @TableField("status")
     private String doctorStatus;
@@ -24,5 +24,8 @@ public class Doctor extends User { // 继承 BaseUser
 
     @TableField("speciality")
     private String doctorSpeciality;
+
+    @TableField("depart_id")
+    private String doctorDepartId;
 
 }

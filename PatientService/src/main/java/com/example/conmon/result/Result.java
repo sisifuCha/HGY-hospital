@@ -1,4 +1,4 @@
-package com.example.Conmon.result;
+package com.example.conmon.result;
 
 import lombok.Data;
 
@@ -32,3 +32,4 @@ public class Result<T> {
         return new Result<>(500, msg, null);
     }
 }
+
