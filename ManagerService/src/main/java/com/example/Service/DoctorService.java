@@ -5,6 +5,7 @@ import com.example.Conmon.result.Result;
 import com.example.pojo.dto.DoctorDTO;
 import com.example.pojo.dto.DoctorsRequestDTO;
 import com.example.pojo.entity.Doctor;
+import com.example.pojo.vo.ScheduleWeekVO;
 
 import javax.print.Doc;
 import java.util.List;
@@ -21,6 +22,16 @@ public interface DoctorService {
      */
     Result<Doctor> getDoctorById(String id);
 
-
+    /**
+     * 分页查询医生信息
+     * @param page
+     * @param num
+     * @param filterName
+     * @param filterValue
+     * @return
+     */
     Result<IPage<Doctor>> getDoctorListWithPlus(int page, int num, String filterName, String filterValue);
+
+    Result<ScheduleWeekVO> getScheduleWeek(Integer week,String departId);
+
 }
