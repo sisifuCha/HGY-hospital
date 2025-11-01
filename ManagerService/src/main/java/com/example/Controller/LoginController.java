@@ -22,8 +22,7 @@ public class LoginController {
 
     @PostMapping(value = "/admin/login")
     public ResponseEntity<Map<String, Object>> login(@RequestBody LoginRequestDTO loginRequestDTO) {
-        //TODO 测试信息，要删掉
-        System.out.println("hello world");
+
 
         // 创建响应对象
         Map<String, Object> response = new HashMap<>();

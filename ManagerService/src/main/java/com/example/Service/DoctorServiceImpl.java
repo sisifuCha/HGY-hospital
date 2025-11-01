@@ -20,20 +20,20 @@ import java.util.List;
 public class DoctorServiceImpl implements DoctorService {
 
     @Autowired
-    private DoctorMapper DoctorMapper;
+    private DoctorMapper doctorMapper;
 
     @Override
     //@Transactional(rollbackFor = Exception.class)
     public Result<String> updateDoctor(DoctorDTO doctorDTO) {
         try {
             // 1. 检查医生是否存在
-            Doctor existingDoctor = DoctorMapper.selectById(doctorDTO.getUserId());
+            Doctor existingDoctor = doctorMapper.selectById(doctorDTO.getUserId());
             if (existingDoctor == null) {
                 return Result.fail(404, "医生信息不存在");
             }
 
             // 2. 检查账号名是否重复
-            int count = DoctorMapper.checkAccountNameExists(doctorDTO.getUserAccount(),doctorDTO.getUserId());
+            int count = doctorMapper.checkAccountNameExists(doctorDTO.getUserAccount(),doctorDTO.getUserId());
             if (count > 0) {
                 return Result.fail(400, "账号名已存在");
             }
@@ -42,7 +42,7 @@ public class DoctorServiceImpl implements DoctorService {
             Doctor doctor = convertToEntity(doctorDTO);
 
             // 4. 执行更新
-            int result = DoctorMapper.updateDoctor(doctor);
+            int result = doctorMapper.updateDoctor(doctor);
             if (result > 0) {
                 System.out.println("医生信息更新成功，ID: {}"+ doctorDTO.getUserId());
                 return Result.success("医生信息更新成功", null);
@@ -58,7 +58,7 @@ public class DoctorServiceImpl implements DoctorService {
 
     @Override
     public Result<Doctor> getDoctorById(String id) {
-        return Result.success(DoctorMapper.selectById(id));
+        return Result.success(doctorMapper.selectById(id));
     }
 
     @Override
@@ -69,14 +69,14 @@ public class DoctorServiceImpl implements DoctorService {
         QueryWrapper<Doctor> queryWrapper = new QueryWrapper<>();
         if (filterValue != null && !filterValue.isEmpty()) {
             if ("depart".equals(filterName)) {
-                queryWrapper.eq("d.depart_id", filterValue);
+                queryWrapper.eq("depart_id", filterValue);
             } else if ("title".equals(filterName)) {
-                queryWrapper.eq("d.doc_title_id", filterValue);
+                queryWrapper.eq("doc_title_id", filterValue);
             }
         }
-        queryWrapper.orderByDesc("d.id");
+        queryWrapper.orderByDesc("id");
 
-        return Result.success(DoctorMapper.selectDoctorPage(pageParam, queryWrapper));
+        return Result.success(doctorMapper.selectDoctorPage(pageParam, queryWrapper));
     }
 
     private Doctor convertToEntity(DoctorDTO dto) {
