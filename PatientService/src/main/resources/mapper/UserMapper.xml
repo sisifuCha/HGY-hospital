@@ -5,7 +5,16 @@
 <mapper namespace="com.example.Mapper.UserMapper">
 
     <select id="findByAccount" resultType="com.example.pojo.entity.User">
-        select * from "user" where account = #{account}
+        select
+            id as userId,
+            name as userName,
+            sex as userGender,
+            account as userAccount,
+            email as userEmail,
+            pass as userPassword,
+            phone_num as userPhone,
+            user_type as userType
+        from "user" where account = #{account}
     </select>
 
 </mapper>

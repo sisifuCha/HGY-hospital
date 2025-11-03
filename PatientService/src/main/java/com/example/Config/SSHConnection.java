@@ -49,7 +49,7 @@ public class SSHConnection {
         session.setConfig(config);
 
         // 设置连接超时时间（30秒）
-        session.setTimeout(30000);
+        session.setTimeout(60000);
 
         // 建立SSH连接
         System.out.println("正在连接SSH服务器: " + SSH_REMOTE_SERVER + ":" + SSH_REMOTE_PORT);
@@ -62,4 +62,3 @@ public class SSHConnection {
         System.out.println("端口转发建立成功!");
     }
 }
-
