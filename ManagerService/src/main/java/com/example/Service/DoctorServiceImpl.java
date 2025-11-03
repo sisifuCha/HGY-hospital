@@ -38,7 +38,7 @@ public class DoctorServiceImpl implements DoctorService {
             // 4. 执行更新
             int result = DoctorMapper.updateDoctor(doctor);
             if (result > 0) {
-                log.info("医生信息更新成功，ID: {}", doctorDTO.getId());
+                log.info("医生信息更新成功，id: {}", doctorDTO.getId());
                 return Result.success("医生信息更新成功", null);
             } else {
                 return Result.fail(500, "医生信息更新失败");

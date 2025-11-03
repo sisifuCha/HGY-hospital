@@ -14,10 +14,10 @@ public class AddNumberSourceRecordEntity implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    @TableId(value = "patient_ID")
+    @TableId(value = "patient_id")
     private String patientId;
 
-    @TableField("sch_ID")
+    @TableField("sch_id")
     private String schId;
 
     @TableField("apply_time")

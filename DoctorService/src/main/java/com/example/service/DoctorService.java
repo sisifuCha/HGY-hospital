@@ -1,9 +1,16 @@
 package com.example.service;
+import com.example.dto.AddNumberDecisionRequest;
+import com.example.dto.DepartmentShiftDto;
 import com.example.dto.DoctorLoginRequest;
+import com.example.dto.DoctorProfileDto;
+import com.example.dto.DoctorProfileUpdateRequest;
+import com.example.dto.PatientRecordDto;
 import com.example.dto.PatientStatusRequest;
+import com.example.dto.PatientSummaryDto;
 import com.example.dto.ScheduleChangeRequest;
 import com.example.utils.Result;
 
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
@@ -13,32 +20,32 @@ public interface DoctorService {
     Result<Map<String,String>> login(DoctorLoginRequest request);
 
     // 获取加号请求通知
-    SseEmitter getAddNumberNotifications(String docID);
+    SseEmitter getAddNumberNotifications(String docId);
 
     // 审核加号请求
-    boolean reviewAddNumberRequest(String addNumberId, boolean approved);
+    Result<Void> reviewAddNumberRequest(AddNumberDecisionRequest request);
 
     // 获取本科室排班列表
-    Object getDepartmentShifts(String docID);
+    List<DepartmentShiftDto> getDepartmentShifts(String docId);
 
     // 获取患者列表
-    Object getPatientList(String docID);
+    List<PatientSummaryDto> getPatientList(String docId);
 
     // 获取特定患者信息
-    Object getPatientDetails(String docID, String registerId);
+    List<PatientRecordDto> getPatientDetails(String docId, String registerId);
 
     // 获取系统通知
-    SseEmitter getSystemNotifications(String docID);
+    SseEmitter getSystemNotifications(String docId);
 
     // 获取医生个人信息
-    Object getDoctorProfile(String docID);
+    DoctorProfileDto getDoctorProfile(String docId);
 
     // 提交班次变更申请
-    boolean submitScheduleChangeRequest(ScheduleChangeRequest request);
+    Result<Void> submitScheduleChangeRequest(ScheduleChangeRequest request);
 
     // 更新患者就诊状态
-    boolean updatePatientStatus(PatientStatusRequest request);
+    Result<Void> updatePatientStatus(PatientStatusRequest request);
 
     // 修改医生个人信息
-    boolean updateDoctorProfile(String doctorId, Object profileData);
+    Result<Void> updateDoctorProfile(String doctorId, DoctorProfileUpdateRequest profileData);
 }

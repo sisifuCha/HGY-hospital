@@ -1,29 +1,29 @@
 package com.example.dto;
 
 public class ScheduleChangeRequest {
-    private String docID;
-    private String originalScheduleID;
+    private String docId;
+    private String originalScheduleId;
     private Integer changeType; // 0:调班, 1:请假
     private String targetDate;
-    private Integer targetTimeSlot;
-    private String targetDoctorID;
+    private Integer timePeriod;
+    private String targetDoctorId;
     private Integer leaveTimeLength;
     private String reason;
 
-    public String getDocID() {
-        return docID;
+    public String getDocId() {
+        return docId;
     }
 
-    public void setDocID(String docID) {
-        this.docID = docID;
+    public void setDocId(String docId) {
+        this.docId = docId;
     }
 
-    public String getOriginalScheduleID() {
-        return originalScheduleID;
+    public String getOriginalScheduleId() {
+        return originalScheduleId;
     }
 
-    public void setOriginalScheduleID(String originalScheduleID) {
-        this.originalScheduleID = originalScheduleID;
+    public void setOriginalScheduleId(String originalScheduleId) {
+        this.originalScheduleId = originalScheduleId;
     }
 
     public Integer getChangeType() {
@@ -42,20 +42,20 @@ public class ScheduleChangeRequest {
         this.targetDate = targetDate;
     }
 
-    public Integer getTargetTimeSlot() {
-        return targetTimeSlot;
+    public Integer getTimePeriod() {
+        return timePeriod;
     }
 
-    public void setTargetTimeSlot(Integer targetTimeSlot) {
-        this.targetTimeSlot = targetTimeSlot;
+    public void setTimePeriod(Integer timePeriod) {
+        this.timePeriod = timePeriod;
     }
 
-    public String getTargetDoctorID() {
-        return targetDoctorID;
+    public String getTargetDoctorId() {
+        return targetDoctorId;
     }
 
-    public void setTargetDoctorID(String targetDoctorID) {
-        this.targetDoctorID = targetDoctorID;
+    public void setTargetDoctorId(String targetDoctorId) {
+        this.targetDoctorId = targetDoctorId;
     }
 
     public Integer getLeaveTimeLength() {

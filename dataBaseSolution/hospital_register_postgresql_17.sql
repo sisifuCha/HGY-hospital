@@ -28,18 +28,18 @@ DROP TABLE IF EXISTS "user" CASCADE;
 /* Table: user (基础用户表)                                      */
 /*==============================================================*/
 CREATE TABLE "user" (
-   ID                   VARCHAR(20)          NOT NULL,
+   id                   VARCHAR(20)          NOT NULL,
    email                VARCHAR(100)         NULL,
    pass                 VARCHAR(255)         NULL,  -- 增加长度以支持加密密码
    name                 VARCHAR(50)          NULL,  -- 增加长度
    account              VARCHAR(50)          NULL,
    sex                  VARCHAR(10)          NULL,
    phone_num            VARCHAR(20)          NULL,  -- 增加长度以支持国际号码
-   CONSTRAINT PK_USER PRIMARY KEY (ID)
+   CONSTRAINT PK_USER PRIMARY KEY (id)
 );
 
 COMMENT ON TABLE "user" IS '用户基础信息表';
-COMMENT ON COLUMN "user".ID IS '用户唯一标识';
+COMMENT ON COLUMN "user".id IS '用户唯一标识';
 COMMENT ON COLUMN "user".email IS '邮箱地址';
 COMMENT ON COLUMN "user".pass IS '密码(加密)';
 
@@ -47,10 +47,10 @@ COMMENT ON COLUMN "user".pass IS '密码(加密)';
 /* Table: department (科室表)                                    */
 /*==============================================================*/
 CREATE TABLE department (
-   ID                   VARCHAR(20)          NOT NULL,
+   id                   VARCHAR(20)          NOT NULL,
    name                 VARCHAR(100)         NULL,
    father_ID            VARCHAR(20)          NULL,
-   CONSTRAINT PK_DEPARTMENT PRIMARY KEY (ID)
+   CONSTRAINT PK_DEPARTMENT PRIMARY KEY (id)
 );
 
 COMMENT ON TABLE department IS '医院科室表';
@@ -60,11 +60,11 @@ COMMENT ON COLUMN department.father_ID IS '父级科室ID,支持科室层级结�
 /* Table: clinic (诊室表)                                        */
 /*==============================================================*/
 CREATE TABLE clinic (
-   ID                   VARCHAR(20)          NOT NULL,
+   id                   VARCHAR(20)          NOT NULL,
    clinic_number        VARCHAR(20)          NULL,
    location             VARCHAR(100)         NULL,
    dep_ID               VARCHAR(20)          NULL,
-   CONSTRAINT PK_CLINIC PRIMARY KEY (ID)
+   CONSTRAINT PK_CLINIC PRIMARY KEY (id)
 );
 
 COMMENT ON TABLE clinic IS '诊室信息表';
@@ -73,11 +73,11 @@ COMMENT ON TABLE clinic IS '诊室信息表';
 /* Table: title_number_source (职称号源表)                       */
 /*==============================================================*/
 CREATE TABLE title_number_source (
-   ID                   VARCHAR(20)          NOT NULL,
+   id                   VARCHAR(20)          NOT NULL,
    name                 VARCHAR(10)          NOT NULL,
    number_source_count  SMALLINT             NULL,
    ori_cost             NUMERIC(10,2)        NULL,  -- 使用 NUMERIC 替代 FLOAT8
-   CONSTRAINT PK_TITLE_NUMBER_SOURCE PRIMARY KEY (ID),
+   CONSTRAINT PK_TITLE_NUMBER_SOURCE PRIMARY KEY (id),
    CONSTRAINT CHK_number_source_count CHECK (number_source_count >= 0)
 );
 
@@ -88,11 +88,11 @@ COMMENT ON COLUMN title_number_source.name IS '职称名称';
 /* Table: doctor (医生表)                                        */
 /*==============================================================*/
 CREATE TABLE doctor (
-   ID                   VARCHAR(20)          NOT NULL,
+   id                   VARCHAR(20)          NOT NULL,
    doc_title_ID         VARCHAR(20)          NULL,
    status               VARCHAR(20)          NULL,
    clinic_ID            VARCHAR(20)          NULL,
-   CONSTRAINT PK_DOCTOR PRIMARY KEY (ID)
+   CONSTRAINT PK_DOCTOR PRIMARY KEY (id)
 );
 
 COMMENT ON TABLE doctor IS '医生信息表';
@@ -118,12 +118,12 @@ COMMENT ON COLUMN schedule_template.time_period_name IS '时段名称: 上午/�
 /* Table: doc_schedule_record (医生排班记录表)                   */
 /*==============================================================*/
 CREATE TABLE doc_schedule_record (
-   ID                   VARCHAR(20)          NOT NULL,
+   id                   VARCHAR(20)          NOT NULL,
    template_ID          VARCHAR(20)          NULL,
    schedule_date        DATE                 NULL,
    left_source_count    INTEGER              NULL,
    doc_ID               VARCHAR(20)          NULL,
-   CONSTRAINT PK_DOC_SCHEDULE_RECORD PRIMARY KEY (ID),
+   CONSTRAINT PK_DOC_SCHEDULE_RECORD PRIMARY KEY (id),
    CONSTRAINT CHK_left_source_count CHECK (left_source_count >= 0)
 );
 
@@ -134,10 +134,10 @@ COMMENT ON COLUMN doc_schedule_record.left_source_count IS '剩余号源数量';
 /* Table: reimburse_type (报销类型表)                            */
 /*==============================================================*/
 CREATE TABLE reimburse_type (
-   ID                   VARCHAR(20)          NOT NULL,
+   id                   VARCHAR(20)          NOT NULL,
    type                 VARCHAR(50)          NULL,
    percent              NUMERIC(5,2)         NULL,
-   CONSTRAINT PK_REIMBURSE_TYPE PRIMARY KEY (ID),
+   CONSTRAINT PK_REIMBURSE_TYPE PRIMARY KEY (id),
    CONSTRAINT CHK_percent CHECK (percent >= 0 AND percent <= 100)
 );
 
@@ -148,9 +148,9 @@ COMMENT ON COLUMN reimburse_type.percent IS '报销比例(百分比)';
 /* Table: medical_insurance (医保表)                             */
 /*==============================================================*/
 CREATE TABLE medical_insurance (
-   ID                   VARCHAR(20)          NOT NULL,
+   id                   VARCHAR(20)          NOT NULL,
    overage              NUMERIC(10,2)        NULL,
-   CONSTRAINT PK_MEDICAL_INSURANCE PRIMARY KEY (ID),
+   CONSTRAINT PK_MEDICAL_INSURANCE PRIMARY KEY (id),
    CONSTRAINT CHK_overage CHECK (overage >= 0)
 );
 
@@ -161,12 +161,12 @@ COMMENT ON COLUMN medical_insurance.overage IS '医保余额';
 /* Table: patient (患者表)                                       */
 /*==============================================================*/
 CREATE TABLE patient (
-   ID                   VARCHAR(20)          NOT NULL,
+   id                   VARCHAR(20)          NOT NULL,
    birth                DATE                 NULL,
    ID_num               VARCHAR(18)          NULL,
    medical_insuranceID  VARCHAR(20)          NULL,
    reimburse_ID         VARCHAR(20)          NULL,
-   CONSTRAINT PK_PATIENT PRIMARY KEY (ID),
+   CONSTRAINT PK_PATIENT PRIMARY KEY (id),
    CONSTRAINT CHK_birth CHECK (birth <= CURRENT_DATE)
 );
 
@@ -267,12 +267,12 @@ COMMENT ON COLUMN pay_record.ask_pay_amount IS '实际支付金额';
 /* Table: sensitive_operation (敏感操作记录表)                   */
 /*==============================================================*/
 CREATE TABLE sensitive_operation (
-   ID                   VARCHAR(20)          NOT NULL,
+   id                   VARCHAR(20)          NOT NULL,
    patient_ID           VARCHAR(20)          NULL,
    sensitive_op_type    VARCHAR(50)          NULL,
    op_time              TIMESTAMP            NULL,
    Remark               TEXT                 NULL,
-   CONSTRAINT PK_SENSITIVE_OPERATION PRIMARY KEY (ID)
+   CONSTRAINT PK_SENSITIVE_OPERATION PRIMARY KEY (id)
 );
 
 COMMENT ON TABLE sensitive_operation IS '敏感操作记录表';
@@ -302,7 +302,7 @@ COMMENT ON COLUMN blacklist.count IS '违规次数';
 ALTER TABLE department
    ADD CONSTRAINT FK_DEPARTMENT_PARENT 
    FOREIGN KEY (father_ID)
-   REFERENCES department (ID)
+   REFERENCES department (id)
    ON DELETE SET NULL 
    ON UPDATE CASCADE;
 
@@ -310,29 +310,29 @@ ALTER TABLE department
 ALTER TABLE clinic
    ADD CONSTRAINT FK_CLINIC_DEPARTMENT 
    FOREIGN KEY (dep_ID)
-   REFERENCES department (ID)
+   REFERENCES department (id)
    ON DELETE SET NULL 
    ON UPDATE CASCADE;
 
 -- Doctor references
 ALTER TABLE doctor
    ADD CONSTRAINT FK_DOCTOR_USER 
-   FOREIGN KEY (ID)
-   REFERENCES "user" (ID)
+   FOREIGN KEY (id)
+   REFERENCES "user" (id)
    ON DELETE CASCADE 
    ON UPDATE CASCADE;
 
 ALTER TABLE doctor
    ADD CONSTRAINT FK_DOCTOR_CLINIC 
    FOREIGN KEY (clinic_ID)
-   REFERENCES clinic (ID)
+   REFERENCES clinic (id)
    ON DELETE SET NULL 
    ON UPDATE CASCADE;
 
 ALTER TABLE doctor
    ADD CONSTRAINT FK_DOCTOR_TITLE 
    FOREIGN KEY (doc_title_ID)
-   REFERENCES title_number_source (ID)
+   REFERENCES title_number_source (id)
    ON DELETE SET NULL 
    ON UPDATE CASCADE;
 
@@ -340,7 +340,7 @@ ALTER TABLE doctor
 ALTER TABLE schedule_template
    ADD CONSTRAINT FK_SCHEDULE_TEMPLATE_CLINIC 
    FOREIGN KEY (clin_ID)
-   REFERENCES clinic (ID)
+   REFERENCES clinic (id)
    ON DELETE SET NULL 
    ON UPDATE CASCADE;
 
@@ -355,29 +355,29 @@ ALTER TABLE doc_schedule_record
 ALTER TABLE doc_schedule_record
    ADD CONSTRAINT FK_DOC_SCHEDULE_DOCTOR 
    FOREIGN KEY (doc_ID)
-   REFERENCES doctor (ID)
+   REFERENCES doctor (id)
    ON DELETE CASCADE 
    ON UPDATE CASCADE;
 
 -- Patient references
 ALTER TABLE patient
    ADD CONSTRAINT FK_PATIENT_USER 
-   FOREIGN KEY (ID)
-   REFERENCES "user" (ID)
+   FOREIGN KEY (id)
+   REFERENCES "user" (id)
    ON DELETE CASCADE 
    ON UPDATE CASCADE;
 
 ALTER TABLE patient
    ADD CONSTRAINT FK_PATIENT_REIMBURSE 
    FOREIGN KEY (reimburse_ID)
-   REFERENCES reimburse_type (ID)
+   REFERENCES reimburse_type (id)
    ON DELETE SET NULL 
    ON UPDATE CASCADE;
 
 ALTER TABLE patient
    ADD CONSTRAINT FK_PATIENT_MEDICAL_INSURANCE 
    FOREIGN KEY (medical_insuranceID)
-   REFERENCES medical_insurance (ID)
+   REFERENCES medical_insurance (id)
    ON DELETE SET NULL 
    ON UPDATE CASCADE;
 
@@ -385,14 +385,14 @@ ALTER TABLE patient
 ALTER TABLE register_record
    ADD CONSTRAINT FK_REGISTER_SCHEDULE 
    FOREIGN KEY (sch_ID)
-   REFERENCES doc_schedule_record (ID)
+   REFERENCES doc_schedule_record (id)
    ON DELETE CASCADE 
    ON UPDATE CASCADE;
 
 ALTER TABLE register_record
    ADD CONSTRAINT FK_REGISTER_PATIENT 
    FOREIGN KEY (patient_ID)
-   REFERENCES patient (ID)
+   REFERENCES patient (id)
    ON DELETE CASCADE 
    ON UPDATE CASCADE;
 
@@ -400,14 +400,14 @@ ALTER TABLE register_record
 ALTER TABLE alternate_record
    ADD CONSTRAINT FK_ALTERNATE_PATIENT 
    FOREIGN KEY (patient_ID)
-   REFERENCES patient (ID)
+   REFERENCES patient (id)
    ON DELETE CASCADE 
    ON UPDATE CASCADE;
 
 ALTER TABLE alternate_record
    ADD CONSTRAINT FK_ALTERNATE_SCHEDULE 
    FOREIGN KEY (sch_ID)
-   REFERENCES doc_schedule_record (ID)
+   REFERENCES doc_schedule_record (id)
    ON DELETE CASCADE 
    ON UPDATE CASCADE;
 
@@ -415,14 +415,14 @@ ALTER TABLE alternate_record
 ALTER TABLE add_number_source_record
    ADD CONSTRAINT FK_ADD_NUMBER_SCHEDULE 
    FOREIGN KEY (sch_ID)
-   REFERENCES doc_schedule_record (ID)
+   REFERENCES doc_schedule_record (id)
    ON DELETE CASCADE 
    ON UPDATE CASCADE;
 
 ALTER TABLE add_number_source_record
    ADD CONSTRAINT FK_ADD_NUMBER_PATIENT 
    FOREIGN KEY (patient_ID)
-   REFERENCES patient (ID)
+   REFERENCES patient (id)
    ON DELETE CASCADE 
    ON UPDATE CASCADE;
 
@@ -430,14 +430,14 @@ ALTER TABLE add_number_source_record
 ALTER TABLE cancel_record
    ADD CONSTRAINT FK_CANCEL_SCHEDULE 
    FOREIGN KEY (sch_ID)
-   REFERENCES doc_schedule_record (ID)
+   REFERENCES doc_schedule_record (id)
    ON DELETE CASCADE 
    ON UPDATE CASCADE;
 
 ALTER TABLE cancel_record
    ADD CONSTRAINT FK_CANCEL_PATIENT 
    FOREIGN KEY (patient_ID)
-   REFERENCES patient (ID)
+   REFERENCES patient (id)
    ON DELETE CASCADE 
    ON UPDATE CASCADE;
 
@@ -445,21 +445,21 @@ ALTER TABLE cancel_record
 ALTER TABLE doc_schedule_change_record
    ADD CONSTRAINT FK_DOC_CHANGE_DOCTOR 
    FOREIGN KEY (doc_ID)
-   REFERENCES doctor (ID)
+   REFERENCES doctor (id)
    ON DELETE CASCADE 
    ON UPDATE CASCADE;
 
 ALTER TABLE doc_schedule_change_record
    ADD CONSTRAINT FK_DOC_CHANGE_ORI_SCHEDULE 
    FOREIGN KEY (ori_sch_ID)
-   REFERENCES doc_schedule_record (ID)
+   REFERENCES doc_schedule_record (id)
    ON DELETE CASCADE 
    ON UPDATE CASCADE;
 
 ALTER TABLE doc_schedule_change_record
    ADD CONSTRAINT FK_DOC_CHANGE_TARGET_SCHEDULE 
    FOREIGN KEY (target_sch_ID)
-   REFERENCES doc_schedule_record (ID)
+   REFERENCES doc_schedule_record (id)
    ON DELETE CASCADE 
    ON UPDATE CASCADE;
 
@@ -467,14 +467,14 @@ ALTER TABLE doc_schedule_change_record
 ALTER TABLE pay_record
    ADD CONSTRAINT FK_PAY_PATIENT 
    FOREIGN KEY (patient_ID)
-   REFERENCES patient (ID)
+   REFERENCES patient (id)
    ON DELETE SET NULL 
    ON UPDATE CASCADE;
 
 ALTER TABLE pay_record
    ADD CONSTRAINT FK_PAY_SCHEDULE 
    FOREIGN KEY (doc_ID)
-   REFERENCES doc_schedule_record (ID)
+   REFERENCES doc_schedule_record (id)
    ON DELETE SET NULL 
    ON UPDATE CASCADE;
 
@@ -482,7 +482,7 @@ ALTER TABLE pay_record
 ALTER TABLE sensitive_operation
    ADD CONSTRAINT FK_SENSITIVE_PATIENT 
    FOREIGN KEY (patient_ID)
-   REFERENCES patient (ID)
+   REFERENCES patient (id)
    ON DELETE CASCADE 
    ON UPDATE CASCADE;
 
@@ -490,21 +490,21 @@ ALTER TABLE sensitive_operation
 ALTER TABLE blacklist
    ADD CONSTRAINT FK_BLACKLIST_SEN1 
    FOREIGN KEY (sen_ID1)
-   REFERENCES sensitive_operation (ID)
+   REFERENCES sensitive_operation (id)
    ON DELETE SET NULL 
    ON UPDATE CASCADE;
 
 ALTER TABLE blacklist
    ADD CONSTRAINT FK_BLACKLIST_SEN2 
    FOREIGN KEY (sen_ID2)
-   REFERENCES sensitive_operation (ID)
+   REFERENCES sensitive_operation (id)
    ON DELETE SET NULL 
    ON UPDATE CASCADE;
 
 ALTER TABLE blacklist
    ADD CONSTRAINT FK_BLACKLIST_SEN3 
    FOREIGN KEY (sen_ID3)
-   REFERENCES sensitive_operation (ID)
+   REFERENCES sensitive_operation (id)
    ON DELETE SET NULL 
    ON UPDATE CASCADE;
 
@@ -561,10 +561,10 @@ CREATE INDEX idx_sensitive_type ON sensitive_operation(sensitive_op_type);
 -- 可用号源视图
 CREATE OR REPLACE VIEW v_available_schedules AS
 SELECT 
-    dsr.ID as schedule_id,
+    dsr.id as schedule_id,
     dsr.schedule_date,
     dsr.left_source_count,
-    d.ID as doctor_id,
+    d.id as doctor_id,
     u.name as doctor_name,
     st.time_period_name,
     st.start_time,
@@ -574,12 +574,12 @@ SELECT
     dep.name as department_name,
     tns.ori_cost
 FROM doc_schedule_record dsr
-JOIN doctor d ON dsr.doc_ID = d.ID
-JOIN "user" u ON d.ID = u.ID
+JOIN doctor d ON dsr.doc_ID = d.id
+JOIN "user" u ON d.id = u.id
 JOIN schedule_template st ON dsr.template_ID = st.id
-JOIN clinic c ON d.clinic_ID = c.ID
-JOIN department dep ON c.dep_ID = dep.ID
-JOIN title_number_source tns ON d.doc_title_ID = tns.ID
+JOIN clinic c ON d.clinic_ID = c.id
+JOIN department dep ON c.dep_ID = dep.id
+JOIN title_number_source tns ON d.doc_title_ID = tns.id
 WHERE dsr.left_source_count > 0
   AND dsr.schedule_date >= CURRENT_DATE;
 
@@ -588,7 +588,7 @@ COMMENT ON VIEW v_available_schedules IS '可用号源视图';
 -- 患者挂号历史视图
 CREATE OR REPLACE VIEW v_patient_register_history AS
 SELECT 
-    p.ID as patient_id,
+    p.id as patient_id,
     u.name as patient_name,
     u.phone_num,
     rr.register_time,
@@ -598,13 +598,13 @@ SELECT
     dep.name as department_name,
     c.clinic_number
 FROM register_record rr
-JOIN patient p ON rr.patient_ID = p.ID
-JOIN "user" u ON p.ID = u.ID
-JOIN doc_schedule_record dsr ON rr.sch_ID = dsr.ID
-JOIN doctor d ON dsr.doc_ID = d.ID
-JOIN "user" doc_u ON d.ID = doc_u.ID
-JOIN clinic c ON d.clinic_ID = c.ID
-JOIN department dep ON c.dep_ID = dep.ID;
+JOIN patient p ON rr.patient_ID = p.id
+JOIN "user" u ON p.id = u.id
+JOIN doc_schedule_record dsr ON rr.sch_ID = dsr.id
+JOIN doctor d ON dsr.doc_ID = d.id
+JOIN "user" doc_u ON d.id = doc_u.id
+JOIN clinic c ON d.clinic_ID = c.id
+JOIN department dep ON c.dep_ID = dep.id;
 
 COMMENT ON VIEW v_patient_register_history IS '患者挂号历史视图';
 
@@ -613,10 +613,10 @@ COMMENT ON VIEW v_patient_register_history IS '患者挂号历史视图';
 /*==============================================================*/
 
 -- 插入示例报销类型
-INSERT INTO reimburse_type (ID, type, percent) VALUES
-('RT001', '城镇职工医保', 80.00),
-('RT002', '城乡居民医保', 70.00),
+INSERT INTO reimburse_type (id, type, percent) VALUES
+('RT001', '医生医保', 90.00),
+('RT002', '患者医保', 95.00),
 ('RT003', '自费', 0.00)
-ON CONFLICT (ID) DO NOTHING;
+ON CONFLICT (id) DO NOTHING;
 
 COMMENT ON DATABASE postgres IS 'Hospital Registration System - PostgreSQL 17 Compatible';

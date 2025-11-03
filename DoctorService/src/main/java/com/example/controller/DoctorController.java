@@ -1,11 +1,15 @@
 package com.example.controller;
 
+import com.example.dto.AddNumberDecisionRequest;
 import com.example.dto.DoctorLoginRequest;
+import com.example.dto.DoctorProfileDto;
+import com.example.dto.DoctorProfileUpdateRequest;
 import com.example.dto.PatientStatusRequest;
 import com.example.dto.ScheduleChangeRequest;
 import com.example.service.DoctorService;
 import com.example.utils.Result;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,62 +48,102 @@ public class DoctorController {
     }
 
     @GetMapping(value = "/add_number_notify_doctor", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public SseEmitter getAddNumberNotifications(@RequestParam String docID) {
-        return doctorService.getAddNumberNotifications(docID);
+    public SseEmitter getAddNumberNotifications(@RequestParam String docId) {
+        return doctorService.getAddNumberNotifications(docId);
     }
 
     @PostMapping("/add_number_result")
-    public ResponseEntity<?> reviewAddNumberRequest(
-            @RequestParam String addNumberId,
-            @RequestParam boolean approved) {
-        boolean result = doctorService.reviewAddNumberRequest(addNumberId, approved);
-        return ResponseEntity.ok(result);
+    public ResponseEntity<Map<String, Object>> reviewAddNumberRequest(@RequestBody AddNumberDecisionRequest request) {
+        Result<Void> result = doctorService.reviewAddNumberRequest(request);
+        return toResponseEntity(result);
     }
 
     @GetMapping("/shifts")
-    public ResponseEntity<?> getDepartmentShifts(@RequestParam String docID) {
-        return ResponseEntity.ok(doctorService.getDepartmentShifts(docID));
+    public ResponseEntity<Map<String, Object>> getDepartmentShifts(@RequestParam String docId) {
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("shifts", doctorService.getDepartmentShifts(docId));
+        return ResponseEntity.ok(Result.success(payload).toMap());
     }
 
     @GetMapping("/patients")
-    public ResponseEntity<?> getPatientList(@RequestParam String docID) {
-        return ResponseEntity.ok(doctorService.getPatientList(docID));
+    public ResponseEntity<Map<String, Object>> getPatientList(@RequestParam String docId) {
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("patients", doctorService.getPatientList(docId));
+        return ResponseEntity.ok(Result.success(payload).toMap());
     }
 
     @GetMapping("/register/{registerId}")
-    public ResponseEntity<?> getPatientDetails(
-            @RequestParam String docID,
+    public ResponseEntity<Map<String, Object>> getPatientDetails(
+            @RequestParam String docId,
             @PathVariable String registerId) {
-        return ResponseEntity.ok(doctorService.getPatientDetails(docID, registerId));
+        try {
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("records", doctorService.getPatientDetails(docId, registerId));
+            return ResponseEntity.ok(Result.success(payload).toMap());
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().body(Result.fail(400, ex.getMessage()).toMap());
+        }
     }
 
     @GetMapping(value = "/notifications", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public SseEmitter getSystemNotifications(@RequestParam String docID) {
-        return doctorService.getSystemNotifications(docID);
+    public SseEmitter getSystemNotifications(@RequestParam String docId) {
+        return doctorService.getSystemNotifications(docId);
     }
 
-    @GetMapping("/{docID}/profile")
-    public ResponseEntity<?> getDoctorProfile(@PathVariable String docID) {
-        return ResponseEntity.ok(doctorService.getDoctorProfile(docID));
+    @GetMapping("/{docId}/profile")
+    public ResponseEntity<Map<String, Object>> getDoctorProfile(@PathVariable String docId) {
+        try {
+            DoctorProfileDto profile = doctorService.getDoctorProfile(docId);
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("doctor", profile);
+            return ResponseEntity.ok(Result.success(payload).toMap());
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Result.fail(404, ex.getMessage()).toMap());
+        }
     }
 
     @PostMapping("/schedule_change_request")
-    public ResponseEntity<?> submitScheduleChangeRequest(@RequestBody ScheduleChangeRequest request) {
-        boolean result = doctorService.submitScheduleChangeRequest(request);
-        return ResponseEntity.ok(result);
+    public ResponseEntity<Map<String, Object>> submitScheduleChangeRequest(@RequestBody ScheduleChangeRequest request) {
+        Result<Void> result = doctorService.submitScheduleChangeRequest(request);
+        return toResponseEntity(result);
     }
 
     @PostMapping("/patient/status")
-    public ResponseEntity<?> updatePatientStatus(@RequestBody PatientStatusRequest request) {
-        boolean result = doctorService.updatePatientStatus(request);
-        return ResponseEntity.ok(result);
+    public ResponseEntity<Map<String, Object>> updatePatientStatus(@RequestBody PatientStatusRequest request) {
+        Result<Void> result = doctorService.updatePatientStatus(request);
+        return toResponseEntity(result);
     }
 
     @PutMapping("/{doctorId}/profile")
-    public ResponseEntity<?> updateDoctorProfile(
+    public ResponseEntity<Map<String, Object>> updateDoctorProfile(
             @PathVariable String doctorId,
-            @RequestBody Object profileData) {
-        boolean result = doctorService.updateDoctorProfile(doctorId, profileData);
-        return ResponseEntity.ok(result);
+            @RequestBody DoctorProfileUpdateRequest profileData) {
+        Result<Void> result = doctorService.updateDoctorProfile(doctorId, profileData);
+        return toResponseEntity(result);
+    }
+
+    private ResponseEntity<Map<String, Object>> toResponseEntity(Result<?> result) {
+        HttpStatus status;
+        switch (result.getCode()) {
+            case 200:
+                status = HttpStatus.OK;
+                break;
+            case 400:
+                status = HttpStatus.BAD_REQUEST;
+                break;
+            case 401:
+                status = HttpStatus.UNAUTHORIZED;
+                break;
+            case 403:
+                status = HttpStatus.FORBIDDEN;
+                break;
+            case 404:
+                status = HttpStatus.NOT_FOUND;
+                break;
+            default:
+                status = HttpStatus.INTERNAL_SERVER_ERROR;
+                break;
+        }
+        return ResponseEntity.status(status).body(result.toMap());
     }
 }

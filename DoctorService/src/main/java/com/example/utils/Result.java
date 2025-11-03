@@ -44,7 +44,7 @@ public class Result<T> implements Serializable {
         return new Result<>(200, msg, data);
     }
     
-    // 登录成功（返回医生ID和JWT令牌）
+    // 登录成功（返回医生id和JWT令牌）
     public static Result<Map<String, String>> loginSuccess(String doctorId, String token) {
         Map<String, String> loginData = new HashMap<>();
         loginData.put("doctorId", doctorId);

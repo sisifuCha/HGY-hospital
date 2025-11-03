@@ -1,16 +1,16 @@
 package com.example.dto;
 
 public class DoctorLoginRequest {
-    // private String docID;
+    // private String docId;
     private String docAccount;//用于登录
     private String pass;
 
-    // public String getDocID() {
-    //     return docID;
+    // public String getDocId() {
+    //     return docId;
     // }
 
-    // public void setDocID(String docID) {
-    //     this.docID = docID;
+    // public void setDocId(String docId) {
+    //     this.docId = docId;
     // }
     public String getDocAccount() {
         return docAccount;

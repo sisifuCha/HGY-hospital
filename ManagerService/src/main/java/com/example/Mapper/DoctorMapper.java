@@ -7,12 +7,12 @@ import org.apache.ibatis.annotations.Param;
 @Mapper
 public interface DoctorMapper {
     /**
-     * 根据ID更新医生信息
+     * 根据id更新医生信息
      */
     int updateDoctor(Doctor doctor);
 
     /**
-     * 根据ID查询医生信息
+     * 根据id查询医生信息
      */
     Doctor selectById(String id);
 

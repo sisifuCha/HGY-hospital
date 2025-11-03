@@ -1,17 +1,17 @@
 package com.example.dto;
 
 public class PatientStatusRequest {
-    private String doctorID;
+    private String doctorId;
     private Integer doctorStatus;  // 0:空闲, 1:坐诊
     private String registerId;
     private Integer patientStatus; // 0:未就诊, 1:就诊中, 2:完成
 
-    public String getDoctorID() {
-        return doctorID;
+    public String getDoctorId() {
+        return doctorId;
     }
 
-    public void setDoctorID(String doctorID) {
-        this.doctorID = doctorID;
+    public void setDoctorId(String doctorId) {
+        this.doctorId = doctorId;
     }
 
     public Integer getDoctorStatus() {

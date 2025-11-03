@@ -21,7 +21,7 @@ public class DoctorController {
 
 //    @GetMapping("/{id}")
 //    public Result<Doctor> getDoctor(@PathVariable String id) {
-//        log.info("查询医生信息，ID: {}", id);
+//        log.info("查询医生信息，id: {}", id);
 //        return doctorService.getDoctorById(id);
 //    }
 }

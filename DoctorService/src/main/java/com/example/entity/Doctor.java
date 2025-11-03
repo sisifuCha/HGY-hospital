@@ -4,7 +4,7 @@ import java.io.Serializable;
 
 public class Doctor implements Serializable {
     // 继承自user表的基本信息
-    private String id;          // 对应user表的ID
+    private String id;          // 对应user表的id
     private String email;       // 对应user表的email
     private String pass;        // 对应user表的pass
     private String name;        // 对应user表的name
@@ -13,9 +13,9 @@ public class Doctor implements Serializable {
     private String phoneNum;    // 对应user表的phone_num
     
     // doctor表特有信息
-    private String docTitleId;  // 对应doctor表的doc_title_ID
+    private String docTitleId;  // 对应doctor表的doc_title_id
     private String status;      // 对应doctor表的status
-    private String clinicId;    // 对应doctor表的clinic_ID
+    private String clinicId;    // 对应doctor表的clinic_id
     
     // 扩展信息（关联查询）
     private String departmentName;  // 关联department表的name
@@ -23,6 +23,7 @@ public class Doctor implements Serializable {
     private String clinicLocation;  // 关联clinic表的location
     private Integer numberSourceCount; // 关联title_number_source表的number_source_count
     private Double oriCost;         // 关联title_number_source表的ori_cost
+    private String titleName;       // 关联title_number_source表的name
 
     // Getters and Setters
     public String getId() {
@@ -143,5 +144,13 @@ public class Doctor implements Serializable {
 
     public void setOriCost(Double oriCost) {
         this.oriCost = oriCost;
+    }
+
+    public String getTitleName() {
+        return titleName;
+    }
+
+    public void setTitleName(String titleName) {
+        this.titleName = titleName;
     }
 }
