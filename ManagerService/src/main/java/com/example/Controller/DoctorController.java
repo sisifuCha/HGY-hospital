@@ -24,7 +24,7 @@ public class DoctorController {
         return doctorService.getDoctorById(doctorId);
     }
 
-    @GetMapping("/getDoctors")
+    @PostMapping("/getDoctors")
     public Result<IPage<Doctor>> getDoctors(@RequestBody DoctorsRequestDTO doctorsRequestDTO) {
         System.out.println(doctorService.getDoctorListWithPlus(doctorsRequestDTO.getPage(),
                 doctorsRequestDTO.getNum(),doctorsRequestDTO.getFilter_name(),doctorsRequestDTO.getFilter_value()));
