@@ -5,6 +5,7 @@ import com.example.Service.DoctorService;
 import com.example.Conmon.result.Result;
 import com.example.pojo.dto.DoctorDTO;
 import com.example.pojo.dto.DoctorsRequestDTO;
+import com.example.pojo.entity.Department;
 import com.example.pojo.entity.Doctor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -18,7 +19,7 @@ public class DoctorController {
     @Autowired
     private DoctorService doctorService;
 
-    @GetMapping("getDoctor")
+    @GetMapping("/getDoctor")
     public Result<Doctor> getDoctor(@RequestParam String doctorId) {
         return doctorService.getDoctorById(doctorId);
     }
@@ -28,6 +29,12 @@ public class DoctorController {
         System. out.println(doctorsRequestDTO.getFilter_value());
         return doctorService.getDoctorListWithPlus(doctorsRequestDTO.getPage(),
                 doctorsRequestDTO.getNum(),doctorsRequestDTO.getFilter_name(),doctorsRequestDTO.getFilter_value());
+    }
+    @GetMapping("/options/departments")
+    public Result<List<Department>> getDepartmentOptions() {
+        // Service 直接返回实体列表
+        List<Department> departmentList = doctorService.getDepartmentOptions();
+        return Result.success(departmentList);
     }
 
     @PostMapping("/updateDoctor")

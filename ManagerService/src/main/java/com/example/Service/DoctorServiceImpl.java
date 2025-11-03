@@ -5,14 +5,17 @@ package com.example.Service;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.example.Mapper.DepartmentMapper;
 import com.example.Mapper.DoctorMapper;
 import com.example.Conmon.result.Result;
 import com.example.pojo.dto.DoctorDTO;
 import com.example.pojo.dto.DoctorsRequestDTO;
+import com.example.pojo.entity.Department;
 import com.example.pojo.entity.Doctor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
 
 import java.util.List;
 
@@ -21,6 +24,8 @@ public class DoctorServiceImpl implements DoctorService {
 
     @Autowired
     private DoctorMapper doctorMapper;
+    @Autowired
+    private DepartmentMapper departmentMapper;
 
     @Override
     //@Transactional(rollbackFor = Exception.class)
@@ -77,6 +82,13 @@ public class DoctorServiceImpl implements DoctorService {
         queryWrapper.orderByDesc("id");
 
         return Result.success(doctorMapper.selectDoctorPage(pageParam, queryWrapper));
+    }
+
+    @Override
+    public List<Department> getDepartmentOptions() {
+        // 使用 MyBatis-Plus 查询 Department 表中的所有数据
+        // (null) 表示没有查询条件
+        return departmentMapper.selectList(null);
     }
 
     private Doctor convertToEntity(DoctorDTO dto) {

@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.example.Conmon.result.Result;
 import com.example.pojo.dto.DoctorDTO;
 import com.example.pojo.dto.DoctorsRequestDTO;
+import com.example.pojo.entity.Department;
 import com.example.pojo.entity.Doctor;
 
 import javax.print.Doc;
@@ -23,4 +24,5 @@ public interface DoctorService {
 
 
     Result<IPage<Doctor>> getDoctorListWithPlus(int page, int num, String filterName, String filterValue);
+    List<Department> getDepartmentOptions();
 }
