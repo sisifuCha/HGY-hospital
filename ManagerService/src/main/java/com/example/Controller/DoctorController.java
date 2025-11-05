@@ -19,7 +19,7 @@ public class DoctorController {
     @Autowired
     private DoctorService doctorService;
 
-    @GetMapping("getDoctor")
+    @GetMapping("/getDoctor")
     public Result<Doctor> getDoctor(@RequestParam String doctorId) {
         return doctorService.getDoctorById(doctorId);
     }
