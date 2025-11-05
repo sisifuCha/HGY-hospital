@@ -1,7 +1,14 @@
 package com.example.Service;
 
-import com.example.conmon.result.Result;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.example.Conmon.result.Result;
 import com.example.pojo.dto.DoctorDTO;
+import com.example.pojo.dto.DoctorsRequestDTO;
+import com.example.pojo.entity.Doctor;
+import com.example.pojo.vo.ScheduleWeekVO;
+
+import javax.print.Doc;
+import java.util.List;
 //import com.example.pojo.entity.Doctor;
 
 public interface DoctorService {
@@ -13,5 +20,18 @@ public interface DoctorService {
     /**
      * 根据id获取医生信息
      */
-    //Result<Doctor> getDoctorById(String id);
+    Result<Doctor> getDoctorById(String id);
+
+    /**
+     * 分页查询医生信息
+     * @param page
+     * @param num
+     * @param filterName
+     * @param filterValue
+     * @return
+     */
+    Result<IPage<Doctor>> getDoctorListWithPlus(int page, int num, String filterName, String filterValue);
+
+    Result<ScheduleWeekVO> getScheduleWeek(Integer week,String departId);
+
 }

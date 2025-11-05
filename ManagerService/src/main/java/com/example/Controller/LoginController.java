@@ -1,6 +1,6 @@
 package com.example.Controller;
 
-import com.example.pojo.dto.LoginRequest;
+import com.example.pojo.dto.LoginRequestDTO;
 import com.example.utils.JwtUtil;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
@@ -20,8 +20,8 @@ public class LoginController {
     // 正确的密码常量
     private static final String CORRECT_PASSWORD = "082109Zhr";
 
-    @PostMapping(value = "/login")
-    public ResponseEntity<Map<String, Object>> login(@RequestBody LoginRequest loginRequest) {
+    @PostMapping(value = "/admin/login")
+    public ResponseEntity<Map<String, Object>> login(@RequestBody LoginRequestDTO loginRequestDTO) {
         //TODO 测试信息，要删掉
         System.out.println("hello world");
 
@@ -29,7 +29,7 @@ public class LoginController {
         Map<String, Object> response = new HashMap<>();
 
         // 检查密码是否为空
-        if (!StringUtils.hasText(loginRequest.getPassword())) {
+        if (!StringUtils.hasText(loginRequestDTO.getPassword())) {
             response.put("code", 400);
             response.put("data", null);
             response.put("msg", "密码不能为空");
@@ -37,10 +37,10 @@ public class LoginController {
         }
 
         // 验证密码
-        if (CORRECT_PASSWORD.equals(loginRequest.getPassword())) {
+        if (CORRECT_PASSWORD.equals(loginRequestDTO.getPassword())) {
             // 密码正确，生成JWT令牌
             try {
-                String jwtToken = JwtUtil.generateToken("user"); // 可以根据需要传入用户名
+                String jwtToken = JwtUtil.generateToken(); // 可以根据需要传入用户名
 
                 response.put("code", 200);
                 response.put("data", jwtToken); // JWT令牌放在data字段
@@ -62,7 +62,7 @@ public class LoginController {
             response.put("data", null);
             response.put("msg", "fail");
 
-            System.out.println("登录失败，输入密码: " + loginRequest.getPassword());
+            System.out.println("登录失败，输入密码: " + loginRequestDTO.getPassword());
             return ResponseEntity.status(401).body(response);
         }
     }

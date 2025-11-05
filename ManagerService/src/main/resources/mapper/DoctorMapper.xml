@@ -1,43 +1,104 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.hospital.mapper.DoctorMapper">
+<mapper namespace="com.example.Mapper.DoctorMapper">
 
-    <resultMap id="BaseResultMap" type="com.hospital.entity.Doctor">
-        <id column="id" property="id"/>
-        <result column="account_name" property="accountName"/>
-        <result column="name" property="name"/>
-        <result column="gender" property="gender"/>
-        <result column="password" property="password"/>
-        <result column="title" property="title"/>
-        <result column="department" property="department"/>
-        <result column="email" property="email"/>
-        <result column="phone" property="phone"/>
-        <result column="create_time" property="createTime"/>
-        <result column="update_time" property="updateTime"/>
+    <!-- 完整的医生信息结果映射，包含来自user表和doctor表的字段 -->
+    <resultMap id="FullDoctorResultMap" type="com.example.pojo.entity.Doctor">
+        <!-- 映射来自doctor表的字段（子类特有字段） -->
+        <result column="doc_title_id" property="titleId"/>
+        <result column="clinic_id" property="clinicId"/>
+        <result column="status" property="doctorStatus"/>
+        <result column="details" property="doctorDetails"/>
+        <result column="specialty" property="doctorSpecialty"/>
+        <result column="depart_id" property="doctorDepartId"/>
+
+        <!-- 映射来自user表的字段（继承自User基类的字段） -->
+        <result column="id" property="userId"/>
+        <result column="name" property="userName"/>
+        <result column="sex" property="userGender"/>
+        <result column="account" property="userAccount"/>
+        <result column="email" property="userEmail"/>
+        <result column="pass" property="userPassword"/>
+        <result column="phone_num" property="userPhone"/>
+
     </resultMap>
 
-    <update id="updateDoctor" parameterType="com.hospital.entity.Doctor">
+    <resultMap id="DoctorScheduleResultMap" type="com.example.pojo.entity.DoctorSchedule">
+        <id column="schedule_id" property="schedule_id"/>
+        <result column="doctor_id" property="doctor_id"/>
+        <result column="schedule_time_id" property="schedule_time_id"/>
+        <result column="date" property="date"/>
+        <result column="available_slots" property="available_slots"/>
+    </resultMap>
+    <!-- 根据医生ID查询完整信息（联表查询） -->
+    <select id="selectById" parameterType="string" resultMap="FullDoctorResultMap">
+        SELECT
+        d.id,
+        d.doc_title_id,
+        d.clinic_id,
+        d.status,
+        d.depart_id,
+        u.name,
+        u.sex,
+        u.account,
+        u.email,
+        u.pass,
+        u.phone_num
+        FROM
+        doctor d
+        INNER JOIN
+        "user" u ON d.id = u.id
+        WHERE
+        d.id = #{id}
+    </select>
+
+    <!-- 更新医生信息（可能需要同时更新user表） -->
+    <update id="updateDoctor" parameterType="com.example.pojo.entity.Doctor">
+        <!-- 如果需要同时更新user表的基本信息，需要先更新user表 -->
+        UPDATE "user"
+        SET name = #{userName},
+        sex = #{userGender},
+        account = #{userAccount},
+        email = #{userEmail},
+        pass = #{userPassword},
+        phone_num = #{userPhone}
+        WHERE id = #{userId};
+
+        <!-- 然后更新doctor表特有信息 -->
         UPDATE doctor
-        SET account_name = #{accountName},
-        name = #{name},
-        gender = #{gender},
-        password = #{password},
-        title = #{title},
-        department = #{department},
-        email = #{email},
-        phone = #{phone},
-        update_time = NOW()
-        WHERE id = #{id}
+        SET doc_title_id = #{titleId},
+        clinic_id = #{clinicId},
+        status = #{doctorStatus},
+        details = #{doctorDetails},
+        specialty = #{doctorSpeciality},
+        depart_id = #{doctorDepartId}
+        WHERE id = #{userId}
     </update>
 
-    <select id="selectById" parameterType="string" resultMap="BaseResultMap">
-        SELECT * FROM doctor WHERE id = #{id}
-    </select>
-
+    <!-- 检查账号名是否存在 -->
     <select id="checkAccountNameExists" resultType="int">
-        SELECT COUNT(*) FROM doctor
-        WHERE account_name = #{accountName} AND id != #{id}
+        SELECT COUNT(*) FROM "user"
+        WHERE account = #{accountName}
+        AND id != #{userId}
     </select>
-
+    <select id="selectDoctorPage" resultMap="FullDoctorResultMap">
+        SELECT
+        d.depart_id,
+        d.id,
+        d.doc_title_id,
+        d.clinic_id,
+        d.status,
+        u.name,
+        u.sex,
+        u.account,
+        u.email,
+        u.pass,
+        u.phone_num
+        FROM
+        doctor d
+        INNER JOIN "user" u ON d.id = u.id
+        <!-- 使用 MyBatis-Plus 提供的 ${ew.customSqlSegment} 来注入 QueryWrapper 构造的条件 -->
+        ${ew.customSqlSegment}
+    </select>
 </mapper>

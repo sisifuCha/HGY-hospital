@@ -23,11 +23,15 @@ public class DoctorDTO {
 
     private String userPhone;
 
-    private String doctorId;
-
     private String titleId;
 
-    private String departmentId;
+    private String clinicId;
 
     private String doctorStatus;
+
+    private String doctorDetails;
+
+    private String doctorSpeciality;
+
+    private String doctorDepartId;
 }

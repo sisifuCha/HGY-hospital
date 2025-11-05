@@ -1,13 +1,23 @@
 package com.example.Service;
 
-//import com.example.Mapper.DoctorMapper;
-//import com.example.pojo.entity.Doctor;
+
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.example.Mapper.DoctorMapper;
-import com.example.conmon.result.Result;
+import com.example.Conmon.result.Result;
 import com.example.pojo.dto.DoctorDTO;
+import com.example.pojo.dto.DoctorsRequestDTO;
 import com.example.pojo.entity.Doctor;
+import com.example.pojo.entity.DoctorSchedule;
+import com.example.pojo.vo.ScheduleWeekVO;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 public class DoctorServiceImpl implements DoctorService {
@@ -20,48 +30,84 @@ public class DoctorServiceImpl implements DoctorService {
     public Result<String> updateDoctor(DoctorDTO doctorDTO) {
         try {
             // 1. 检查医生是否存在
-            Doctor existingDoctor = DoctorMapper.selectById(doctorDTO.getDoctorId());
+            Doctor existingDoctor = DoctorMapper.selectById(doctorDTO.getUserId());
             if (existingDoctor == null) {
                 return Result.fail(404, "医生信息不存在");
             }
 
             // 2. 检查账号名是否重复
-            int count = DoctorMapper.checkAccountNameExists(doctorDTO.getAccountName(), doctorDTO.getId());
+            int count = DoctorMapper.checkAccountNameExists(doctorDTO.getUserAccount(),doctorDTO.getUserId());
             if (count > 0) {
                 return Result.fail(400, "账号名已存在");
             }
 
             // 3. DTO转Entity
             Doctor doctor = convertToEntity(doctorDTO);
-            doctor.setUpdateTime(LocalDateTime.now());
 
             // 4. 执行更新
             int result = DoctorMapper.updateDoctor(doctor);
             if (result > 0) {
-                log.info("医生信息更新成功，id: {}", doctorDTO.getId());
+                System.out.println("医生信息更新成功，ID: {}"+ doctorDTO.getUserId());
                 return Result.success("医生信息更新成功", null);
             } else {
                 return Result.fail(500, "医生信息更新失败");
             }
 
         } catch (Exception e) {
-            log.error("更新医生信息失败: {}", e.getMessage(), e);
+            System.out.println("更新医生信息失败: {}"+e.getMessage());
             throw new RuntimeException("系统异常，更新失败");
         }
     }
 
     @Override
     public Result<Doctor> getDoctorById(String id) {
-        try {
-            Doctor doctor = DoctorMapper.selectById(id);
-            if (doctor != null) {
-                return Result.success(doctor);
-            } else {
-                return Result.fail(404, "医生信息不存在");
+        return Result.success(DoctorMapper.selectById(id));
+    }
+
+    @Override
+    public Result<IPage<Doctor>> getDoctorListWithPlus(int page, int num, String filterName, String filterValue) {
+        Page<Doctor> pageParam = new Page<>(page, num);
+
+        // 使用MyBatis-Plus的查询条件
+        QueryWrapper<Doctor> queryWrapper = new QueryWrapper<>();
+        if (filterValue != null && !filterValue.isEmpty()) {
+            if ("depart".equals(filterName)) {
+                queryWrapper.eq("d.depart_id", filterValue);
+            } else if ("title".equals(filterName)) {
+                queryWrapper.eq("d.doc_title_id", filterValue);
             }
-        } catch (Exception e) {
-            log.error("查询医生信息失败: {}", e.getMessage(), e);
-            return Result.fail("系统异常，查询失败");
+        }
+        queryWrapper.orderByDesc("d.id");
+
+        return Result.success(DoctorMapper.selectDoctorPage(pageParam, queryWrapper));
+    }
+
+    @Override
+    public Result<ScheduleWeekVO> getScheduleWeek(Integer week, String departId) {
+        LocalDate currentDate = LocalDate.now();
+        LocalDate monday;
+        LocalDate sunday;
+
+        // 获取当前日期是星期几（1-7，1代表星期一，7代表星期日）
+        int dayOfWeek = currentDate.getDayOfWeek().getValue();
+
+        if (week == 0) {
+            // 获取本周周一和周日的日期
+            monday = currentDate.minusDays(dayOfWeek - 1); // 本周一
+            sunday = monday.plusDays(6); // 本周日
+            List<DoctorSchedule> doctorSchedules = DoctorMapper.selectDoctorSchedule(monday,sunday,departId);
+            //处理VO
+            return Result.success(getScheduleWeekVO(doctorSchedules));
+        } else if (week == 1) {
+            // 获取下周一到下周日的日期
+            LocalDate nextMonday = currentDate.plusDays(8 - dayOfWeek); // 下周一
+            monday = nextMonday;
+            sunday = nextMonday.plusDays(6); // 下周日
+            List<DoctorSchedule> doctorSchedules = DoctorMapper.selectDoctorSchedule(monday,sunday,departId);
+            //处理VO
+            return Result.success(getScheduleWeekVO(doctorSchedules));
+        } else {
+            return Result.fail("无效的周次");
         }
     }
 
@@ -69,5 +115,38 @@ public class DoctorServiceImpl implements DoctorService {
         Doctor doctor = new Doctor();
         BeanUtils.copyProperties(dto, doctor);
         return doctor;
+    }
+
+    private ScheduleWeekVO getScheduleWeekVO(List<DoctorSchedule> doctorSchedules){
+        ScheduleWeekVO res = new ScheduleWeekVO();
+        for (DoctorSchedule doctorSchedule : doctorSchedules) {
+            LocalDate date = doctorSchedule.getDate();
+            switch (date.getDayOfWeek().getValue()) {
+                case 1:
+                    res.getMon().add(doctorSchedule);
+                    break;
+                case 2:
+                    res.getTue().add(doctorSchedule);
+                    break;
+                case 3:
+                    res.getWed().add(doctorSchedule);
+                    break;
+                case 4:
+                    res.getThu().add(doctorSchedule);
+                    break;
+                case 5:
+                    res.getFri().add(doctorSchedule);
+                    break;
+                case 6:
+                    res.getSat().add(doctorSchedule);
+                    break;
+                case 7:
+                    res.getSun().add(doctorSchedule);
+                    break;
+                default:
+                    break;
+            }
+        }
+        return res;
     }
 }
