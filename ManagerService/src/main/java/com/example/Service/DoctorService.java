@@ -18,7 +18,7 @@ public interface DoctorService {
     Result<String> updateDoctor(DoctorDTO doctorDTO);
 
     /**
-     * 根据ID获取医生信息
+     * 根据id获取医生信息
      */
     Result<Doctor> getDoctorById(String id);
 
