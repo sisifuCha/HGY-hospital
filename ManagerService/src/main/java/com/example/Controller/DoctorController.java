@@ -43,4 +43,8 @@ public class DoctorController {
         System.out.println("收到请求，周次和科室id分别为"+week+"  "+departId);
         return doctorService.getScheduleWeek(week,departId);
     }
+
+    public Result<String> CreateNextWeekSchedule(){
+        return null;
+    }
 }
