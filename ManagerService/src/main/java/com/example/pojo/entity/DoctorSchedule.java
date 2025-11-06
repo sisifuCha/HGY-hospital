@@ -8,22 +8,22 @@ import lombok.Data;
 import java.time.LocalDate;
 
 @Data
-@TableName("`doctor_schedule`")
+@TableName("`doc_schedule_record`")
 public class DoctorSchedule {
 
     @TableId
-    @TableField("schedule_id")
+    @TableField("id")
     private String schedule_id;
 
-    @TableField("doctor_id")
+    @TableField("doc_id")
     private String doctor_id;
 
-    @TableField("schedule_time_id")
+    @TableField("template_id")
     private String schedule_time_id;
 
-    @TableField("date")
+    @TableField("schedule_date")
     private LocalDate date;
 
-    @TableField("available_slots")
+    @TableField("left_source_count")
     private Integer available_slots;
 }
