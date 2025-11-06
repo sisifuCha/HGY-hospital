@@ -39,7 +39,7 @@ public class LoginController {
         if (CORRECT_PASSWORD.equals(loginRequestDTO.getPassword())) {
             // 密码正确，生成JWT令牌
             try {
-                String jwtToken = JwtUtil.generateToken(); // 可以根据需要传入用户名
+                String jwtToken = JwtUtil.generateToken("user"); // 可以根据需要传入用户名
 
                 response.put("code", 200);
                 response.put("data", jwtToken); // JWT令牌放在data字段
