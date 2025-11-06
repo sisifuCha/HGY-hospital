@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.example.Mapper.RegistrationMapper">
+
+    <resultMap id="DoctorWithSchedulesMap" type="com.example.pojo.dto.DoctorWithSchedulesDto">
+        <id property="id" column="doc_id"/>
+        <result property="name" column="doc_name"/>
+        <result property="title" column="title_name"/>
+        <collection property="schedules" ofType="com.example.pojo.dto.ScheduleDto">
+            <id property="id" column="sch_id"/>
+            <result property="startTime" column="start_time"/>
+            <result property="endTime" column="end_time"/>
+            <result property="timePeriodName" column="time_period_name"/>
+            <result property="leftSourceCount" column="left_source_count"/>
+        </collection>
+    </resultMap>
+
+    <resultMap id="DoctorDetailsMap" type="com.example.pojo.entity.Doctor">
+        <id property="id" column="id"/>
+        <result property="name" column="name"/>
+        <result property="docTitleId" column="doc_title_id"/>
+        <result property="title" column="title"/>
+        <result property="specialty" column="specialty"/>
+        <result property="details" column="details"/>
+        <result property="departId" column="depart_id"/>
+        <result property="clinicId" column="clinic_id"/>
+        <result property="status" column="status"/>
+    </resultMap>
+
+    <select id="findDoctorsWithSchedulesByDepartmentAndDate" resultMap="DoctorWithSchedulesMap">
+        SELECT
+            d.id AS doc_id,
+            u.name AS doc_name,
+            tns.name AS title_name,
+            dsr.id AS sch_id,
+            st.start_time,
+            st.end_time,
+            st.time_period_name,
+            dsr.left_source_count
+        FROM
+            doctor d
+                JOIN "user" u ON d.id = u.id
+                LEFT JOIN title_number_source tns ON d.doc_title_id = tns.id
+                INNER JOIN doc_schedule_record dsr ON d.id = dsr.doc_id
+                INNER JOIN schedule_template st ON dsr.template_id = st.id
+        WHERE
+            d.depart_id = #{departmentId} AND dsr.schedule_date = #{date}
+        ORDER BY
+            u.name, st.start_time;
+    </select>
+
+    <select id="findDoctorDetailsById" resultMap="DoctorDetailsMap">
+        SELECT
+            d.id,
+            u.name,
+            d.doc_title_id,
+            tns.name as title,
+            d.specialty,
+            d.details,
+            d.depart_id,
+            d.clinic_id,
+            d.status
+        FROM
+            doctor d
+            JOIN "user" u on u.id = d.id
+            LEFT JOIN title_number_source tns on tns.id = d.doc_title_id
+        WHERE d.id = #{doctorId}
+    </select>
+</mapper>
+
