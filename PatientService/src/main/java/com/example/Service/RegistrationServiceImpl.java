@@ -1,6 +1,7 @@
 package com.example.Service;
 
 import com.example.Mapper.RegistrationMapper;
+import com.example.pojo.dto.DepartmentWithSubDepartmentsDto;
 import com.example.pojo.dto.DoctorWithSchedulesDto;
 import com.example.pojo.entity.Doctor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,5 +25,9 @@ public class RegistrationServiceImpl implements RegistrationService {
     public Doctor getDoctorDetailsById(String doctorId) {
         return registrationMapper.findDoctorDetailsById(doctorId);
     }
-}
 
+    @Override
+    public List<DepartmentWithSubDepartmentsDto> getAllDepartments() {
+        return registrationMapper.findAllDepartmentsWithSubDepartments();
+    }
+}

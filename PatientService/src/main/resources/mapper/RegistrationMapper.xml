@@ -3,15 +3,17 @@
 <mapper namespace="com.example.Mapper.RegistrationMapper">
 
     <resultMap id="DoctorWithSchedulesMap" type="com.example.pojo.dto.DoctorWithSchedulesDto">
-        <id property="id" column="doc_id"/>
-        <result property="name" column="doc_name"/>
-        <result property="title" column="title_name"/>
+        <id property="doctorId" column="doc_id"/>
+        <result property="doctorName" column="doc_name"/>
+        <result property="doctorTitle" column="title_name"/>
+        <result property="specialty" column="specialty"/>
         <collection property="schedules" ofType="com.example.pojo.dto.ScheduleDto">
-            <id property="id" column="sch_id"/>
-            <result property="startTime" column="start_time"/>
-            <result property="endTime" column="end_time"/>
+            <id property="scheduleId" column="sch_id"/>
+            <result property="startTime" column="start_time" javaType="java.lang.String"/>
+            <result property="endTime" column="end_time" javaType="java.lang.String"/>
             <result property="timePeriodName" column="time_period_name"/>
             <result property="leftSourceCount" column="left_source_count"/>
+            <result property="registrationFee" column="ori_cost"/>
         </collection>
     </resultMap>
 
@@ -32,11 +34,13 @@
             d.id AS doc_id,
             u.name AS doc_name,
             tns.name AS title_name,
+            d.specialty,
             dsr.id AS sch_id,
-            st.start_time,
-            st.end_time,
+            to_char(st.start_time, 'HH24:MI') AS start_time,
+            to_char(st.end_time, 'HH24:MI') AS end_time,
             st.time_period_name,
-            dsr.left_source_count
+            dsr.left_source_count,
+            tns.ori_cost
         FROM
             doctor d
                 JOIN "user" u ON d.id = u.id
@@ -66,5 +70,21 @@
             LEFT JOIN title_number_source tns on tns.id = d.doc_title_id
         WHERE d.id = #{doctorId}
     </select>
-</mapper>
 
+    <select id="findAllDepartmentsWithSubDepartments" resultType="com.example.pojo.dto.DepartmentWithSubDepartmentsDto">
+        WITH parent_departments AS (
+            SELECT id, name
+            FROM department
+            WHERE father_id IS NULL
+        )
+        SELECT
+            p.id,
+            p.name,
+            (
+                SELECT json_agg(json_build_object('id', s.id, 'name', s.name))
+                FROM department s
+                WHERE s.father_id = p.id
+            ) AS subDepartments
+        FROM parent_departments p;
+    </select>
+</mapper>
