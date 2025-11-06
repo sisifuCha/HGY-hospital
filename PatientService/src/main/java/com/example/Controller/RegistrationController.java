@@ -1,6 +1,7 @@
 package com.example.Controller;
 
 import com.example.Service.RegistrationService;
+import com.example.pojo.dto.DepartmentWithSubDepartmentsDto;
 import com.example.pojo.dto.DoctorWithSchedulesDto;
 import com.example.pojo.entity.Doctor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,7 +12,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/patient/register")
+@RequestMapping("/api")
 public class RegistrationController {
 
     @Autowired
@@ -23,11 +24,11 @@ public class RegistrationController {
      * @param date 日期
      * @return
      */
-    @GetMapping("/doctors/schedules")
+    @GetMapping("/registration/doctors")
     public List<DoctorWithSchedulesDto> getDoctorsWithSchedules(
-            @RequestParam String departmentId,
+            @RequestParam Integer departmentId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
-        return registrationService.getDoctorsWithSchedulesByDepartment(departmentId, date);
+        return registrationService.getDoctorsWithSchedulesByDepartment(String.valueOf(departmentId), date);
     }
 
     /**
@@ -39,5 +40,13 @@ public class RegistrationController {
     public Doctor getDoctorDetails(@PathVariable String doctorId) {
         return registrationService.getDoctorDetailsById(doctorId);
     }
-}
 
+    /**
+     * 获取所有科室及其子科室
+     * @return
+     */
+    @GetMapping("/departments")
+    public List<DepartmentWithSubDepartmentsDto> getDepartments() {
+        return registrationService.getAllDepartments();
+    }
+}
