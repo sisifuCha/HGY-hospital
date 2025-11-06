@@ -25,4 +25,5 @@ public interface DoctorService {
 
     Result<IPage<Doctor>> getDoctorListWithPlus(int page, int num, String filterName, String filterValue);
     List<Department> getDepartmentOptions();
+
 }
