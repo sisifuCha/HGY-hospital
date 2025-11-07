@@ -1,4 +1,4 @@
-package com.example.conmon.result;
+package com.example.Conmon.result;
 
 import lombok.Data;
 

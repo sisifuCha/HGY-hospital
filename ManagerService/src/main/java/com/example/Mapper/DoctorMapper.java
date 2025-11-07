@@ -1,11 +1,17 @@
 package com.example.Mapper;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.example.pojo.entity.Doctor;
-import io.swagger.v3.oas.models.security.SecurityScheme;
+import com.example.pojo.entity.DoctorSchedule;
 import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.ResultMap;
+import org.apache.ibatis.annotations.Select;
+
+import java.time.LocalDate;
 import java.util.List;
-import java.util.Map;
+
 
 public interface DoctorMapper extends BaseMapper<Doctor> {
 
@@ -18,9 +24,14 @@ public interface DoctorMapper extends BaseMapper<Doctor> {
     // 检查账号名是否存在
     int checkAccountNameExists(@Param("accountName") String accountName, String userId);
 
-    // 查询所有医生的完整信息
-    List<Doctor> selectAllFullDoctors();
+    //分页获取医生信息
+    IPage<Doctor> selectDoctorPage(IPage<Doctor> page, @Param("ew") QueryWrapper<Doctor> queryWrapper);
 
-    // 根据条件动态查询医生信息
-    List<Doctor> selectDoctorsByCondition(Map<String, Object> condition);
+    //根据时间范围和科室获取排班信息
+    @Select("SELECT ds.id, ds.doc_id, ds.template_id, ds.schedule_date, ds.left_source_count " +
+            "FROM doc_schedule_record ds INNER JOIN doctor d ON ds.doc_id = d.id " +
+            "WHERE ds.schedule_date >= #{startTime} AND ds.schedule_date <= #{endTime} AND d.depart_id = #{departId}")
+    @ResultMap("DoctorScheduleResultMap")
+    // 或者如果MyBatis-Plus能自动找到，可直接写resultMap的id
+    List<DoctorSchedule> selectDoctorSchedule(@Param("startTime") LocalDate startTime, @Param("endTime") LocalDate endTime, @Param("departId") String departId);
 }
