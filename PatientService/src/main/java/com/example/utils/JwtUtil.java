@@ -4,7 +4,7 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import javax.crypto.SecretKey;
 import java.util.Date;
-
+//111111
 public class JwtUtil {
 
     // 安全密钥（生产环境中应从配置文件中读取）
