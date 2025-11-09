@@ -10,7 +10,7 @@ public class PatientSummaryRow {
     private String gender;
     private LocalDate birth;
     private LocalDate scheduleDate;
-    private String timePeriodName;
+    private String templateId; // schedule_template.id
     private LocalDateTime registerTime;
 
     public String getPatientId() {
@@ -61,12 +61,12 @@ public class PatientSummaryRow {
         this.scheduleDate = scheduleDate;
     }
 
-    public String getTimePeriodName() {
-        return timePeriodName;
+    public String getTemplateId() {
+        return templateId;
     }
 
-    public void setTimePeriodName(String timePeriodName) {
-        this.timePeriodName = timePeriodName;
+    public void setTemplateId(String templateId) {
+        this.templateId = templateId;
     }
 
     public LocalDateTime getRegisterTime() {

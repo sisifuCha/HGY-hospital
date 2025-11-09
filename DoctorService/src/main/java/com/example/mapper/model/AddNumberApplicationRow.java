@@ -10,7 +10,7 @@ public class AddNumberApplicationRow {
     private String applicationNote;
     private String patientName;
     private LocalDate scheduleDate;
-    private String timePeriodName;
+    private String templateId; // schedule_template.id
 
     public String getPatientId() {
         return patientId;
@@ -60,11 +60,11 @@ public class AddNumberApplicationRow {
         this.scheduleDate = scheduleDate;
     }
 
-    public String getTimePeriodName() {
-        return timePeriodName;
+    public String getTemplateId() {
+        return templateId;
     }
 
-    public void setTimePeriodName(String timePeriodName) {
-        this.timePeriodName = timePeriodName;
+    public void setTemplateId(String templateId) {
+        this.templateId = templateId;
     }
 }

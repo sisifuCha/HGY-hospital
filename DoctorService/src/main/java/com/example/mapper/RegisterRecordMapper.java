@@ -20,12 +20,12 @@ public interface RegisterRecordMapper {
               "  u.\"sex\"           AS gender,",
               "  p.birth              AS birth,",
               "  dsr.schedule_date    AS scheduleDate,",
-              "  st.time_period_name  AS timePeriodName",
+              "  dsr.template_id     AS templateId",
               "FROM \"register_record\" rr",
               "JOIN \"doc_schedule_record\" dsr ON rr.\"sch_id\" = dsr.\"id\"",
-              "LEFT JOIN \"schedule_template\" st ON dsr.template_id = st.id",
               "JOIN \"patient\" p ON rr.\"patient_id\" = p.\"id\"",
               "JOIN \"user\" u ON p.\"id\" = u.\"id\"",
+              "LEFT JOIN \"schedule_template\" st ON dsr.template_id = st.id",
               "WHERE dsr.\"doc_id\" = #{docId} AND rr.\"status\" != 'cancelled'",
               "ORDER BY dsr.schedule_date, st.start_time NULLS LAST, u.\"name\""
        })

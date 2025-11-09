@@ -2,7 +2,7 @@ package com.example.dto;
 
 public class ScheduleChangeRequest {
     private String docId;
-    private String originalScheduleId;
+    private String originalTime; // 格式: ${date}_${timePeriod}, 例如: 2025-11-11_2
     private Integer changeType; // 0:调班, 1:请假
     private String targetDate;
     private Integer timePeriod;
@@ -18,12 +18,12 @@ public class ScheduleChangeRequest {
         this.docId = docId;
     }
 
-    public String getOriginalScheduleId() {
-        return originalScheduleId;
+    public String getOriginalTime() {
+        return originalTime;
     }
 
-    public void setOriginalScheduleId(String originalScheduleId) {
-        this.originalScheduleId = originalScheduleId;
+    public void setOriginalTime(String originalTime) {
+        this.originalTime = originalTime;
     }
 
     public Integer getChangeType() {

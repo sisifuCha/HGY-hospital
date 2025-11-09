@@ -7,7 +7,7 @@ public class DepartmentShiftRow {
     private LocalDate scheduleDate;
     private String doctorName;
     private String doctorId;
-    private String timePeriodName;
+    private String templateId; // schedule_template.id (TIME0001, TIME0002, TIME0003)
     private LocalTime startTime;
 
     public LocalDate getScheduleDate() {
@@ -34,12 +34,12 @@ public class DepartmentShiftRow {
         this.doctorId = doctorId;
     }
 
-    public String getTimePeriodName() {
-        return timePeriodName;
+    public String getTemplateId() {
+        return templateId;
     }
 
-    public void setTimePeriodName(String timePeriodName) {
-        this.timePeriodName = timePeriodName;
+    public void setTemplateId(String templateId) {
+        this.templateId = templateId;
     }
 
     public LocalTime getStartTime() {

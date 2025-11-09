@@ -22,12 +22,11 @@ public interface AddNumberSourceRecordMapper extends BaseMapper<AddNumberSourceR
               "  ans.reason_text  AS applicationNote,",
               "  u.\"name\"       AS patientName,",
               "  dsr.schedule_date AS scheduleDate,",
-              "  st.time_period_name AS timePeriodName",
+              "  dsr.template_id  AS templateId",
               "FROM \"add_number_source_record\" ans",
               "JOIN \"patient\" p ON ans.patient_id = p.\"id\"",
               "JOIN \"user\" u ON p.\"id\" = u.\"id\"",
               "JOIN \"doc_schedule_record\" dsr ON ans.sch_id = dsr.\"id\"",
-              "LEFT JOIN \"schedule_template\" st ON dsr.template_id = st.id",
               "WHERE dsr.\"doc_id\" = #{docId} AND ans.\"status\" = 'pending'",
               "ORDER BY ans.apply_time DESC"
        })

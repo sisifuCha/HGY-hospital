@@ -33,7 +33,7 @@ public interface DocScheduleRecordMapper {
         "  dsr.schedule_date   AS scheduleDate,",
         "  doc_user.\"name\"   AS doctorName,",
         "  d.\"id\"           AS doctorId,",
-        "  st.time_period_name AS timePeriodName,",
+        "  dsr.template_id     AS templateId,",
         "  st.start_time       AS startTime",
         "FROM \"doc_schedule_record\" dsr",
         "JOIN \"doctor\" d ON dsr.\"doc_id\" = d.\"id\"",
@@ -55,14 +55,13 @@ public interface DocScheduleRecordMapper {
     @Select({
         "SELECT dsr.*",
         "FROM \"doc_schedule_record\" dsr",
-        "LEFT JOIN \"schedule_template\" st ON dsr.template_id = st.id",
         "WHERE dsr.\"doc_id\" = #{docId}",
         "  AND dsr.schedule_date = #{date}",
-        "  AND (st.time_period_name = #{timePeriodName} OR #{timePeriodName} IS NULL)",
+        "  AND (dsr.template_id = #{templateId} OR #{templateId} IS NULL)",
         "ORDER BY dsr.schedule_date",
         "LIMIT 1"
     })
     DocScheduleRecord findByDocAndDateAndPeriod(@Param("docId") String docId,
                                                 @Param("date") LocalDate date,
-                                                @Param("timePeriodName") String timePeriodName);
+                                                @Param("templateId") String templateId);
 }
