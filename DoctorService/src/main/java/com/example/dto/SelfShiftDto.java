@@ -2,11 +2,9 @@ package com.example.dto;
 
 import java.time.LocalDate;
 
-public class DepartmentShiftDto {
+public class SelfShiftDto {
     private LocalDate date;
-    private String docName;
-    private int timePeriod;
-    private String docId;
+    private Integer timePeriod;
     private String clinicPlace; // 诊室位置（clinic_number）
 
     public LocalDate getDate() {
@@ -17,28 +15,12 @@ public class DepartmentShiftDto {
         this.date = date;
     }
 
-    public String getDocName() {
-        return docName;
-    }
-
-    public void setDocName(String docName) {
-        this.docName = docName;
-    }
-
-    public int getTimePeriod() {
+    public Integer getTimePeriod() {
         return timePeriod;
     }
 
-    public void setTimePeriod(int timePeriod) {
+    public void setTimePeriod(Integer timePeriod) {
         this.timePeriod = timePeriod;
-    }
-
-    public String getDocId() {
-        return docId;
-    }
-
-    public void setDocId(String docId) {
-        this.docId = docId;
     }
 
     public String getClinicPlace() {

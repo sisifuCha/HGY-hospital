@@ -11,6 +11,7 @@ import com.example.dto.PatientRecordDto;
 import com.example.dto.PatientStatusRequest;
 import com.example.dto.PatientSummaryDto;
 import com.example.dto.ScheduleChangeRequest;
+import com.example.dto.SelfShiftDto;
 import com.example.entity.Doctor;
 import com.example.entity.DocScheduleRecord;
 import com.example.entity.AddNumberSourceRecord;
@@ -25,6 +26,7 @@ import com.example.mapper.model.AddNumberApplicationRow;
 import com.example.mapper.model.DepartmentShiftRow;
 import com.example.mapper.model.PatientRecordRow;
 import com.example.mapper.model.PatientSummaryRow;
+import com.example.mapper.model.SelfShiftRow;
 import com.example.service.DoctorService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -149,6 +151,14 @@ public class DoctorServiceImpl implements DoctorService {
         List<DepartmentShiftRow> rows = scheduleRecordMapper.selectDepartmentShiftRows(docId, LocalDate.now());
         return rows.stream()
                 .map(this::mapDepartmentShift)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<SelfShiftDto> getSelfShifts(String docId) {
+        List<SelfShiftRow> rows = scheduleRecordMapper.selectSelfShiftRows(docId, LocalDate.now());
+        return rows.stream()
+                .map(this::mapSelfShift)
                 .collect(Collectors.toList());
     }
 
@@ -478,6 +488,18 @@ public class DoctorServiceImpl implements DoctorService {
                 ? TimePeriodUtils.resolveTemplateIdToPeriodIndex(row.getTemplateId())
                 : TimePeriodUtils.resolvePeriodIndex(row.getStartTime());
         dto.setTimePeriod(period);
+        dto.setClinicPlace(row.getClinicNumber());
+        return dto;
+    }
+
+    private SelfShiftDto mapSelfShift(SelfShiftRow row) {
+        SelfShiftDto dto = new SelfShiftDto();
+        dto.setDate(row.getScheduleDate());
+        int period = row.getTemplateId() != null
+                ? TimePeriodUtils.resolveTemplateIdToPeriodIndex(row.getTemplateId())
+                : TimePeriodUtils.resolvePeriodIndex(row.getStartTime());
+        dto.setTimePeriod(period);
+        dto.setClinicPlace(row.getClinicNumber());
         return dto;
     }
 

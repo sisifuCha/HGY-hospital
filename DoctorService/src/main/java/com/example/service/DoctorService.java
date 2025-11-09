@@ -8,6 +8,7 @@ import com.example.dto.PatientRecordDto;
 import com.example.dto.PatientStatusRequest;
 import com.example.dto.PatientSummaryDto;
 import com.example.dto.ScheduleChangeRequest;
+import com.example.dto.SelfShiftDto;
 import com.example.utils.Result;
 
 import java.util.List;
@@ -27,6 +28,9 @@ public interface DoctorService {
 
     // 获取本科室排班列表
     List<DepartmentShiftDto> getDepartmentShifts(String docId);
+
+    // 获取当前医生排班列表
+    List<SelfShiftDto> getSelfShifts(String docId);
 
     // 获取患者列表
     List<PatientSummaryDto> getPatientList(String docId);
