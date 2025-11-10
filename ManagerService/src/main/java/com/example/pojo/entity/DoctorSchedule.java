@@ -3,6 +3,7 @@ package com.example.pojo.entity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.example.Conmon.CommonData;
 import lombok.Data;
 
 import java.time.LocalDate;
@@ -25,5 +26,5 @@ public class DoctorSchedule {
     private LocalDate date;
 
     @TableField("left_source_count")
-    private Integer available_slots;
+    private Integer available_slots = CommonData.DEFAULT_LEFT_SOURCE_COUNT;
 }
