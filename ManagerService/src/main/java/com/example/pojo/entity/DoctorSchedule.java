@@ -27,4 +27,7 @@ public class DoctorSchedule {
 
     @TableField("left_source_count")
     private Integer available_slots = CommonData.DEFAULT_LEFT_SOURCE_COUNT;
+
+    @TableField("status")
+    private String status = null;
 }
