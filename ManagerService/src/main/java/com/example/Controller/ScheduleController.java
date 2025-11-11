@@ -17,8 +17,9 @@ public class ScheduleController {
     private ScheduleService scheduleService;
 
     @PostMapping("/CreateNextWeekSchedule")
-    public Result<String> CreateNextWeekSchedule(@RequestBody() NextWeekScheduleDTO nextWeekScheduleDTO){
+    public Result<Void> CreateNextWeekSchedule(@RequestBody() NextWeekScheduleDTO nextWeekScheduleDTO){
         System.out.println(nextWeekScheduleDTO);
-        return null;
+        return scheduleService.createSchedules(nextWeekScheduleDTO);
+
     }
 }

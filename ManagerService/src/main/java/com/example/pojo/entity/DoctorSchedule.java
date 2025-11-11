@@ -9,11 +9,10 @@ import lombok.Data;
 import java.time.LocalDate;
 
 @Data
-@TableName("`doc_schedule_record`")
+@TableName("doc_schedule_record")
 public class DoctorSchedule {
 
-    @TableId
-    @TableField("id")
+    @TableId(value = "id")
     private String schedule_id;
 
     @TableField("doc_id")

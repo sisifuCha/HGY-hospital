@@ -23,20 +23,22 @@ public class ScheduleServiceImpl implements ScheduleService {
     private ScheduleMapper scheduleMapper;
     @Autowired
     private DoctorMapper doctorMapper;
+    @Autowired
+    private ScheduleIdGenerator scheduleIdGenerator;
 
     @Override
-    public Result<String> createSchedule(DoctorSchedule schedule) {
+    public Result<Void> createSchedule(DoctorSchedule schedule) {
         // 调用MyBatis-Plus的insert方法
         int result = scheduleMapper.insert(schedule);
         if (result > 0) {
-            return Result.success("排班创建成功，记录ID为：" + schedule.getSchedule_id());
+            return Result.success("排班创建成功，记录ID为：" + schedule.getSchedule_id(),null);
         } else {
             return Result.fail("排班创建失败。");
         }
     }
 
     @Override
-    public Result<String> createSchedules(NextWeekScheduleDTO nextWeekScheduleDTO) {
+    public Result<Void> createSchedules(NextWeekScheduleDTO nextWeekScheduleDTO) {
         List<DoctorSchedule> schedules = new ArrayList<>();
         //遍历nextWeekScheduleDTO的属性，处理其中的scheduleDTO对象
         //java的反射机制，运行时获取类的信息
@@ -68,7 +70,7 @@ public class ScheduleServiceImpl implements ScheduleService {
                             // 处理每个ScheduleDTO
                             DoctorSchedule doctorSchedule = new DoctorSchedule();
                             doctorSchedule.setDoctor_id(doctorMapper.getIdByName(dto.getDoctor_name()));
-                            doctorSchedule.setSchedule_id(ScheduleIdGenerator.getNextId());
+                            doctorSchedule.setSchedule_id(scheduleIdGenerator.getNextId());
                             doctorSchedule.setSchedule_time_id(dto.getTemplate_id());
                             executeScheduleDate(doctorSchedule,fieldName,0);
                             schedules.add(doctorSchedule);
@@ -86,8 +88,15 @@ public class ScheduleServiceImpl implements ScheduleService {
             // 根据实际需求处理异常，这里返回错误结果
             return Result.fail("遍历对象属性时发生错误");
         }
-
-        return null;
+        try{
+            for (DoctorSchedule item : schedules) {
+                createSchedule(item);
+            }
+            return Result.success("插入成功",null);
+        }catch (Exception e){
+            e.printStackTrace();
+            return Result.fail("新排班插入数据库错误");
+        }
     }
 
     private void executeScheduleDate(DoctorSchedule doctorSchedule, String date, Integer code) {
