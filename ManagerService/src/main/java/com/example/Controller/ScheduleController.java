@@ -16,10 +16,10 @@ public class ScheduleController {
     @Autowired
     private ScheduleService scheduleService;
 
-    @PostMapping("/update_schedule")
-    public Result<String> CreateNextWeekSchedule(@RequestBody() NextWeekScheduleDTO nextWeekScheduleDTO){
+    @PostMapping("/CreateNextWeekSchedule")
+    public Result<Void> CreateNextWeekSchedule(@RequestBody() NextWeekScheduleDTO nextWeekScheduleDTO){
         System.out.println(nextWeekScheduleDTO);
+        return scheduleService.createSchedules(nextWeekScheduleDTO);
 
-        return null;
     }
 }

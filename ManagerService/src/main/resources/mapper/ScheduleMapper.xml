@@ -1,6 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
-        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.example.Mapper.ScheduleMapper">
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.Mapper.ScheduleMapper"> <!-- 请替换为您的Mapper接口全限定名 -->
+    <resultMap id="DoctorScheduleResultMap" type="com.example.pojo.entity.DoctorSchedule">
+        <!-- 主键字段 -->
+        <id column="id" property="schedule_id"/>
+        <!-- 普通字段 -->
+        <result column="doc_id" property="doctor_id"/>
+        <result column="template_id" property="schedule_time_id"/>
+        <result column="schedule_date" property="date"/>
+        <result column="left_source_count" property="available_slots"/>
+        <result column="status" property="status"/>
+    </resultMap>
+    <insert id="insertBatch">
+        INSERT INTO doc_schedule_record (id, template_id, schedule_date, left_source_count, doc_id, clinic_id, status) <!-- 请替换为您的表名和字段 -->
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            (#{item.schedule_id}, #{item.schedule_time_id}, #{item.date}, #{item.available_slots}, #{status})
+        </foreach>
+    </insert>
 
 </mapper>
