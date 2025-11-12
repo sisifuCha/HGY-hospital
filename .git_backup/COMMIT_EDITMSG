@@ -1,0 +1,3 @@
+Add user login and registration backend for PatientService
+
+Introduces user login and registration functionality to PatientService. Adds controller, service, DTOs, entity classes, mappers, JWT utility, and configuration for PostgreSQL and MyBatis-Plus. Implements user authentication and registration logic, including patient ID generation and JWT token issuance.
