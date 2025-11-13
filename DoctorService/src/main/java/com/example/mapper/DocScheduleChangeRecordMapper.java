@@ -1,5 +1,6 @@
 package com.example.mapper;
 
+import java.time.LocalDate;
 import java.util.List;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
@@ -23,7 +24,7 @@ public interface DocScheduleChangeRecordMapper {
                            @Param("targetSchId") String targetSchId,
                            @Param("reasonText") String reasonText,
                            @Param("status") String status,
-                           @Param("targetDate") String targetDate,
+                           @Param("targetDate") LocalDate targetDate,
                            @Param("templateId") String templateId,
                            @Param("type") Integer type,
                            @Param("leaveTimeLength") Integer leaveTimeLength);

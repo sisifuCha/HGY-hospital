@@ -211,7 +211,6 @@ public class DoctorServiceImpl implements DoctorService {
         dto.setDoctorId(doctor.getId());
         dto.setName(doctor.getName());
         dto.setDepartment(doctor.getDepartmentName());
-        dto.setClinicId(doctor.getClinicId());
         dto.setTitle(StringUtils.hasText(doctor.getTitleName()) ? doctor.getTitleName() : "");
         return dto;
     }
@@ -259,13 +258,13 @@ public class DoctorServiceImpl implements DoctorService {
 
         // 4. 根据 changeType 处理不同逻辑
         String targetSchId = null;
-        String targetDate = null;
+        LocalDate targetDate = null;
         String templateId = null;
         Integer leaveTimeLength = null;
 
         if (request.getChangeType() == 0) {
             // 调到空班：需要 targetDate 和 timePeriod
-            if (!StringUtils.hasText(request.getTargetDate()) || request.getTimePeriod() == null) {
+            if (request.getTargetDate() == null || request.getTimePeriod() == null) {
                 return Result.fail(400, "调到空班需提供targetDate和timePeriod");
             }
             
@@ -287,22 +286,14 @@ public class DoctorServiceImpl implements DoctorService {
             
             // 请假不需要目标排班
             targetSchId = null;
-            targetDate = null;
             templateId = null;
 
         } else if (request.getChangeType() == 2) {
             // 与某医生换班：需要 targetDoctorId、targetDate 和 timePeriod
             if (!StringUtils.hasText(request.getTargetDoctorId()) || 
-                !StringUtils.hasText(request.getTargetDate()) || 
+                request.getTargetDate() == null || 
                 request.getTimePeriod() == null) {
                 return Result.fail(400, "与医生换班需提供targetDoctorId、targetDate和timePeriod");
-            }
-
-            LocalDate targetDateParsed;
-            try {
-                targetDateParsed = LocalDate.parse(request.getTargetDate());
-            } catch (Exception ex) {
-                return Result.fail(400, "targetDate格式不正确");
             }
 
             targetDate = request.getTargetDate();
@@ -314,7 +305,7 @@ public class DoctorServiceImpl implements DoctorService {
             // 查询目标医生的排班记录
             DocScheduleRecord targetSchedule = scheduleRecordMapper.findByDocAndDateAndPeriod(
                 request.getTargetDoctorId(),
-                targetDateParsed,
+                targetDate,
                 templateId
             );
             if (targetSchedule == null) {
@@ -360,12 +351,44 @@ public class DoctorServiceImpl implements DoctorService {
             return Result.fail(400, "挂号id格式不正确");
         }
 
-        DocScheduleRecord schedule = scheduleRecordMapper.getScheduleById(key.getScheduleId());
-        if (schedule == null) {
+        // 获取排班记录及其时间模板信息
+        com.example.dto.ScheduleDetailDto scheduleDetail = scheduleRecordMapper.getScheduleWithTemplateById(key.getScheduleId());
+        if (scheduleDetail == null) {
             return Result.fail(404, "挂号记录不存在");
         }
-        if (!request.getDoctorId().equals(schedule.getDocId())) {
+        if (!request.getDoctorId().equals(scheduleDetail.getDocId())) {
             return Result.fail(403, "无权更新该挂号记录");
+        }
+
+        // 时间校验：检查当前时间是否在排班时段内
+        LocalDateTime now = LocalDateTime.now();
+        LocalDate today = now.toLocalDate();
+        java.time.LocalTime currentTime = now.toLocalTime();
+
+        // 检查日期
+        if (scheduleDetail.getScheduleDate().isAfter(today)) {
+            return Result.fail(400, "排班日期尚未到来，无法更新患者状态");
+        }
+        
+        // 如果是当天，检查时间段
+        if (scheduleDetail.getScheduleDate().isEqual(today)) {
+            if (scheduleDetail.getStartTime() != null && scheduleDetail.getEndTime() != null) {
+                if (currentTime.isBefore(scheduleDetail.getStartTime())) {
+                    String timePeriodName = scheduleDetail.getTimePeriodName() != null ? 
+                        scheduleDetail.getTimePeriodName() : "该时段";
+                    return Result.fail(400, String.format("%s尚未开始（开始时间：%s），无法更新患者状态", 
+                        timePeriodName, scheduleDetail.getStartTime()));
+                }
+                if (currentTime.isAfter(scheduleDetail.getEndTime())) {
+                    String timePeriodName = scheduleDetail.getTimePeriodName() != null ? 
+                        scheduleDetail.getTimePeriodName() : "该时段";
+                    return Result.fail(400, String.format("%s已结束（结束时间：%s），无法更新患者状态", 
+                        timePeriodName, scheduleDetail.getEndTime()));
+                }
+            }
+        } else if (scheduleDetail.getScheduleDate().isBefore(today)) {
+            // 如果是过去的日期，也视为已结束
+            return Result.fail(400, "排班日期已过，无法更新患者状态");
         }
 
         // 使用 StatusConverter 工具类进行状态转换

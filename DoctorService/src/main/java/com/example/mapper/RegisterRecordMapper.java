@@ -40,10 +40,10 @@ public interface RegisterRecordMapper {
               "  dsr.schedule_date   AS scheduleDate",
               "FROM \"register_record\" rr",
               "JOIN \"doc_schedule_record\" dsr ON rr.\"sch_id\" = dsr.\"id\"",
-              "JOIN \"doctor\" d ON dsr.\"doc_id\" = d.\"id\"",
-              "JOIN \"clinic\" c ON d.\"clinic_id\" = c.\"id\"",
+              "JOIN \"clinic\" c ON dsr.\"clinic_id\" = c.\"id\"",
               "JOIN \"department\" dep ON c.\"dep_id\" = dep.\"id\"",
               "WHERE rr.\"patient_id\" = #{patientId}",
+              "  AND rr.\"status\" = '已就诊'",
               "ORDER BY rr.register_time DESC"
        })
        List<PatientRecordRow> selectPatientHistoryRows(@Param("patientId") String patientId);

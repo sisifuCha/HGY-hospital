@@ -17,12 +17,15 @@ public interface DocScheduleRecordMapper {
     List<DocScheduleRecord> getDocSchedules(@Param("docId") String docId, @Param("date") Date date);
 
     @Select("SELECT dsr.* FROM \"doc_schedule_record\" dsr " +
-           "JOIN \"doctor\" d ON dsr.\"doc_id\" = d.\"id\" " +
-           "JOIN \"clinic\" c ON d.\"clinic_id\" = c.\"id\" " +
+           "JOIN \"clinic\" c ON dsr.\"clinic_id\" = c.\"id\" " +
            "JOIN \"department\" dep ON c.\"dep_id\" = dep.\"id\" " +
-           "WHERE dep.\"id\" = (SELECT c2.\"dep_id\" FROM \"clinic\" c2 " +
-           "JOIN \"doctor\" d2 ON c2.\"id\" = d2.\"clinic_id\" " +
-           "WHERE d2.\"id\" = #{docId}) " +
+           "WHERE dep.\"id\" = (" +
+           "    SELECT c2.\"dep_id\" " +
+           "    FROM \"doc_schedule_record\" dsr2 " +
+           "    JOIN \"clinic\" c2 ON dsr2.\"clinic_id\" = c2.\"id\" " +
+           "    WHERE dsr2.\"doc_id\" = #{docId} " +
+           "    LIMIT 1" +
+           ") " +
            "AND dsr.\"schedule_date\" >= #{date}")
     List<DocScheduleRecord> getDepartmentSchedules(@Param("docId") String docId, @Param("date") Date date);
 
@@ -82,4 +85,19 @@ public interface DocScheduleRecordMapper {
     DocScheduleRecord findByDocAndDateAndPeriod(@Param("docId") String docId,
                                                 @Param("date") LocalDate date,
                                                 @Param("templateId") String templateId);
+
+    @Select({
+        "SELECT",
+        "  dsr.id AS scheduleId,",
+        "  dsr.schedule_date AS scheduleDate,",
+        "  dsr.template_id AS templateId,",
+        "  dsr.doc_id AS docId,",
+        "  st.start_time AS startTime,",
+        "  st.end_time AS endTime,",
+        "  st.time_period_name AS timePeriodName",
+        "FROM \"doc_schedule_record\" dsr",
+        "LEFT JOIN \"schedule_template\" st ON dsr.template_id = st.id",
+        "WHERE dsr.id = #{scheduleId}"
+    })
+    com.example.dto.ScheduleDetailDto getScheduleWithTemplateById(@Param("scheduleId") String scheduleId);
 }
