@@ -71,20 +71,49 @@
         WHERE d.id = #{doctorId}
     </select>
 
-    <select id="findAllDepartmentsWithSubDepartments" resultType="com.example.pojo.dto.DepartmentWithSubDepartmentsDto">
-        SELECT
-            p.id,
-            p.name,
-            json_agg(json_build_object('id', c.id, 'name', c.name)) FILTER (WHERE c.id IS NOT NULL) AS subDepartments
-        FROM
-            department p
-        LEFT JOIN
-            department c ON TRIM(p.id) = TRIM(c.father_id)
-        WHERE
-            p.father_id IS NULL OR p.father_id = ''
-        GROUP BY
-            p.id, p.name
-        ORDER BY
-            p.id;
+    <!-- 计数：同一患者+排班的有效挂号（已预约 / 已就诊） -->
+    <select id="countActiveRegistrationByKey" resultType="int">
+        SELECT COUNT(*)
+        FROM register_record rr
+        WHERE rr.patient_ID = #{patientId}
+          AND rr.sch_ID = #{scheduleRecordId}
+          AND rr.status IN ('已预约','已就诊')
+    </select>
+
+    <!-- 扣减剩余号源，要求 > 0 -->
+    <update id="decrementScheduleLeftSource">
+        UPDATE doc_schedule_record
+        SET left_source_count = left_source_count - 1
+        WHERE id = #{scheduleRecordId}
+          AND left_source_count > 0
+    </update>
+
+    <!-- 回补剩余号源（取消时可用） -->
+    <update id="incrementScheduleLeftSource">
+        UPDATE doc_schedule_record
+        SET left_source_count = left_source_count + 1
+        WHERE id = #{scheduleRecordId}
+    </update>
+
+    <!-- 插入挂号记录：status 使用中文 '已预约' 或传入的中文枚举 -->
+    <insert id="insertRegistration">
+        INSERT INTO register_record (patient_ID, sch_ID, register_time, status)
+        VALUES (#{patientId}, #{scheduleRecordId}, NOW(), #{status})
+    </insert>
+
+    <select id="getRegistrationStatusByKey" resultType="string">
+        SELECT status FROM register_record WHERE patient_ID = #{patientId} AND sch_ID = #{scheduleRecordId}
+    </select>
+    <update id="updateRegistrationStatusToCanceled">
+        UPDATE register_record SET status = '已取消'
+        WHERE patient_ID = #{patientId} AND sch_ID = #{scheduleRecordId} AND status IN ('预约中','已预约')
+    </update>
+    <select id="findRegistrationByKey" resultType="com.example.pojo.dto.RegistrationDto">
+        SELECT rr.patient_ID AS patientId,
+               rr.sch_ID AS scheduleRecordId,
+               to_char(rr.register_time,'YYYY-MM-DD"T"HH24:MI:SS') AS registerTime,
+               rr.status AS status
+        FROM register_record rr
+        WHERE rr.patient_ID = #{patientId} AND rr.sch_ID = #{scheduleRecordId}
     </select>
 </mapper>
