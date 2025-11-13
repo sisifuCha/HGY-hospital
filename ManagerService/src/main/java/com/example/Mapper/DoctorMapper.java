@@ -28,9 +28,9 @@ public interface DoctorMapper extends BaseMapper<Doctor> {
     IPage<Doctor> selectDoctorPage(IPage<Doctor> page, @Param("ew") QueryWrapper<Doctor> queryWrapper);
 
     //根据时间范围和科室获取排班信息
-    @Select("SELECT ds.schedule_id, ds.doctor_id, ds.schedule_time_id, ds.date, ds.available_slots " +
-            "FROM doctor_schedule ds INNER JOIN doctor d ON ds.doctor_id = d.id " +
-            "WHERE ds.date >= #{startTime} AND ds.date <= #{endTime} AND d.depart_id = #{departId}")
+    @Select("SELECT ds.id, ds.doc_id, ds.template_id, ds.schedule_date, ds.left_source_count " +
+            "FROM doc_schedule_record ds INNER JOIN doctor d ON ds.doc_id = d.id " +
+            "WHERE ds.schedule_date >= #{startTime} AND ds.schedule_date <= #{endTime} AND d.depart_id = #{departId}")
     @ResultMap("DoctorScheduleResultMap")
     // 或者如果MyBatis-Plus能自动找到，可直接写resultMap的id
     List<DoctorSchedule> selectDoctorSchedule(@Param("startTime") LocalDate startTime, @Param("endTime") LocalDate endTime, @Param("departId") String departId);

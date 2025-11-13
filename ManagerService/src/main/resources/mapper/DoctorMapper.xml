@@ -25,11 +25,11 @@
     </resultMap>
 
     <resultMap id="DoctorScheduleResultMap" type="com.example.pojo.entity.DoctorSchedule">
-        <id column="schedule_id" property="schedule_id"/>
-        <result column="doctor_id" property="doctor_id"/>
-        <result column="schedule_time_id" property="schedule_time_id"/>
-        <result column="date" property="date"/>
-        <result column="available_slots" property="available_slots"/>
+        <id column="id" property="schedule_id"/>
+        <result column="doc_id" property="doctor_id"/>
+        <result column="template_id" property="schedule_time_id"/>
+        <result column="schedule_date" property="date"/>
+        <result column="left_source_count" property="available_slots"/>
     </resultMap>
     <!-- 根据医生ID查询完整信息（联表查询） -->
     <select id="selectById" parameterType="string" resultMap="FullDoctorResultMap">
