@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.example.Mapper.DepartmentMapper">
+    <resultMap id="DepartmentWithSubDeptsResultMap" type="com.example.pojo.entity.Department">
+        <id column="id" property="id" jdbcType="VARCHAR"/>
+        <result column="name" property="name" jdbcType="VARCHAR"/>
+        <result column="subDepartments" property="subDepartments"
+                typeHandler="com.example.utils.JsonDepartmentListTypeHandler"/>
+    </resultMap>
+
+    <select id="findAllWithSubDepartments" resultMap="DepartmentWithSubDeptsResultMap">
+        SELECT
+            p.id,
+            p.name,
+            COALESCE(json_agg(json_build_object('id', c.id, 'name', c.name)) FILTER (WHERE c.id IS NOT NULL), '[]')::TEXT AS subDepartments
+        FROM
+            department p
+        LEFT JOIN
+            department c ON TRIM(p.id) = TRIM(c.father_id)
+        WHERE
+            p.father_id IS NULL OR p.father_id = ''
+        GROUP BY
+            p.id, p.name
+        ORDER BY
+            p.id
+    </select>
+</mapper>
+
+

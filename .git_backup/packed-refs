@@ -1,5 +1,0 @@
-# pack-refs with: peeled fully-peeled sorted 
-2ef96e3d01b0f69a2d182a47b8ab36e5da6a1100 refs/remotes/origin/dev
-5f5b8f3bad1cb58f233871065fac7ef74b569ee3 refs/remotes/origin/feature-about-doctor
-85e1920d6b76f4aca576d789ba9273b903594524 refs/remotes/origin/feature/patient
-e9e0e90e62adf7b90fb4ef0b28f5a184279fc01a refs/remotes/origin/master
