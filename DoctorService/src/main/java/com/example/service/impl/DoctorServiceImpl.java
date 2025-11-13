@@ -102,7 +102,8 @@ public class DoctorServiceImpl implements DoctorService {
             // JWT生成失败
             return Result.fail(500, "系统错误，令牌生成失败");
         }
-    }
+
+}
 
     @Override
     public SseEmitter getAddNumberNotifications(String docId) {
@@ -367,14 +368,25 @@ public class DoctorServiceImpl implements DoctorService {
             return Result.fail(403, "无权更新该挂号记录");
         }
 
-        String patientStatus = mapPatientStatus(request.getPatientStatus());
-        int affected = registerRecordMapper.updateStatus(key.getPatientId(), key.getScheduleId(), patientStatus);
+        // 使用 StatusConverter 工具类进行状态转换
+        String patientStatusStr;
+        String doctorStatusStr;
+        try {
+            patientStatusStr = com.example.utils.StatusConverter.convertPatientStatus(request.getPatientStatus());
+            doctorStatusStr = com.example.utils.StatusConverter.convertDoctorStatus(request.getDoctorStatus());
+        } catch (IllegalArgumentException ex) {
+            return Result.fail(400, ex.getMessage());
+        }
+
+        int affected = registerRecordMapper.updateStatus(key.getPatientId(), key.getScheduleId(), patientStatusStr);
         if (affected == 0) {
             return Result.fail(500, "更新挂号状态失败");
         }
 
-        String doctorStatus = mapDoctorStatus(request.getDoctorStatus());
-        doctorMapper.updateDoctorStatus(request.getDoctorId(), doctorStatus);
+        int doctorAffected = doctorMapper.updateDoctorStatus(request.getDoctorId(), doctorStatusStr);
+        if (doctorAffected == 0) {
+            return Result.fail(500, "更新医生状态失败");
+        }
 
         return Result.success(null, "状态已更新");
     }
@@ -575,26 +587,5 @@ public class DoctorServiceImpl implements DoctorService {
             default:
                 return status;
         }
-    }
-
-    private String mapPatientStatus(Integer status) {
-        if (status == null) {
-            return "waiting";
-        }
-        switch (status) {
-            case 1:
-                return "in_progress";
-            case 2:
-                return "finished";
-            default:
-                return "waiting";
-        }
-    }
-
-    private String mapDoctorStatus(Integer status) {
-        if (status == null) {
-            return "idle";
-        }
-        return status == 1 ? "consulting" : "idle";
     }
 }
