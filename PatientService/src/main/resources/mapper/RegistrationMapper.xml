@@ -72,19 +72,19 @@
     </select>
 
     <select id="findAllDepartmentsWithSubDepartments" resultType="com.example.pojo.dto.DepartmentWithSubDepartmentsDto">
-        WITH parent_departments AS (
-            SELECT id, name
-            FROM department
-            WHERE father_id IS NULL
-        )
         SELECT
             p.id,
             p.name,
-            (
-                SELECT json_agg(json_build_object('id', s.id, 'name', s.name))
-                FROM department s
-                WHERE s.father_id = p.id
-            ) AS subDepartments
-        FROM parent_departments p;
+            json_agg(json_build_object('id', c.id, 'name', c.name)) FILTER (WHERE c.id IS NOT NULL) AS subDepartments
+        FROM
+            department p
+        LEFT JOIN
+            department c ON TRIM(p.id) = TRIM(c.father_id)
+        WHERE
+            p.father_id IS NULL OR p.father_id = ''
+        GROUP BY
+            p.id, p.name
+        ORDER BY
+            p.id;
     </select>
 </mapper>
