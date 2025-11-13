@@ -51,7 +51,7 @@ public class JsonDepartmentListTypeHandler extends BaseTypeHandler<List<Departme
             return null;
         }
         try {
-            return objectMapper.readValue(json, new TypeReference<List<Department>>() {});
+            return objectMapper.readValue(json, new TypeReference<>() {});
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
