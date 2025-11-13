@@ -4,11 +4,27 @@ Accept: application/json
 
 ### 获取指定科室和日期的医生排班列表
 # 注意: 请将 departmentId 和 date 替换为实际要查询的值
-GET http://localhost:8082/api/registration/doctors?departmentId=101&date=2025-11-08
+GET http://localhost:8082/api/registration/doctors?departmentId=DEP013&date=2025-11-15
 Accept: application/json
 
 ### 获取医生详细信息
 # 注意: 请将 "doc-1" 替换为实际要查询的医生ID
-GET http://localhost:8082/api/registration/doctor/doc-1
+GET http://localhost:8082/api/doctors/doc-1
 Accept: application/json
 
+### 创建挂号
+# 注意: 请将 patientId 和 scheduleRecordId 替换为实际存在的ID
+POST http://localhost:8082/api/registrations
+Content-Type: application/json
+Accept: application/json
+
+{
+  "patientId": "PAT0100",
+  "scheduleRecordId": "SCH1003",
+  "confirm": true
+}
+
+### 取消挂号（删除之前添加的记录）
+# 注意: 如已修改上面的 patientId / scheduleRecordId，这里也需要同步修改
+DELETE http://localhost:8082/api/registrations?patientId=PAT0100&scheduleRecordId=SCH1003
+Accept: application/json

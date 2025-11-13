@@ -1,33 +1,37 @@
 package com.example.Config;
 
-import jakarta.servlet.ServletContextEvent;
-import jakarta.servlet.ServletContextListener;
-import jakarta.servlet.annotation.WebListener;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
-@WebListener
-public class MyContextListener implements ServletContextListener {
+@Component
+@Slf4j
+public class MyContextListener {
 
-    private SSHConnection conexionssh;
+    @Autowired
+    private SSHConnection sshConnection;
 
-    @Override
-    public void contextInitialized(ServletContextEvent sce) {
-        System.out.println("Context initialized ... !");
+    @PostConstruct
+    public void init() {
+        log.info("Application context initialized");
         try {
-            conexionssh = new SSHConnection();
-            System.out.println("SSH连接已建立");
-        } catch (Throwable e) {
-            System.err.println("SSH连接失败: " + e.getMessage());
-            e.printStackTrace();
+            sshConnection.connect();
+            log.info("SSH连接已建立");
+        } catch (Exception e) {
+            log.error("SSH连接失败: {}", e.getMessage(), e);
         }
     }
 
-    @Override
-    public void contextDestroyed(ServletContextEvent sce) {
-        System.out.println("Context destroyed ... !");
-        if (conexionssh != null) {
-            conexionssh.closeSSH();
-            System.out.println("SSH连接已关闭");
+    @PreDestroy
+    public void destroy() {
+        log.info("Application context is shutting down");
+        try {
+            sshConnection.close();
+            log.info("SSH连接已关闭");
+        } catch (Exception e) {
+            log.warn("关闭SSH连接时出错: {}", e.getMessage(), e);
         }
     }
 }
-
