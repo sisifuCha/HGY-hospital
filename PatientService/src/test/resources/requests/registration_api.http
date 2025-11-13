@@ -1,0 +1,14 @@
+### 获取科室列表
+GET http://localhost:8082/api/departments
+Accept: application/json
+
+### 获取指定科室和日期的医生排班列表
+# 注意: 请将 departmentId 和 date 替换为实际要查询的值
+GET http://localhost:8082/api/registration/doctors?departmentId=101&date=2025-11-08
+Accept: application/json
+
+### 获取医生详细信息
+# 注意: 请将 "doc-1" 替换为实际要查询的医生ID
+GET http://localhost:8082/api/registration/doctor/doc-1
+Accept: application/json
+

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.Mapper.UserMapper">
+
+    <select id="findByAccount" resultType="com.example.pojo.entity.User">
+        select
+            id as userId,
+            name as userName,
+            sex as userGender,
+            account as userAccount,
+            email as userEmail,
+            pass as userPassword,
+            phone_num as userPhone,
+            user_type as userType
+        from "user" where account = #{account}
+    </select>
+
+</mapper>
+
