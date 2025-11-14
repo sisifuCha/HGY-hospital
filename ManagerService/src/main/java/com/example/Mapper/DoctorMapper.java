@@ -15,6 +15,9 @@ import java.util.List;
 
 public interface DoctorMapper extends BaseMapper<Doctor> {
 
+    @Select("SELECT id from \"user\" where name = #{name};")
+    String getIdByName(@Param("name") String name);
+
     // 更新医生信息（同时更新user表和doctor表）
     int updateDoctor(Doctor doctor);
 

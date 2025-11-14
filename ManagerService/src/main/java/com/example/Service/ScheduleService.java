@@ -7,7 +7,7 @@ import com.example.pojo.entity.DoctorSchedule;
 
 public interface ScheduleService {
 
-    public Result<String> createSchedule(DoctorSchedule schedule);
+    public Result<Void> createSchedule(DoctorSchedule schedule);
 
-    public Result<String> createSchedules(NextWeekScheduleDTO nextWeekScheduleDTO);
+    public Result<Void> createSchedules(NextWeekScheduleDTO nextWeekScheduleDTO);
 }
