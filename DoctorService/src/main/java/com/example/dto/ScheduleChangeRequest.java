@@ -1,10 +1,12 @@
 package com.example.dto;
 
+import java.time.LocalDate;
+
 public class ScheduleChangeRequest {
     private String docId;
-    private String originalScheduleId;
+    private String originalTime; // 格式: ${date}_${timePeriod}, 例如: 2025-11-11_2
     private Integer changeType; // 0:调班, 1:请假
-    private String targetDate;
+    private LocalDate targetDate;
     private Integer timePeriod;
     private String targetDoctorId;
     private Integer leaveTimeLength;
@@ -18,12 +20,12 @@ public class ScheduleChangeRequest {
         this.docId = docId;
     }
 
-    public String getOriginalScheduleId() {
-        return originalScheduleId;
+    public String getOriginalTime() {
+        return originalTime;
     }
 
-    public void setOriginalScheduleId(String originalScheduleId) {
-        this.originalScheduleId = originalScheduleId;
+    public void setOriginalTime(String originalTime) {
+        this.originalTime = originalTime;
     }
 
     public Integer getChangeType() {
@@ -34,11 +36,11 @@ public class ScheduleChangeRequest {
         this.changeType = changeType;
     }
 
-    public String getTargetDate() {
+    public LocalDate getTargetDate() {
         return targetDate;
     }
 
-    public void setTargetDate(String targetDate) {
+    public void setTargetDate(LocalDate targetDate) {
         this.targetDate = targetDate;
     }
 

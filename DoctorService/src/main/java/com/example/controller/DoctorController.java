@@ -65,6 +65,13 @@ public class DoctorController {
         return ResponseEntity.ok(Result.success(payload).toMap());
     }
 
+    @GetMapping("/selfshifts")
+    public ResponseEntity<Map<String, Object>> getSelfShifts(@RequestParam String docId) {
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("shifts", doctorService.getSelfShifts(docId));
+        return ResponseEntity.ok(Result.success(payload).toMap());
+    }
+
     @GetMapping("/patients")
     public ResponseEntity<Map<String, Object>> getPatientList(@RequestParam String docId) {
         Map<String, Object> payload = new HashMap<>();

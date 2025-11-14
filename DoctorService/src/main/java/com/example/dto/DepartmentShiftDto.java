@@ -7,6 +7,7 @@ public class DepartmentShiftDto {
     private String docName;
     private int timePeriod;
     private String docId;
+    private String clinicPlace; // 诊室位置（clinic_number）
 
     public LocalDate getDate() {
         return date;
@@ -38,5 +39,13 @@ public class DepartmentShiftDto {
 
     public void setDocId(String docId) {
         this.docId = docId;
+    }
+
+    public String getClinicPlace() {
+        return clinicPlace;
+    }
+
+    public void setClinicPlace(String clinicPlace) {
+        this.clinicPlace = clinicPlace;
     }
 }

@@ -87,17 +87,27 @@ COMMENT ON COLUMN title_number_source.name IS '职称名称';
 /*==============================================================*/
 /* Table: doctor (医生表)                                        */
 /*==============================================================*/
-CREATE TABLE doctor (
-   id                   VARCHAR(20)          NOT NULL,
-   doc_title_ID         VARCHAR(20)          NULL,
-   status               VARCHAR(20)          NULL,
-   clinic_ID            VARCHAR(20)          NULL,
-   CONSTRAINT PK_DOCTOR PRIMARY KEY (id)
+CREATE TABLE doctor(
+    id varchar(20) NOT NULL,
+    doc_title_id varchar(20),
+    status varchar(20),
+    clinic_id varchar(20),
+    details varchar(255),
+    specialty varchar(255),
+    depart_id varchar(20),
+    CONSTRAINT fk_doctor_clinic FOREIGN key(clinic_id) REFERENCES clinic(id),
+    CONSTRAINT fk_doctor_title FOREIGN key(doc_title_id) REFERENCES title_number_source(id),
+    CONSTRAINT fk_doctor_user FOREIGN key(id) REFERENCES "user"(id)
 );
-
+CREATE INDEX idx_doctor_clinic ON public.doctor USING btree (clinic_id);
+CREATE INDEX idx_doctor_title ON public.doctor USING btree (doc_title_id);
+CREATE INDEX idx_doctor_status ON public.doctor USING btree (status);
 COMMENT ON TABLE doctor IS '医生信息表';
-COMMENT ON COLUMN doctor.status IS '医生状态: 在职/休假/停诊等';
-
+COMMENT ON COLUMN doctor.status IS '医生状态: 在职/就诊中/休假';
+COMMENT ON COLUMN doctor.clinic_id IS '**已废弃**';
+COMMENT ON COLUMN doctor.details IS '医生基本履历';
+COMMENT ON COLUMN doctor.specialty IS '医生擅长';
+COMMENT ON COLUMN doctor.depart_id IS '医生所在子门诊的id';
 /*==============================================================*/
 /* Table: schedule_template (排班模板表)                         */
 /*==============================================================*/

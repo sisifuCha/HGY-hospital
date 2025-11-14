@@ -1,5 +1,6 @@
 package com.example.mapper;
 
+import java.time.LocalDate;
 import java.util.List;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
@@ -10,16 +11,23 @@ import org.apache.ibatis.annotations.Select;
 public interface DocScheduleChangeRecordMapper {
 
     @Insert({
-        "INSERT INTO \"doc_schedule_change_record\" (\"doc_id\", \"ori_sch_id\", \"target_sch_id\", \"reason_text\", \"status\")",
-        "VALUES (#{docId}, #{originalScheduleId}, #{targetScheduleId}, #{reason}, #{status})",
-        "ON CONFLICT (\"doc_id\", \"ori_sch_id\", \"target_sch_id\")",
-        "DO UPDATE SET \"reason_text\" = EXCLUDED.\"reason_text\", \"status\" = EXCLUDED.\"status\""
+        "INSERT INTO \"doc_schedule_change_record\" (",
+        "  \"doc_id\", \"ori_sch_id\", \"target_sch_id\", \"reason_text\", \"status\",",
+        "  \"target_date\", \"template_id\", \"type\", \"leave_time_length\"",
+        ") VALUES (",
+        "  #{docId}, #{oriSchId}, #{targetSchId}, #{reasonText}, #{status},",
+        "  #{targetDate}, #{templateId}, #{type}, #{leaveTimeLength}",
+        ")"
     })
-    int upsertChangeRequest(@Param("docId") String docId,
-                            @Param("originalScheduleId") String originalScheduleId,
-                            @Param("targetScheduleId") String targetScheduleId,
-                            @Param("reason") String reason,
-                            @Param("status") String status);
+    int insertChangeRequest(@Param("docId") String docId,
+                           @Param("oriSchId") String oriSchId,
+                           @Param("targetSchId") String targetSchId,
+                           @Param("reasonText") String reasonText,
+                           @Param("status") String status,
+                           @Param("targetDate") LocalDate targetDate,
+                           @Param("templateId") String templateId,
+                           @Param("type") Integer type,
+                           @Param("leaveTimeLength") Integer leaveTimeLength);
 
     @Select({
         "SELECT",

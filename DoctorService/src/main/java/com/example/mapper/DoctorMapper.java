@@ -9,12 +9,11 @@ import org.apache.ibatis.annotations.Update;
 @Mapper
 public interface DoctorMapper {
     @Select("SELECT d.*, u.\"name\", u.\"phone_num\", u.\"email\", u.\"sex\", " +
-           "c.\"clinic_number\", c.\"location\", dep.\"name\" as department_name, " +
+           "dep.\"name\" as department_name, " +
            "tns.\"number_source_count\", tns.\"ori_cost\", tns.\"name\" AS title_name " +
            "FROM \"doctor\" d " +
            "JOIN \"user\" u ON d.\"id\" = u.\"id\" " +
-           "JOIN \"clinic\" c ON d.\"clinic_id\" = c.\"id\" " +
-           "JOIN \"department\" dep ON c.\"dep_id\" = dep.\"id\" " +
+           "LEFT JOIN \"department\" dep ON d.\"depart_id\" = dep.\"id\" " +
            "LEFT JOIN \"title_number_source\" tns ON d.\"doc_title_id\" = tns.\"id\" " +
            "WHERE d.\"id\" = #{docId}")
     Doctor getDoctorWithDetails(@Param("docId") String docId);
@@ -28,11 +27,18 @@ public interface DoctorMapper {
     @Select("SELECT d.*, u.\"name\" " +
            "FROM \"doctor\" d " +
            "JOIN \"user\" u ON d.\"id\" = u.\"id\" " +
-           "JOIN \"clinic\" c ON d.\"clinic_id\" = c.\"id\" " +
-           "JOIN \"department\" dep ON c.\"dep_id\" = dep.\"id\" " +
-           "WHERE dep.\"id\" = (SELECT c2.\"dep_id\" FROM \"clinic\" c2 " +
-           "JOIN \"doctor\" d2 ON c2.\"id\" = d2.\"clinic_id\" " +
-           "WHERE d2.\"id\" = #{docId})")
+           "WHERE d.\"id\" IN (" +
+           "    SELECT DISTINCT dsr.\"doc_id\" " +
+           "    FROM \"doc_schedule_record\" dsr " +
+           "    JOIN \"clinic\" c ON dsr.\"clinic_id\" = c.\"id\" " +
+           "    WHERE c.\"dep_id\" = (" +
+           "        SELECT c2.\"dep_id\" " +
+           "        FROM \"doc_schedule_record\" dsr2 " +
+           "        JOIN \"clinic\" c2 ON dsr2.\"clinic_id\" = c2.\"id\" " +
+           "        WHERE dsr2.\"doc_id\" = #{docId} " +
+           "        LIMIT 1" +
+           "    )" +
+           ")")
     java.util.List<Doctor> getDoctorsByDepartment(@Param("docId") String docId);
 
        @Update({

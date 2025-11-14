@@ -11,6 +11,7 @@ import com.example.dto.PatientRecordDto;
 import com.example.dto.PatientStatusRequest;
 import com.example.dto.PatientSummaryDto;
 import com.example.dto.ScheduleChangeRequest;
+import com.example.dto.SelfShiftDto;
 import com.example.entity.Doctor;
 import com.example.entity.DocScheduleRecord;
 import com.example.entity.AddNumberSourceRecord;
@@ -25,6 +26,7 @@ import com.example.mapper.model.AddNumberApplicationRow;
 import com.example.mapper.model.DepartmentShiftRow;
 import com.example.mapper.model.PatientRecordRow;
 import com.example.mapper.model.PatientSummaryRow;
+import com.example.mapper.model.SelfShiftRow;
 import com.example.service.DoctorService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -100,7 +102,8 @@ public class DoctorServiceImpl implements DoctorService {
             // JWT生成失败
             return Result.fail(500, "系统错误，令牌生成失败");
         }
-    }
+
+}
 
     @Override
     public SseEmitter getAddNumberNotifications(String docId) {
@@ -153,6 +156,14 @@ public class DoctorServiceImpl implements DoctorService {
     }
 
     @Override
+    public List<SelfShiftDto> getSelfShifts(String docId) {
+        List<SelfShiftRow> rows = scheduleRecordMapper.selectSelfShiftRows(docId, LocalDate.now());
+        return rows.stream()
+                .map(this::mapSelfShift)
+                .collect(Collectors.toList());
+    }
+
+    @Override
     public List<PatientSummaryDto> getPatientList(String docId) {
         List<PatientSummaryRow> rows = registerRecordMapper.selectPatientSummaryRows(docId);
         return rows.stream()
@@ -200,7 +211,6 @@ public class DoctorServiceImpl implements DoctorService {
         dto.setDoctorId(doctor.getId());
         dto.setName(doctor.getName());
         dto.setDepartment(doctor.getDepartmentName());
-        dto.setClinicId(doctor.getClinicId());
         dto.setTitle(StringUtils.hasText(doctor.getTitleName()) ? doctor.getTitleName() : "");
         return dto;
     }
@@ -208,41 +218,120 @@ public class DoctorServiceImpl implements DoctorService {
     @Override
     @Transactional
     public Result<Void> submitScheduleChangeRequest(ScheduleChangeRequest request) {
-        if (request == null || !StringUtils.hasText(request.getDocId()) || !StringUtils.hasText(request.getOriginalScheduleId())) {
-            return Result.fail(400, "必填参数缺失");
+        // 1. 参数校验
+        if (request == null || !StringUtils.hasText(request.getDocId()) || !StringUtils.hasText(request.getOriginalTime())) {
+            return Result.fail(400, "docId和originalTime为必填参数");
+        }
+        if (request.getChangeType() == null || request.getChangeType() < 0 || request.getChangeType() > 2) {
+            return Result.fail(400, "changeType必须为0/1/2");
         }
 
-        DocScheduleRecord original = scheduleRecordMapper.getScheduleById(request.getOriginalScheduleId());
-        if (original == null) {
-            return Result.fail(404, "原班次不存在");
-        }
-        if (!request.getDocId().equals(original.getDocId())) {
-            return Result.fail(403, "只能申请本人班次");
+        // 2. 解析 originalTime: 格式 "2025-11-22_1"
+        String[] parts = request.getOriginalTime().split("_");
+        if (parts.length != 2) {
+            return Result.fail(400, "originalTime格式不正确，应为: 日期_时段编号");
         }
 
-        String targetScheduleId = original.getId();
-        if (Integer.valueOf(0).equals(request.getChangeType())) {
-            if (!StringUtils.hasText(request.getTargetDate()) || request.getTimePeriod() == null) {
-                return Result.fail(400, "调班需提供目标日期与时段");
+        LocalDate originalDate;
+        Integer originalTimePeriod;
+        try {
+            originalDate = LocalDate.parse(parts[0]);
+            originalTimePeriod = Integer.parseInt(parts[1]);
+        } catch (Exception ex) {
+            return Result.fail(400, "originalTime格式不正确: " + ex.getMessage());
+        }
+
+        // 3. 查询原班次记录（ori_sch_id）
+        String originalTemplateId = mapTimePeriodIndexToTemplateId(originalTimePeriod);
+        if (originalTemplateId == null) {
+            return Result.fail(400, "时段编号不正确，应为1/2/3");
+        }
+
+        DocScheduleRecord originalSchedule = scheduleRecordMapper.findByDocAndDateAndPeriod(
+            request.getDocId(), 
+            originalDate, 
+            originalTemplateId
+        );
+        if (originalSchedule == null) {
+            return Result.fail(404, "未找到原班次记录");
+        }
+
+        // 4. 根据 changeType 处理不同逻辑
+        String targetSchId = null;
+        LocalDate targetDate = null;
+        String templateId = null;
+        Integer leaveTimeLength = null;
+
+        if (request.getChangeType() == 0) {
+            // 调到空班：需要 targetDate 和 timePeriod
+            if (request.getTargetDate() == null || request.getTimePeriod() == null) {
+                return Result.fail(400, "调到空班需提供targetDate和timePeriod");
             }
-            LocalDate targetDate;
-            try {
-                targetDate = LocalDate.parse(request.getTargetDate());
-            } catch (Exception ex) {
-                return Result.fail(400, "目标日期格式不正确");
+            
+            targetDate = request.getTargetDate();
+            templateId = mapTimePeriodIndexToTemplateId(request.getTimePeriod());
+            if (templateId == null) {
+                return Result.fail(400, "timePeriod不正确，应为1/2/3");
             }
-            String targetDoctorId = StringUtils.hasText(request.getTargetDoctorId()) ? request.getTargetDoctorId() : request.getDocId();
-            String timePeriodName = mapTimePeriodName(request.getTimePeriod());
-            DocScheduleRecord target = scheduleRecordMapper.findByDocAndDateAndPeriod(targetDoctorId, targetDate, timePeriodName);
-            if (target == null) {
-                return Result.fail(404, "未找到目标班次");
+            
+            // target_sch_id 为空（调到空位置）
+            targetSchId = null;
+
+        } else if (request.getChangeType() == 1) {
+            // 请假：需要 leaveTimeLength
+            if (request.getLeaveTimeLength() == null || request.getLeaveTimeLength() <= 0) {
+                return Result.fail(400, "请假需提供有效的leaveTimeLength");
             }
-            targetScheduleId = target.getId();
+            leaveTimeLength = request.getLeaveTimeLength();
+            
+            // 请假不需要目标排班
+            targetSchId = null;
+            templateId = null;
+
+        } else if (request.getChangeType() == 2) {
+            // 与某医生换班：需要 targetDoctorId、targetDate 和 timePeriod
+            if (!StringUtils.hasText(request.getTargetDoctorId()) || 
+                request.getTargetDate() == null || 
+                request.getTimePeriod() == null) {
+                return Result.fail(400, "与医生换班需提供targetDoctorId、targetDate和timePeriod");
+            }
+
+            targetDate = request.getTargetDate();
+            templateId = mapTimePeriodIndexToTemplateId(request.getTimePeriod());
+            if (templateId == null) {
+                return Result.fail(400, "timePeriod不正确，应为1/2/3");
+            }
+
+            // 查询目标医生的排班记录
+            DocScheduleRecord targetSchedule = scheduleRecordMapper.findByDocAndDateAndPeriod(
+                request.getTargetDoctorId(),
+                targetDate,
+                templateId
+            );
+            if (targetSchedule == null) {
+                return Result.fail(404, "未找到目标医生的排班记录");
+            }
+            targetSchId = targetSchedule.getId();
         }
 
-        String reason = buildScheduleChangeReason(request);
-        scheduleChangeRecordMapper.upsertChangeRequest(request.getDocId(), original.getId(), targetScheduleId, reason, "pending");
+        // 5. 插入变更记录
+        int affected = scheduleChangeRecordMapper.insertChangeRequest(
+            request.getDocId(),
+            originalSchedule.getId(),
+            targetSchId,
+            request.getReason(),
+            "pending",
+            targetDate,
+            templateId,
+            request.getChangeType(),
+            leaveTimeLength
+        );
 
+        if (affected == 0) {
+            return Result.fail(500, "插入变更记录失败");
+        }
+
+        // 6. 推送通知
         emitNotificationSnapshot(request.getDocId(), null);
 
         return Result.success(null, "班次变更申请已提交");
@@ -262,22 +351,65 @@ public class DoctorServiceImpl implements DoctorService {
             return Result.fail(400, "挂号id格式不正确");
         }
 
-        DocScheduleRecord schedule = scheduleRecordMapper.getScheduleById(key.getScheduleId());
-        if (schedule == null) {
+        // 获取排班记录及其时间模板信息
+        com.example.dto.ScheduleDetailDto scheduleDetail = scheduleRecordMapper.getScheduleWithTemplateById(key.getScheduleId());
+        if (scheduleDetail == null) {
             return Result.fail(404, "挂号记录不存在");
         }
-        if (!request.getDoctorId().equals(schedule.getDocId())) {
+        if (!request.getDoctorId().equals(scheduleDetail.getDocId())) {
             return Result.fail(403, "无权更新该挂号记录");
         }
 
-        String patientStatus = mapPatientStatus(request.getPatientStatus());
-        int affected = registerRecordMapper.updateStatus(key.getPatientId(), key.getScheduleId(), patientStatus);
+        // 时间校验：检查当前时间是否在排班时段内
+        LocalDateTime now = LocalDateTime.now();
+        LocalDate today = now.toLocalDate();
+        java.time.LocalTime currentTime = now.toLocalTime();
+
+        // 检查日期
+        if (scheduleDetail.getScheduleDate().isAfter(today)) {
+            return Result.fail(400, "排班日期尚未到来，无法更新患者状态");
+        }
+        
+        // 如果是当天，检查时间段
+        if (scheduleDetail.getScheduleDate().isEqual(today)) {
+            if (scheduleDetail.getStartTime() != null && scheduleDetail.getEndTime() != null) {
+                if (currentTime.isBefore(scheduleDetail.getStartTime())) {
+                    String timePeriodName = scheduleDetail.getTimePeriodName() != null ? 
+                        scheduleDetail.getTimePeriodName() : "该时段";
+                    return Result.fail(400, String.format("%s尚未开始（开始时间：%s），无法更新患者状态", 
+                        timePeriodName, scheduleDetail.getStartTime()));
+                }
+                if (currentTime.isAfter(scheduleDetail.getEndTime())) {
+                    String timePeriodName = scheduleDetail.getTimePeriodName() != null ? 
+                        scheduleDetail.getTimePeriodName() : "该时段";
+                    return Result.fail(400, String.format("%s已结束（结束时间：%s），无法更新患者状态", 
+                        timePeriodName, scheduleDetail.getEndTime()));
+                }
+            }
+        } else if (scheduleDetail.getScheduleDate().isBefore(today)) {
+            // 如果是过去的日期，也视为已结束
+            return Result.fail(400, "排班日期已过，无法更新患者状态");
+        }
+
+        // 使用 StatusConverter 工具类进行状态转换
+        String patientStatusStr;
+        String doctorStatusStr;
+        try {
+            patientStatusStr = com.example.utils.StatusConverter.convertPatientStatus(request.getPatientStatus());
+            doctorStatusStr = com.example.utils.StatusConverter.convertDoctorStatus(request.getDoctorStatus());
+        } catch (IllegalArgumentException ex) {
+            return Result.fail(400, ex.getMessage());
+        }
+
+        int affected = registerRecordMapper.updateStatus(key.getPatientId(), key.getScheduleId(), patientStatusStr);
         if (affected == 0) {
             return Result.fail(500, "更新挂号状态失败");
         }
 
-        String doctorStatus = mapDoctorStatus(request.getDoctorStatus());
-        doctorMapper.updateDoctorStatus(request.getDoctorId(), doctorStatus);
+        int doctorAffected = doctorMapper.updateDoctorStatus(request.getDoctorId(), doctorStatusStr);
+        if (doctorAffected == 0) {
+            return Result.fail(500, "更新医生状态失败");
+        }
 
         return Result.success(null, "状态已更新");
     }
@@ -377,7 +509,7 @@ public class DoctorServiceImpl implements DoctorService {
         dto.setPatientName(row.getPatientName());
         dto.setApplyTime(toOffsetDateTime(row.getApplyTime()));
         dto.setTargetDate(row.getScheduleDate());
-        dto.setTargetTimePeriod(TimePeriodUtils.resolvePeriodIndex(row.getTimePeriodName()));
+        dto.setTargetTimePeriod(TimePeriodUtils.resolveTemplateIdToPeriodIndex(row.getTemplateId()));
         dto.setNote(row.getApplicationNote());
         return dto;
     }
@@ -387,10 +519,22 @@ public class DoctorServiceImpl implements DoctorService {
         dto.setDate(row.getScheduleDate());
         dto.setDocId(row.getDoctorId());
         dto.setDocName(row.getDoctorName());
-        int period = row.getTimePeriodName() != null
-                ? TimePeriodUtils.resolvePeriodIndex(row.getTimePeriodName())
+        int period = row.getTemplateId() != null
+                ? TimePeriodUtils.resolveTemplateIdToPeriodIndex(row.getTemplateId())
                 : TimePeriodUtils.resolvePeriodIndex(row.getStartTime());
         dto.setTimePeriod(period);
+        dto.setClinicPlace(row.getClinicNumber());
+        return dto;
+    }
+
+    private SelfShiftDto mapSelfShift(SelfShiftRow row) {
+        SelfShiftDto dto = new SelfShiftDto();
+        dto.setDate(row.getScheduleDate());
+        int period = row.getTemplateId() != null
+                ? TimePeriodUtils.resolveTemplateIdToPeriodIndex(row.getTemplateId())
+                : TimePeriodUtils.resolvePeriodIndex(row.getStartTime());
+        dto.setTimePeriod(period);
+        dto.setClinicPlace(row.getClinicNumber());
         return dto;
     }
 
@@ -401,7 +545,8 @@ public class DoctorServiceImpl implements DoctorService {
         dto.setGender(row.getGender());
         dto.setAge(calculateAge(row.getBirth()));
         dto.setScheduleDate(row.getScheduleDate());
-        dto.setTimePeriod(TimePeriodUtils.resolvePeriodIndex(row.getTimePeriodName()));
+        // 将 templateId 转换回编号返回给前端
+        dto.setTimePeriod(TimePeriodUtils.resolveTemplateIdToPeriodIndex(row.getTemplateId()));
         return dto;
     }
 
@@ -445,20 +590,12 @@ public class DoctorServiceImpl implements DoctorService {
         return java.time.Period.between(birth, LocalDate.now()).getYears();
     }
 
-    private String mapTimePeriodName(Integer index) {
-        if (index == null) {
-            return null;
-        }
-        switch (index) {
-            case 1:
-                return "上午";
-            case 2:
-                return "下午";
-            case 3:
-                return "晚上";
-            default:
-                return null;
-        }
+    /**
+     * 将时段编号映射为 schedule_template.id
+     * 1 -> TIME0001, 2 -> TIME0002, 3 -> TIME0003
+     */
+    private String mapTimePeriodIndexToTemplateId(Integer index) {
+        return TimePeriodUtils.mapPeriodIndexToTemplateId(index);
     }
 
     private String readableStatus(String status) {
@@ -473,40 +610,5 @@ public class DoctorServiceImpl implements DoctorService {
             default:
                 return status;
         }
-    }
-
-    private String buildScheduleChangeReason(ScheduleChangeRequest request) {
-        StringBuilder builder = new StringBuilder();
-        if (StringUtils.hasText(request.getReason())) {
-            builder.append(request.getReason());
-        }
-        if (request.getLeaveTimeLength() != null && request.getLeaveTimeLength() > 0) {
-            if (builder.length() > 0) {
-                builder.append("; ");
-            }
-            builder.append("请假时长:").append(request.getLeaveTimeLength()).append("天");
-        }
-        return builder.toString();
-    }
-
-    private String mapPatientStatus(Integer status) {
-        if (status == null) {
-            return "waiting";
-        }
-        switch (status) {
-            case 1:
-                return "in_progress";
-            case 2:
-                return "finished";
-            default:
-                return "waiting";
-        }
-    }
-
-    private String mapDoctorStatus(Integer status) {
-        if (status == null) {
-            return "idle";
-        }
-        return status == 1 ? "consulting" : "idle";
     }
 }

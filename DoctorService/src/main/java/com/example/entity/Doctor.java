@@ -15,7 +15,10 @@ public class Doctor implements Serializable {
     // doctor表特有信息
     private String docTitleId;  // 对应doctor表的doc_title_id
     private String status;      // 对应doctor表的status
-    private String clinicId;    // 对应doctor表的clinic_id
+    private String clinicId;    // 对应doctor表的clinic_id (已废弃)
+    private String departId;    // 对应doctor表的depart_id
+    private String details;     // 对应doctor表的details
+    private String specialty;   // 对应doctor表的specialty
     
     // 扩展信息（关联查询）
     private String departmentName;  // 关联department表的name
@@ -152,5 +155,29 @@ public class Doctor implements Serializable {
 
     public void setTitleName(String titleName) {
         this.titleName = titleName;
+    }
+
+    public String getDepartId() {
+        return departId;
+    }
+
+    public void setDepartId(String departId) {
+        this.departId = departId;
+    }
+
+    public String getDetails() {
+        return details;
+    }
+
+    public void setDetails(String details) {
+        this.details = details;
+    }
+
+    public String getSpecialty() {
+        return specialty;
+    }
+
+    public void setSpecialty(String specialty) {
+        this.specialty = specialty;
     }
 }

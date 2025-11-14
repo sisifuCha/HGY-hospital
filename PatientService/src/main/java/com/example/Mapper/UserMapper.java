@@ -14,11 +14,15 @@ public interface UserMapper extends BaseMapper<User> {
 
     /**
      * 根据登录账号查询用户信息
-     * @param userAccount 登录账号
+     * @param account 登录账号
      * @return 匹配的用户实体，如果不存在则返回 null
      */
-    @Select("SELECT * FROM \"user\" WHERE account = #{userAccount}")
-    User findByUserAccount(String userAccount);
+    User findByAccount(String account);
 
+    /**
+     * 查询患者类型的最大ID
+     * @return 最大ID字符串，如 "PAT0012"
+     */
+    @Select("SELECT max(id) FROM \"user\" WHERE user_type = 'PAT'")
+    String findMaxPatId();
 }
-

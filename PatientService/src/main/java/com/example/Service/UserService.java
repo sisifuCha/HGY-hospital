@@ -15,13 +15,14 @@ public interface UserService {
      * @param loginRequest 包含账号和密码的登录请求体
      * @return 包含 token 或错误信息的结果对象
      */
-    Result login(LoginRequest loginRequest);
+    Result<String> login(LoginRequest loginRequest);
 
     /**
      * 用户注册
      * @param registerRequest 包含用户信息的注册请求体
      * @return 包含成功或失败信息的结果对象
      */
-    Result register(RegisterRequest registerRequest);
-}
+    Result<String> register(RegisterRequest registerRequest);
 
+
+}

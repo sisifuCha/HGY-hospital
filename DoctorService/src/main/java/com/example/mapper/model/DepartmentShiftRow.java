@@ -7,8 +7,9 @@ public class DepartmentShiftRow {
     private LocalDate scheduleDate;
     private String doctorName;
     private String doctorId;
-    private String timePeriodName;
+    private String templateId; // schedule_template.id (TIME0001, TIME0002, TIME0003)
     private LocalTime startTime;
+    private String clinicNumber; // 诊室编号
 
     public LocalDate getScheduleDate() {
         return scheduleDate;
@@ -34,12 +35,12 @@ public class DepartmentShiftRow {
         this.doctorId = doctorId;
     }
 
-    public String getTimePeriodName() {
-        return timePeriodName;
+    public String getTemplateId() {
+        return templateId;
     }
 
-    public void setTimePeriodName(String timePeriodName) {
-        this.timePeriodName = timePeriodName;
+    public void setTemplateId(String templateId) {
+        this.templateId = templateId;
     }
 
     public LocalTime getStartTime() {
@@ -48,5 +49,13 @@ public class DepartmentShiftRow {
 
     public void setStartTime(LocalTime startTime) {
         this.startTime = startTime;
+    }
+
+    public String getClinicNumber() {
+        return clinicNumber;
+    }
+
+    public void setClinicNumber(String clinicNumber) {
+        this.clinicNumber = clinicNumber;
     }
 }

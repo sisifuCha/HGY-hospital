@@ -1,13 +1,16 @@
 package com.example.Service;
 
-
+//import com.example.Mapper.DoctorMapper;
+//import com.example.pojo.entity.Doctor;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.example.Mapper.DepartmentMapper;
 import com.example.Mapper.DoctorMapper;
 import com.example.Conmon.result.Result;
 import com.example.pojo.dto.DoctorDTO;
 import com.example.pojo.dto.DoctorsRequestDTO;
+import com.example.pojo.entity.Department;
 import com.example.pojo.entity.Doctor;
 import com.example.pojo.entity.DoctorSchedule;
 import com.example.pojo.vo.ScheduleWeekVO;
@@ -15,8 +18,8 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -24,6 +27,8 @@ public class DoctorServiceImpl implements DoctorService {
 
     @Autowired
     private DoctorMapper DoctorMapper;
+    @Autowired
+    private DepartmentMapper DepartmentMapper;
 
     @Override
     //@Transactional(rollbackFor = Exception.class)
@@ -72,14 +77,27 @@ public class DoctorServiceImpl implements DoctorService {
         QueryWrapper<Doctor> queryWrapper = new QueryWrapper<>();
         if (filterValue != null && !filterValue.isEmpty()) {
             if ("depart".equals(filterName)) {
-                queryWrapper.eq("d.depart_id", filterValue);
+                queryWrapper.eq("depart_id", filterValue);
             } else if ("title".equals(filterName)) {
-                queryWrapper.eq("d.doc_title_id", filterValue);
+                queryWrapper.eq("doc_title_id", filterValue);
             }
         }
-        queryWrapper.orderByDesc("d.id");
+        queryWrapper.orderByDesc("id");
 
         return Result.success(DoctorMapper.selectDoctorPage(pageParam, queryWrapper));
+    }
+
+    @Override
+    public List<Department> getDepartmentOptions() {
+        // 使用 MyBatis-Plus 查询 Department 表中的所有数据
+        // (null) 表示没有查询条件
+        return DepartmentMapper.selectList(null);
+    }
+
+    private Doctor convertToEntity(DoctorDTO dto) {
+        Doctor doctor = new Doctor();
+        BeanUtils.copyProperties(dto, doctor);
+        return doctor;
     }
 
     @Override
@@ -109,12 +127,7 @@ public class DoctorServiceImpl implements DoctorService {
         } else {
             return Result.fail("无效的周次");
         }
-    }
 
-    private Doctor convertToEntity(DoctorDTO dto) {
-        Doctor doctor = new Doctor();
-        BeanUtils.copyProperties(dto, doctor);
-        return doctor;
     }
 
     private ScheduleWeekVO getScheduleWeekVO(List<DoctorSchedule> doctorSchedules){
