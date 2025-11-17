@@ -46,8 +46,8 @@ public class DoctorController {
     }
 
     @GetMapping("/getSchedules")
-    public Result<ScheduleWeekVO> getSchedules(@RequestParam("week") Integer week,@RequestParam("departId") String departId){
-        System.out.println("收到请求，周次和科室id分别为"+week+"  "+departId);
-        return doctorService.getScheduleWeek(week,departId);
+    public Result<ScheduleWeekVO> getSchedules(@RequestParam("week") Integer week,@RequestParam("departName") String departName){
+        System.out.println("收到请求，周次和科室名字分别为"+week+"  "+departName);
+        return doctorService.getScheduleWeek(week,departName);
     }
 }

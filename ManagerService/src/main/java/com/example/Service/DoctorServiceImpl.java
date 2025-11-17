@@ -101,11 +101,13 @@ public class DoctorServiceImpl implements DoctorService {
     }
 
     @Override
-    public Result<ScheduleWeekVO> getScheduleWeek(Integer week, String departId) {
+    public Result<ScheduleWeekVO> getScheduleWeek(Integer week, String departName) {
         LocalDate currentDate = LocalDate.now();
         LocalDate monday;
         LocalDate sunday;
 
+        //TODO 获取对应departId
+        String departId = DepartmentMapper.getIdByName(departName);
         // 获取当前日期是星期几（1-7，1代表星期一，7代表星期日）
         int dayOfWeek = currentDate.getDayOfWeek().getValue();
 
