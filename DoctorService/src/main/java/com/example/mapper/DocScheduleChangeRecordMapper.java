@@ -40,6 +40,14 @@ public interface DocScheduleChangeRecordMapper {
     })
     List<ScheduleChangeRecordRow> findByDoctor(@Param("docId") String docId);
 
+    @Select({
+        "SELECT COUNT(*) FROM \"doc_schedule_change_record\"",
+        "WHERE \"doc_id\" = #{docId}",
+        "  AND \"ori_sch_id\" = #{oriSchId}",
+        "  AND \"status\" = 'pending'"
+    })
+    int countPendingByDocAndSchedule(@Param("docId") String docId, @Param("oriSchId") String oriSchId);
+
     class ScheduleChangeRecordRow {
         private String docId;
         private String originalScheduleId;

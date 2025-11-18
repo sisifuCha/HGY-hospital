@@ -142,9 +142,16 @@ public class DoctorServiceImpl implements DoctorService {
             return Result.fail(500, "更新加号申请失败");
         }
 
+        // 推送给医生的订阅端以更新申请列表
         emitAddNumberSnapshot(schedule.getDocId(), null);
 
-        return Result.success(null, "审核完成");
+        // 返回带有后续操作码的响应，前端可据此决定下一步动作
+        java.util.Map<String, String> payload = new java.util.HashMap<>();
+        payload.put("decision", status);
+        // 如果被批准，前端可能需要通知患者或直接将其加入候诊/挂号队列
+        payload.put("nextAction", request.isApproved() ? "notify_patient" : "none");
+
+        return Result.success(payload, "审核完成");
     }
 
     @Override
@@ -256,7 +263,16 @@ public class DoctorServiceImpl implements DoctorService {
             return Result.fail(404, "未找到原班次记录");
         }
 
-        // 4. 根据 changeType 处理不同逻辑
+        // 4. 检查是否存在待处理的重复申请
+        int pendingCount = scheduleChangeRecordMapper.countPendingByDocAndSchedule(
+            request.getDocId(),
+            originalSchedule.getId()
+        );
+        if (pendingCount > 0) {
+            return Result.fail(409, "该班次已有待处理的变更申请，请勿重复提交");
+        }
+
+        // 5. 根据 changeType 处理不同逻辑
         String targetSchId = null;
         LocalDate targetDate = null;
         String templateId = null;
@@ -314,7 +330,7 @@ public class DoctorServiceImpl implements DoctorService {
             targetSchId = targetSchedule.getId();
         }
 
-        // 5. 插入变更记录
+        // 6. 插入变更记录
         int affected = scheduleChangeRecordMapper.insertChangeRequest(
             request.getDocId(),
             originalSchedule.getId(),
@@ -328,10 +344,10 @@ public class DoctorServiceImpl implements DoctorService {
         );
 
         if (affected == 0) {
-            return Result.fail(500, "插入变更记录失败");
+            return Result.fail(409, "插入变更记录失败，可能存在并发冲突");
         }
 
-        // 6. 推送通知
+        // 7. 推送通知
         emitNotificationSnapshot(request.getDocId(), null);
 
         return Result.success(null, "班次变更申请已提交");

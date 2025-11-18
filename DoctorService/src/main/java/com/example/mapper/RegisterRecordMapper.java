@@ -26,7 +26,7 @@ public interface RegisterRecordMapper {
               "JOIN \"patient\" p ON rr.\"patient_id\" = p.\"id\"",
               "JOIN \"user\" u ON p.\"id\" = u.\"id\"",
               "LEFT JOIN \"schedule_template\" st ON dsr.template_id = st.id",
-              "WHERE dsr.\"doc_id\" = #{docId} AND rr.\"status\" != 'cancelled'",
+              "WHERE dsr.\"doc_id\" = #{docId} AND (rr.\"status\" = '已挂号' OR rr.\"status\" = '就诊中')",
               "ORDER BY dsr.schedule_date, st.start_time NULLS LAST, u.\"name\""
        })
        List<PatientSummaryRow> selectPatientSummaryRows(@Param("docId") String docId);
