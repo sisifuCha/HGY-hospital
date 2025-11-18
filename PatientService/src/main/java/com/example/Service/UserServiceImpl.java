@@ -11,6 +11,7 @@ import com.example.utils.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -112,5 +113,20 @@ public class UserServiceImpl implements UserService {
 
         // 6. 返回成功结果
         return Result.success("注册成功");
+    }
+
+    @Override
+    public Result<String> getPatientIdByAccount(String account) {
+        if (!StringUtils.hasText(account)) {
+            return Result.fail(400, "账号不能为空");
+        }
+        User user = userMapper.findByAccount(account);
+        if (user == null) {
+            return Result.fail(404, "用户不存在");
+        }
+        if (!"PAT".equals(user.getUserType())) {
+            return Result.fail(400, "该账号不是患者类型");
+        }
+        return Result.success(user.getUserId());
     }
 }

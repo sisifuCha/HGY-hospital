@@ -5,11 +5,13 @@ import com.example.Mapper.RegistrationMapper;
 import com.example.conmon.exception.CreateFailedException;
 import com.example.conmon.exception.DuplicateRegistrationException;
 import com.example.conmon.exception.SourceFullException;
-import com.example.conmon.result.Result;
 import com.example.pojo.dto.DepartmentWithSubDepartmentsDto;
 import com.example.pojo.dto.DoctorWithSchedulesDto;
 import com.example.pojo.dto.RegistrationDto;
+import com.example.pojo.dto.RegistrationQueryDto;
 import com.example.pojo.entity.Doctor;
+import com.example.pojo.vo.PageVo;
+import com.example.pojo.vo.RegistrationVo;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
@@ -18,7 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
 import java.util.List;
 
 @Service
@@ -87,6 +89,17 @@ public class RegistrationServiceImpl implements RegistrationService {
     }
 
     @Override
+    public PageVo<RegistrationVo> getRegistrations(RegistrationQueryDto queryDto) {
+        if (queryDto.getStatus() != null && !queryDto.getStatus().isEmpty()) {
+            queryDto.setStatusList(Arrays.asList(queryDto.getStatus().split(",")));
+        }
+        int offset = (queryDto.getPage() - 1) * queryDto.getPageSize();
+        List<RegistrationVo> registrations = registrationMapper.findRegistrationsByQuery(queryDto, offset, queryDto.getPageSize());
+        long total = registrationMapper.countRegistrationsByQuery(queryDto);
+        return new PageVo<>(queryDto.getPage(), queryDto.getPageSize(), total, registrations);
+    }
+
+    @Override
     public RegistrationDto getRegistrationByKey(String patientId, String scheduleRecordId) {
         return registrationMapper.findRegistrationByKey(patientId, scheduleRecordId);
     }
@@ -94,22 +107,23 @@ public class RegistrationServiceImpl implements RegistrationService {
     @Override
     @Transactional
     public RegistrationDto cancelRegistration(String patientId, String scheduleRecordId) {
-        String currentStatus = registrationMapper.getRegistrationStatusByKey(patientId, scheduleRecordId);
-        if (currentStatus == null) {
-            throw new IllegalArgumentException("记录不存在");
+        String status = registrationMapper.getRegistrationStatusByKey(patientId, scheduleRecordId);
+        if (status == null || "已取消".equals(status) || "已就诊".equals(status)) {
+            // 挂号不存在，或已是终态，无法取消
+            return null;
         }
-        if (!("预约中".equals(currentStatus) || "已预约".equals(currentStatus))) {
-            throw new IllegalArgumentException("当前状态不可取消");
-        }
-        boolean needRollbackSource = "已预约".equals(currentStatus);
         int updated = registrationMapper.updateRegistrationStatusToCanceled(patientId, scheduleRecordId);
-        if (updated == 0) {
-            throw new CreateFailedException("取消失败");
+        if (updated > 0) {
+            // 只有“已预约”的状态才需要回补号源
+            if ("已预约".equals(status)) {
+                registrationMapper.incrementScheduleLeftSource(scheduleRecordId);
+            }
         }
-        if (needRollbackSource) {
-            registrationMapper.incrementScheduleLeftSource(scheduleRecordId);
-        }
-        RegistrationDto dto = registrationMapper.findRegistrationByKey(patientId, scheduleRecordId);
-        return dto;
+        return registrationMapper.findRegistrationByKey(patientId, scheduleRecordId);
+    }
+
+    @Override
+    public RegistrationVo getRegistrationByPatientAndSchedule(String patientId, String scheduleRecordId) {
+        return registrationMapper.findRegistrationByPatientAndSchedule(patientId, scheduleRecordId);
     }
 }

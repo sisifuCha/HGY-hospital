@@ -19,8 +19,11 @@ public class DepartmentController {
 
     @GetMapping("/list")
     public Result<List<Department>> list() {
-        List<Department> list = departmentService.getAllDepartmentsWithHierarchy();
-        return Result.success(list);
+        try {
+            List<Department> list = departmentService.getAllDepartmentsWithHierarchy();
+            return Result.success(list);
+        } catch (Exception ex) {
+            return Result.fail(500, "服务器内部错误");
+        }
     }
 }
-
