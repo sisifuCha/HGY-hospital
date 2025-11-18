@@ -10,8 +10,7 @@ public class MyContextListener implements ServletContextListener {
     private SSHConnection conexionssh;
 
     @Override
-    public void contextInitialized(ServletContextEvent sce) {
-        System.out.println("Context initialized ... !");
+    public void contextInitialized(ServletContextEvent sce) {System.out.println("Context initialized ... !");
         try {
             conexionssh = new SSHConnection();
             System.out.println("SSH连接已建立");

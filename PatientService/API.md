@@ -31,13 +31,13 @@
 - URL: `/api/registration/doctors`
 - Method: `GET`
 - Params:
-  - `departmentId` (number, required)
+  - `departmentId` (string, required)
   - `date` (string, required, YYYY-MM-DD)
 - Success Response (200):
   ```json
   [
     {
-      "doctorId": "doc-001",
+      "doctorId": "DOC001",
       "doctorName": "张三",
       "doctorTitle": "主任医师",
       "specialty": "高血压、冠心病等心血管疾病",
@@ -45,8 +45,8 @@
         {
           "scheduleId": "101",
           "timePeriodName": "上午",
-          "startTime": "08:00",
-          "endTime": "12:00",
+          "startTime": "08:00:00",
+          "endTime": "12:00:00",
           "registrationFee": 50,
           "leftSourceCount": 5
         }
@@ -63,17 +63,44 @@
 - Success Response (200):
   ```json
   {
-    "id": "doc-001",
+    "id": "DOC001",
     "name": "张三",
-    "docTitleId": "T001",
+    "docTitleId": "TITLE001",
     "title": "主任医师",
     "specialty": "心血管相关疾病",
     "details": "从业20年，经验丰富",
-    "departId": "101",
-    "clinicId": "CL001",
-    "status": "ACTIVE"
+    "departId": "DEP101",
+    "clinicId": "CLIN001",
+    "status": "在职"
   }
   ```
+
+### 1.4 根据账号获取患者ID（新增）
+- URL: `/user/patient-id`
+- Method: `GET`
+- Query Params:
+  - `account` (string, required)
+- Success Response (200):
+  ```json
+  {
+    "code": 200,
+    "msg": "success",
+    "data": "PAT0001"
+  }
+  ```
+- Error Response (示例):
+  - 账号为空：
+    ```json
+    { "code": 400, "msg": "账号不能为空", "data": null }
+    ```
+  - 用户不存在：
+    ```json
+    { "code": 404, "msg": "用户不存在", "data": null }
+    ```
+  - 非患者账号：
+    ```json
+    { "code": 400, "msg": "该账号不是患者类型", "data": null }
+    ```
 
 ---
 ## 2. 待实现的最小核心“挂号”接口
@@ -85,19 +112,19 @@
 - Request Body:
   ```json
   {
-    "patientId": "PAT123456",
+    "patientId": "PAT0001",
     "scheduleRecordId": "SCH7890",
     "confirm": true
   }
   ```
 - 字段说明：
   - `confirm`: true → 已预约；false → 预约中。
-- Success Response (201):
+- Success Response (200):
   ```json
   {
-    "patientId": "PAT123456",
+    "patientId": "PAT0001",
     "scheduleRecordId": "SCH7890",
-    "registerTime": "2025-11-15T09:30:12",
+    "registerTime": "2025-11-15 09:30:12",
     "status": "已预约"
   }
   ```
@@ -121,7 +148,7 @@
     "total": 54,
     "items": [
       {
-        "patientId": "PAT123456",
+        "patientId": "PAT0001",
         "scheduleRecordId": "SCH7890",
         "registerTime": "2025-11-15T09:30:12",
         "status": "已预约",
@@ -143,9 +170,9 @@
 - Success Response (200):
   ```json
   {
-    "patientId": "PAT123456",
+    "patientId": "PAT0001",
     "scheduleRecordId": "SCH7890",
-    "registerTime": "2025-11-15T09:30:12",
+    "registerTime": "2025-11-15 09:30:12",
     "status": "已预约",
     "doctorId": "DOC0023",
     "departmentId": "DEP005",
@@ -163,13 +190,127 @@
 - Success Response (200):
   ```json
   {
-    "patientId": "PAT123456",
+    "patientId": "PAT0001",
     "scheduleRecordId": "SCH7890",
     "status": "已取消"
   }
   ```
 
----
+### 2.5 读取单条挂号（按挂号ID）
+- URL: `/api/registrations/{registrationId}`
+- Method: `GET`
+- Path Params:
+  - `registrationId` (string, required)  // 对应数据库表 `register_record` 的主键（或唯一标识）
+- Description: 按挂号表的内部 ID 读取单条挂号记录，适用于前端在列表中点击某条记录查看详情的场景。与 `/api/registrations/by-key` 不同，本接口以挂号表的主键为索引，便于运维和内部引用。请求应校验调用者对该 patientId 的访问权限（仅患者本人或有权限的管理/业务系统）。
+- Success Response (200):
+  ```json
+  {
+    "registrationId": "REG0123",
+    "patientId": "PAT0001",
+    "scheduleRecordId": "SCH7890",
+    "registerTime": "2025-11-15T09:30:12",
+    "status": "已预约",
+    "doctorId": "DOC0023",
+    "departmentId": "DEP005",
+    "clinicId": "CLIN001",
+    "scheduleDate": "2025-11-15",
+    "timePeriodName": "上午",
+    "registrationFee": 50,
+    "paymentStatus": "已支付"
+  }
+  ```
+- 注：`paymentStatus` 为可选字段，根据系统是否关联合并支付信息返回。
+- Error Responses (examples):
+  - 找不到记录：
+    ```json
+    { "code": 404, "message": "挂号记录未找到", "data": null }
+    ```
+  - 无权访问（尝试访问非本人记录）：
+    ```json
+    { "code": 403, "message": "无权访问该挂号记录", "data": null }
+    ```
+  - 参数错误：
+    ```json
+    { "code": 400, "message": "registrationId 不能为空", "data": null }
+    ```
+- Notes / 校验要点:
+  - 如果系统没有单独的 `registrationId` 字段，可由 `patientId + scheduleRecordId` 唯一定位；本接口可返回同样的复合键字段以兼容现有设计。
+  - 必须校验记录的归属（patientId）以防信息泄露。
+  - 返回字段尽量与前端所需字段对齐，必要时可扩展（例如医生简介、诊室名称、是否可取消等）。
+
+### 2.6 上传患者个人档案
+- URL: `/api/patients/{patientId}/profile`
+- Method: `POST`
+- Path Params:
+  - `patientId` (string, required)  // 患者唯一标识
+- Request Body:
+  ```json
+  {
+    "name": "张三",
+    "gender": "男",
+    "birthDate": "1985-06-15",
+    "phone": "13800138000",
+    "address": "北京市朝阳区某小区",
+    "medicalHistory": "无",
+    "allergies": "青霉素"
+  }
+  ```
+- Description: 上传或更新患者的个人档案信息。调用者需校验对该 patientId 的访问权限。
+- Success Response (200):
+  ```json
+  {
+    "code": 200,
+    "message": "档案上传成功",
+    "data": null
+  }
+  ```
+- Error Responses (examples):
+  - 参数错误：
+    ```json
+    { "code": 400, "message": "请求参数不合法", "data": null }
+    ```
+  - 无权访问：
+    ```json
+    { "code": 403, "message": "无权访问该患者档案", "data": null }
+    ```
+  - 患者不存在：
+    ```json
+    { "code": 404, "message": "患者不存在", "data": null }
+    ```
+
+### 2.7 读取患者个人档案
+- URL: `/api/patients/{patientId}/profile`
+- Method: `GET`
+- Path Params:
+  - `patientId` (string, required)  // 患者唯一标识
+- Description: 读取患者的个人档案信息。调用者需校验对该 patientId 的访问权限。
+- Success Response (200):
+  ```json
+  {
+    "patientId": "PAT0001",
+    "name": "张三",
+    "gender": "男",
+    "birthDate": "1985-06-15",
+    "phone": "13800138000",
+    "address": "北京市朝阳区某小区",
+    "medicalHistory": "无",
+    "allergies": "青霉素"
+  }
+  ```
+- Error Responses (examples):
+  - 无权访问：
+    ```json
+    { "code": 403, "message": "无权访问该患者档案", "data": null }
+    ```
+  - 患者不存在：
+    ```json
+    { "code": 404, "message": "患者不存在", "data": null }
+    ```
+  - 参数错误：
+    ```json
+    { "code": 400, "message": "patientId 不能为空", "data": null }
+    ```
+
 ## 3. 业务与校验要点
 - 身份校验：patientId 归属、黑名单、当日限额。
 - 排班校验：scheduleRecordId 存在、日期未过、剩余号源 > 0。

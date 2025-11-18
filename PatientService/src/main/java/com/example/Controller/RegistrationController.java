@@ -6,7 +6,9 @@ import com.example.pojo.dto.CreateRegistrationRequest;
 import com.example.pojo.dto.DepartmentWithSubDepartmentsDto;
 import com.example.pojo.dto.DoctorWithSchedulesDto;
 import com.example.pojo.dto.RegistrationDto;
+import com.example.pojo.dto.RegistrationQueryDto;
 import com.example.pojo.entity.Doctor;
+import com.example.pojo.vo.RegistrationVo;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -26,41 +28,52 @@ public class RegistrationController {
      * 根据科室ID和日期获取医生及其排班信息
      * @param departmentId 科室ID
      * @param date 日期
-     * @return
+     * @return 医生及其排班信息
      */
     @GetMapping("/registration/doctors")
-    public List<DoctorWithSchedulesDto> getDoctorsWithSchedules(
+    public Result<?> getDoctorsWithSchedules(
             @RequestParam String departmentId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
-        return registrationService.getDoctorsWithSchedulesByDepartment(departmentId, date);
+        try {
+            return Result.success(registrationService.getDoctorsWithSchedulesByDepartment(departmentId, date));
+        } catch (IllegalArgumentException ex) {
+            return Result.fail(404, "科室ID不存在");
+        } catch (Exception ex) {
+            return Result.fail(400, "日期格式错误");
+        }
     }
 
     /**
      * 根据医生ID获取医生详细信息
      * @param doctorId 医生ID
-     * @return
+     * @return 医生详细信息
      */
     @GetMapping("/doctors/{doctorId}")
-    public Doctor getDoctorDetails(@PathVariable String doctorId) {
-        return registrationService.getDoctorDetailsById(doctorId);
+    public Result<?> getDoctorDetails(@PathVariable String doctorId) {
+        return Result.success(registrationService.getDoctorDetailsById(doctorId));
     }
 
     /**
      * 获取所有科室及其子科室
-     * @return
+     * @return 科室及其子科室列表
      */
     @GetMapping("/departments")
-    public List<DepartmentWithSubDepartmentsDto> getDepartments() {
-        return registrationService.getAllDepartments();
+    public Result<?> getDepartments() {
+        return Result.success(registrationService.getAllDepartments());
+    }
+
+    @GetMapping("/registrations")
+    public Result<?> getRegistrations(RegistrationQueryDto queryDto) {
+        return Result.success(registrationService.getRegistrations(queryDto));
     }
 
     /**
      * 创建挂号信息
      * @param req 挂号请求体
-     * @return
+     * @return 创建的挂号信息
      */
     @PostMapping("/registrations")
-    public Result<RegistrationDto> createRegistration(@RequestBody @Valid CreateRegistrationRequest req) {
+    public Result<?> createRegistration(@RequestBody @Valid CreateRegistrationRequest req) {
         RegistrationDto dto = registrationService.createRegistration(req.getPatientId(), req.getScheduleRecordId(), req.isConfirm());
         return Result.success(dto);
     }
@@ -69,10 +82,10 @@ public class RegistrationController {
      * 根据患者ID和排班记录ID获取挂号信息
      * @param patientId 患者ID
      * @param scheduleRecordId 排班记录ID
-     * @return
+     * @return 挂号信息
      */
     @GetMapping("/registrations/by-key")
-    public Result<RegistrationDto> getRegistrationByKey(@RequestParam String patientId,
+    public Result<?> getRegistrationByKey(@RequestParam String patientId,
                                                         @RequestParam String scheduleRecordId) {
         return Result.success(registrationService.getRegistrationByKey(patientId, scheduleRecordId));
     }
@@ -81,7 +94,7 @@ public class RegistrationController {
      * 取消挂号
      * @param patientId 患者ID
      * @param scheduleRecordId 排班记录ID
-     * @return
+     * @return 取消后的挂号信息
      */
     @DeleteMapping("/registrations")
     public Result<RegistrationDto> cancelRegistration(@RequestParam String patientId,
