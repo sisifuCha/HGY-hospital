@@ -41,6 +41,9 @@ public interface DoctorMapper {
            ")")
     java.util.List<Doctor> getDoctorsByDepartment(@Param("docId") String docId);
 
+    @Select("SELECT \"doc_title_id\" FROM \"doctor\" WHERE \"id\" = #{docId}")
+    String getDoctorTitleId(@Param("docId") String docId);
+
        @Update({
               "UPDATE \"doctor\" SET \"status\" = #{status} WHERE \"id\" = #{docId}"
        })
