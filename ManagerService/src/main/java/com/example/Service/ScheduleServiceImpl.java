@@ -4,9 +4,12 @@ import com.example.Conmon.result.Result;
 import com.example.Mapper.DepartmentMapper;
 import com.example.Mapper.DoctorMapper;
 import com.example.Mapper.ScheduleMapper;
+import com.example.pojo.dto.HistoryScheduleDTO;
 import com.example.pojo.dto.NextWeekScheduleDTO;
 import com.example.pojo.dto.ScheduleDTO;
 import com.example.pojo.entity.DoctorSchedule;
+import com.example.pojo.vo.HistoryScheduleWeekVO;
+import com.example.pojo.vo.ScheduleWeekVO;
 import com.example.utils.ScheduleIdGenerator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -41,7 +44,7 @@ public class ScheduleServiceImpl implements ScheduleService {
     }
 
     @Override
-    public Result<Void> createSchedules(NextWeekScheduleDTO nextWeekScheduleDTO) {
+    public Result<Void> createSchedules(NextWeekScheduleDTO nextWeekScheduleDTO, Integer week) {
         List<DoctorSchedule> schedules = new ArrayList<>();
         //遍历nextWeekScheduleDTO的属性，处理其中的scheduleDTO对象
         //java的反射机制，运行时获取类的信息
@@ -75,7 +78,7 @@ public class ScheduleServiceImpl implements ScheduleService {
                             doctorSchedule.setDoctor_id(doctorMapper.getIdByName(dto.getDoctor_name()));
                             doctorSchedule.setSchedule_id(scheduleIdGenerator.getNextId());
                             doctorSchedule.setSchedule_time_id(dto.getTemplate_id());
-                            executeScheduleDate(doctorSchedule,fieldName,0);
+                            executeScheduleDate(doctorSchedule,fieldName,week);
                             schedules.add(doctorSchedule);
                         } else {
                             System.out.println("集合中包含非ScheduleDTO对象: " + item);
@@ -116,6 +119,66 @@ public class ScheduleServiceImpl implements ScheduleService {
         return Result.fail("删除项不存在");
     }
 
+    @Override
+    public Result<HistoryScheduleWeekVO> getScheduleHistory(LocalDate date, String depart_name) {
+        HistoryScheduleWeekVO historyScheduleWeekVO = new HistoryScheduleWeekVO();
+        //获取date所在周的周一和周六时间
+        LocalDate monday = date.with(DayOfWeek.MONDAY);
+        LocalDate sunday = date.with(DayOfWeek.SUNDAY);
+        List<HistoryScheduleDTO> doctorSchedules = scheduleMapper.getScheduleHistory(monday,sunday,depart_name);
+        //对实体做视图转换
+        Map<LocalDate,String> dayMapping = new HashMap<>();
+        dayMapping.put(date.with(DayOfWeek.MONDAY), "Mon");    // 周一
+        dayMapping.put(date.with(DayOfWeek.TUESDAY), "Tue");   // 周二
+        dayMapping.put(date.with(DayOfWeek.WEDNESDAY), "Wed"); // 周三
+        dayMapping.put(date.with(DayOfWeek.THURSDAY), "Thu");  // 周四
+        dayMapping.put(date.with(DayOfWeek.FRIDAY), "Fri");    // 周五
+        dayMapping.put(date.with(DayOfWeek.SATURDAY), "Sat");  // 周六
+        dayMapping.put(date.with(DayOfWeek.SUNDAY), "Sun");    // 周日
+        //做周中分类
+        for(HistoryScheduleDTO dto:doctorSchedules){
+            LocalDate currentDate = dto.getDate();
+            if (dayMapping.containsKey(currentDate)) {
+                String dayOfWeek = dayMapping.get(currentDate);
+                ScheduleDTO scheduleDTO = new ScheduleDTO();
+                scheduleDTO.setDoctor_name(dto.getDoctor_name());
+                scheduleDTO.setTemplate_id(dto.getTemplate_id());
+
+                // 使用反射获取目标属性并添加对象
+                try {
+                    // 1. 获取目标类的Class对象
+                    Class<?> targetClass = historyScheduleWeekVO.getClass();
+
+                    // 2. 根据属性名（dayOfWeek的值）获取对应的Field对象
+                    Field targetField = targetClass.getDeclaredField(dayOfWeek);
+
+                    // 3. 设置可访问性（防止因private修饰而无法访问）
+                    targetField.setAccessible(true);
+
+                    // 4. 获取该属性在当前对象中的值（即您需要的集合）
+                    Object fieldValue = targetField.get(historyScheduleWeekVO);
+
+                    // 5. 安全检查：确保获取到的是一个List集合
+                    if (fieldValue instanceof List) {
+                        // 6. 将scheduleDTO添加到集合中
+                        @SuppressWarnings("unchecked")
+                        List<ScheduleDTO> targetList = (List<ScheduleDTO>) fieldValue;
+                        targetList.add(scheduleDTO);
+                    } else {
+                        // 处理类型不匹配的情况，例如记录错误日志
+                        System.err.println("错误: 属性 " + dayOfWeek + " 不是List类型或为null。");
+                    }
+
+                } catch (NoSuchFieldException e) {
+                    System.err.println("错误: 在类 " + " 中未找到名为 '" + dayOfWeek + "' 的属性。");
+                } catch (IllegalAccessException e) {
+                    System.err.println("错误: 无法访问属性 '" + dayOfWeek + "'。");
+                }
+            }
+        }
+        return Result.success(historyScheduleWeekVO);
+    }
+    /******************************************************/
     private void executeScheduleDate(DoctorSchedule doctorSchedule, String date, Integer code) {
         // 创建日期缩写与DayOfWeek的映射关系
         Map<String, DayOfWeek> dayMapping = new HashMap<>();
@@ -134,15 +197,11 @@ public class ScheduleServiceImpl implements ScheduleService {
             if (code == 0) {
                 // 获取本周对应日期的日期[1](@ref)
                 targetDate = LocalDate.now().with(TemporalAdjusters.previousOrSame(targetDayOfWeek));
-            } else if (code == 1) {
+            } else{
                 // 获取下周对应日期的日期[1](@ref)
                 LocalDate thisWeekDay = LocalDate.now().with(TemporalAdjusters.previousOrSame(targetDayOfWeek));
-                targetDate = thisWeekDay.plusWeeks(1);
-            } else {
-                // 如果code不是0或1，设置为当前日期
-                targetDate = LocalDate.now();
+                targetDate = thisWeekDay.plusWeeks(code);
             }
-
             // 设置日期到doctorSchedule对象
             doctorSchedule.setDate(targetDate);
         } else {

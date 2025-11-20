@@ -11,6 +11,13 @@
         <result column="left_source_count" property="available_slots"/>
         <result column="status" property="status"/>
     </resultMap>
+
+    <resultMap id="HistoryScheduleDTOMap" type="com.example.pojo.dto.HistoryScheduleDTO">
+        <result column="name" property="name"/>
+        <result column="schedule_date" property="date"/>
+        <result column="template_id" property="template_id"/>
+    </resultMap>
+
     <insert id="insertBatch">
         INSERT INTO doc_schedule_record (id, template_id, schedule_date, left_source_count, doc_id, clinic_id, status) <!-- 请替换为您的表名和字段 -->
         VALUES
