@@ -10,8 +10,8 @@ import java.math.BigDecimal;
 @Mapper
 public interface PayRecordMapper {
 
-    @Insert("INSERT INTO pay_record (id, pay_time, pay_status, ori_amount, ask_pay_amount, patient_id, doc_id) " +
-            "VALUES (#{id}, #{payTime}, #{payStatus}, #{oriAmount}, #{askPayAmount}, #{patientId}, #{docId})")
+    @Insert("INSERT INTO pay_record (id, pay_time, pay_status, ori_amount, ask_pay_amount, patient_id, sch_id) " +
+            "VALUES (#{id}, #{payTime}, #{payStatus}, #{oriAmount}, #{askPayAmount}, #{patientId}, #{schId})")
     int insertPayRecord(PayRecord payRecord);
 
     @Select("SELECT ori_cost FROM title_number_source WHERE id = #{titleId}")

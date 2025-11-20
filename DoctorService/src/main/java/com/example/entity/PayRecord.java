@@ -13,7 +13,7 @@ public class PayRecord implements Serializable {
     private BigDecimal oriAmount;
     private BigDecimal askPayAmount;
     private String patientId;
-    private String docId;
+    private String schId;
 
     public String getId() {
         return id;
@@ -63,11 +63,11 @@ public class PayRecord implements Serializable {
         this.patientId = patientId;
     }
 
-    public String getDocId() {
-        return docId;
+    public String getSchId() {
+        return schId;
     }
 
-    public void setDocId(String docId) {
-        this.docId = docId;
+    public void setSchId(String schId) {
+        this.schId = schId;
     }
 }

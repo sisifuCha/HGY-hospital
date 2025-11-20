@@ -143,7 +143,7 @@ public class DoctorServiceImpl implements DoctorService {
             return Result.fail(404, "未找到关联排班记录");
         }
 
-        String status = request.isApproved() ? "approved" : "rejected";
+        String status = request.isApproved() ? "已同意" : "已拒绝";
         int affected = addNumberSourceRecordMapper.updateRequestStatus(key.getPatientId(), key.getScheduleId(), status);
         if (affected == 0) {
             return Result.fail(500, "更新加号申请失败");
@@ -200,7 +200,7 @@ public class DoctorServiceImpl implements DoctorService {
                 payRecord.setOriAmount(oriCost);
                 payRecord.setAskPayAmount(askPayAmount);
                 payRecord.setPatientId(key.getPatientId());
-                payRecord.setDocId(schedule.getDocId());
+                payRecord.setSchId(schedule.getId());
                 // pay_time为null,待支付时更新
 
                 int inserted = payRecordMapper.insertPayRecord(payRecord);
@@ -688,10 +688,12 @@ public class DoctorServiceImpl implements DoctorService {
             return "pending";
         }
         switch (status.toLowerCase()) {
+            case "已同意":
             case "approved":
-                return "approved";
+                return "已同意";
+            case "已拒绝":
             case "rejected":
-                return "rejected";
+                return "已拒绝";
             default:
                 return status;
         }
