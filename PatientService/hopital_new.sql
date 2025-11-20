@@ -148,3 +148,16 @@ create index idx_user_account on "user" using btree ("5");
 create index idx_user_phone on "user" using btree ("7");
 comment on table public."user" is '用户基础信息表';
 
+create table public.waiting_queue (
+    id varchar(64) primary key,
+    patient_id varchar(64) not null,
+    sch_id varchar(64) not null,
+    apply_time timestamp without time zone default now(),
+    status varchar(32) not null,
+    registration_id varchar(64),
+    foreign key (patient_id) references public.patient (id) match simple on update cascade on delete cascade,
+    foreign key (sch_id) references public.doc_schedule_record (id) match simple on update cascade on delete cascade
+);
+create index idx_waiting_schedule on waiting_queue using btree (sch_id);
+create index idx_waiting_patient on waiting_queue using btree (patient_id);
+comment on table public.waiting_queue is '候补队列表';
