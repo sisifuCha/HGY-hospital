@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component; // 新增注解
 
 import javax.annotation.PostConstruct; // 新增导入
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Component // 添加此注解，让Spring管理这个类
@@ -24,6 +25,7 @@ public class ScheduleIdGenerator {
 
     public void initCounter() { // 改为实例方法
         String maxId = scheduleMapper.getMaxId();
+        //TODO 获取所有ID通过ID排序
         if (maxId != null && maxId.startsWith(PREFIX) && maxId.length() > 3) {
             try {
                 String numberPart = maxId.substring(3);

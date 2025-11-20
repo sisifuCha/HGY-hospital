@@ -15,4 +15,6 @@ public interface DepartmentMapper extends BaseMapper<Department> {
     @Select("SELECT id FROM department WHERE name = #{name}")
         // 或者如果MyBatis-Plus能自动找到，可直接写resultMap的id
     String getIdByName(@Param("name") String name);
+
+
 }

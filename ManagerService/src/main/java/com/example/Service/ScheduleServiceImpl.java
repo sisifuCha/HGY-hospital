@@ -1,6 +1,7 @@
 package com.example.Service;
 
 import com.example.Conmon.result.Result;
+import com.example.Mapper.DepartmentMapper;
 import com.example.Mapper.DoctorMapper;
 import com.example.Mapper.ScheduleMapper;
 import com.example.pojo.dto.NextWeekScheduleDTO;
@@ -21,6 +22,8 @@ public class ScheduleServiceImpl implements ScheduleService {
 
     @Autowired
     private ScheduleMapper scheduleMapper;
+    @Autowired
+    private DepartmentMapper departmentMapper;
     @Autowired
     private DoctorMapper doctorMapper;
     @Autowired
@@ -97,6 +100,20 @@ public class ScheduleServiceImpl implements ScheduleService {
             e.printStackTrace();
             return Result.fail("新排班插入数据库错误");
         }
+    }
+
+    @Override
+    public Result<Void> deleteSchedule(LocalDate date, String doctor_name, String template_id, String depart_name) {
+
+        try {
+            String depart_id = departmentMapper.getIdByName(depart_name);
+            String doc_id = doctorMapper.getIdByNameAndDepart(doctor_name, depart_id);
+            int res = scheduleMapper.deleteSchedule(date, template_id, doc_id);
+            if (res > 0) {return Result.success(null);}
+        } catch (Exception e) {
+            return Result.fail("数据库错误");
+        }
+        return Result.fail("删除项不存在");
     }
 
     private void executeScheduleDate(DoctorSchedule doctorSchedule, String date, Integer code) {

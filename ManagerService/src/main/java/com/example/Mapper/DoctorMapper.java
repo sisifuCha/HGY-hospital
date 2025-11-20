@@ -15,6 +15,9 @@ import java.util.List;
 
 public interface DoctorMapper extends BaseMapper<Doctor> {
 
+    @Select("SELECT u.id FROM \"user\" u INNER JOIN \"doctor\" d ON d.id=u.id WHERE u.name = #{name} AND d.depart_id=#{departId}")
+    String getIdByNameAndDepart(String name,String departId);
+
     @Select("SELECT id from \"user\" where name = #{name};")
     String getIdByName(@Param("name") String name);
 
