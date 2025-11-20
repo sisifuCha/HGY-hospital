@@ -175,15 +175,34 @@ public class DoctorServiceImpl implements DoctorService {
                     BigDecimal.valueOf(100 - reimbursePercent)
                 ).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
                 
-                // 创建支付记录
+                // 先检查 schedule.status 是否为 '0' 或 '1'
+                // DocScheduleRecord 实体当前未包含 status 字段，假设 mapper 能返回 status 字符串
+                String scheduleStatus = schedule.getStatus();
+                if (!"0".equals(scheduleStatus) && !"1".equals(scheduleStatus)) {
+                    return Result.fail(400, "该排班不可加号");
+                }
+
+                // 插入 register_record (status='待支付')
+                com.example.entity.RegisterRecord rr = new com.example.entity.RegisterRecord();
+                rr.setPatientId(key.getPatientId());
+                rr.setSchId(key.getScheduleId());
+                rr.setRegisterTime(new java.util.Date());
+                rr.setStatus("待支付");
+                int rInserted = registerRecordMapper.insertRegisterRecord(rr);
+                if (rInserted == 0) {
+                    return Result.fail(500, "插入挂号记录失败");
+                }
+
+                // 创建支付记录，使用 UUID 作为 id，pay_status 使用中文 '待支付'
                 PayRecord payRecord = new PayRecord();
-                payRecord.setPayStatus(0); // 未支付
+                payRecord.setId(java.util.UUID.randomUUID().toString());
+                payRecord.setPayStatus("待支付");
                 payRecord.setOriAmount(oriCost);
                 payRecord.setAskPayAmount(askPayAmount);
                 payRecord.setPatientId(key.getPatientId());
                 payRecord.setDocId(schedule.getDocId());
                 // pay_time为null,待支付时更新
-                
+
                 int inserted = payRecordMapper.insertPayRecord(payRecord);
                 if (inserted == 0) {
                     return Result.fail(500, "生成支付订单失败");

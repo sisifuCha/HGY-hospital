@@ -9,7 +9,7 @@ public class PayRecord implements Serializable {
 
     private String id;
     private LocalDateTime payTime;
-    private Integer payStatus;  // 0:未支付, 1:已支付, 2:超时, 3:已取消
+    private String payStatus;  // '待支付','已支付','超时','已取消'
     private BigDecimal oriAmount;
     private BigDecimal askPayAmount;
     private String patientId;
@@ -31,11 +31,11 @@ public class PayRecord implements Serializable {
         this.payTime = payTime;
     }
 
-    public Integer getPayStatus() {
+    public String getPayStatus() {
         return payStatus;
     }
 
-    public void setPayStatus(Integer payStatus) {
+    public void setPayStatus(String payStatus) {
         this.payStatus = payStatus;
     }
 

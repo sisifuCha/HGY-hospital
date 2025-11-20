@@ -53,4 +53,8 @@ public interface RegisterRecordMapper {
     int updateStatus(@Param("patientId") String patientId, 
                     @Param("schId") String schId, 
                     @Param("status") String status);
+
+    @org.apache.ibatis.annotations.Insert("INSERT INTO \"register_record\" (patient_id, sch_id, register_time, status) " +
+           "VALUES (#{patientId}, #{schId}, #{registerTime}, #{status})")
+    int insertRegisterRecord(com.example.entity.RegisterRecord record);
 }
