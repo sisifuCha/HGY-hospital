@@ -533,6 +533,12 @@ public class DoctorServiceImpl implements DoctorService {
         return Result.success(null, "医生信息已更新");
     }
 
+    @Override
+    public void notifyAddNumberChange(String docId) {
+        // 数据库触发器通知加号申请变更，推送 SSE 更新
+        emitAddNumberSnapshot(docId, null);
+    }
+
     private SseEmitter createEmitter(Map<String, SseEmitter> store, String key) {
         SseEmitter emitter = new SseEmitter(0L);
         store.put(key, emitter);
@@ -685,7 +691,7 @@ public class DoctorServiceImpl implements DoctorService {
 
     private String readableStatus(String status) {
         if (!StringUtils.hasText(status)) {
-            return "pending";
+            return "待审核";
         }
         switch (status.toLowerCase()) {
             case "已同意":

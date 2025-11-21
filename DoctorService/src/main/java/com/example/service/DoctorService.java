@@ -52,4 +52,7 @@ public interface DoctorService {
 
     // 修改医生个人信息
     Result<Void> updateDoctorProfile(String doctorId, DoctorProfileUpdateRequest profileData);
+
+    // 通知加号申请变更（供数据库监听器调用）
+    void notifyAddNumberChange(String docId);
 }

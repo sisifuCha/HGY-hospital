@@ -44,7 +44,7 @@ public interface DocScheduleChangeRecordMapper {
         "SELECT COUNT(*) FROM \"doc_schedule_change_record\"",
         "WHERE \"doc_id\" = #{docId}",
         "  AND \"ori_sch_id\" = #{oriSchId}",
-        "  AND \"status\" = 'pending'"
+        "  AND \"status\" = '待审核'"
     })
     int countPendingByDocAndSchedule(@Param("docId") String docId, @Param("oriSchId") String oriSchId);
 

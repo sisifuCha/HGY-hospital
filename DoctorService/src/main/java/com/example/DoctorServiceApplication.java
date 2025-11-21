@@ -6,7 +6,6 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.ComponentScan;
 
 @SpringBootApplication(exclude = {
-    org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration.class,
     com.baomidou.mybatisplus.autoconfigure.MybatisPlusAutoConfiguration.class
 })
 @ComponentScan(basePackages = {"com.example"})
