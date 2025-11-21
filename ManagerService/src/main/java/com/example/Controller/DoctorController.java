@@ -7,6 +7,8 @@ import com.example.pojo.dto.DoctorDTO;
 import com.example.pojo.dto.DoctorsRequestDTO;
 import com.example.pojo.entity.Department;
 import com.example.pojo.entity.Doctor;
+import com.example.pojo.vo.FinalScheduleVO;
+import com.example.pojo.vo.FinalScheduleWeekVO;
 import com.example.pojo.vo.ScheduleWeekVO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -46,7 +48,7 @@ public class DoctorController {
     }
 
     @GetMapping("/getSchedules")
-    public Result<ScheduleWeekVO> getSchedules(@RequestParam("week") Integer week,@RequestParam("departName") String departName){
+    public Result<FinalScheduleWeekVO> getSchedules(@RequestParam("week") Integer week, @RequestParam("departName") String departName){
         System.out.println("收到请求，周次和科室名字分别为"+week+"  "+departName);
         return doctorService.getScheduleWeek(week,departName);
     }

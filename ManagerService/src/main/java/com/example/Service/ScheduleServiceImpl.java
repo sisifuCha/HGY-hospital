@@ -8,6 +8,8 @@ import com.example.pojo.dto.HistoryScheduleDTO;
 import com.example.pojo.dto.NextWeekScheduleDTO;
 import com.example.pojo.dto.ScheduleDTO;
 import com.example.pojo.entity.DoctorSchedule;
+import com.example.pojo.vo.FinalScheduleVO;
+import com.example.pojo.vo.FinalScheduleWeekVO;
 import com.example.pojo.vo.HistoryScheduleWeekVO;
 import com.example.pojo.vo.ScheduleWeekVO;
 import com.example.utils.ScheduleIdGenerator;
@@ -120,12 +122,12 @@ public class ScheduleServiceImpl implements ScheduleService {
     }
 
     @Override
-    public Result<HistoryScheduleWeekVO> getScheduleHistory(LocalDate date, String depart_name) {
-        HistoryScheduleWeekVO historyScheduleWeekVO = new HistoryScheduleWeekVO();
+    public Result<FinalScheduleWeekVO> getScheduleHistory(LocalDate date, String depart_name) {
+        FinalScheduleWeekVO finalScheduleWeekVO = new FinalScheduleWeekVO();
         //获取date所在周的周一和周六时间
         LocalDate monday = date.with(DayOfWeek.MONDAY);
         LocalDate sunday = date.with(DayOfWeek.SUNDAY);
-        List<HistoryScheduleDTO> doctorSchedules = scheduleMapper.getScheduleHistory(monday,sunday,depart_name);
+        List<FinalScheduleVO> doctorSchedules = scheduleMapper.getScheduleHistory(monday,sunday,depart_name);
         //对实体做视图转换
         Map<LocalDate,String> dayMapping = new HashMap<>();
         dayMapping.put(date.with(DayOfWeek.MONDAY), "Mon");    // 周一
@@ -136,18 +138,18 @@ public class ScheduleServiceImpl implements ScheduleService {
         dayMapping.put(date.with(DayOfWeek.SATURDAY), "Sat");  // 周六
         dayMapping.put(date.with(DayOfWeek.SUNDAY), "Sun");    // 周日
         //做周中分类
-        for(HistoryScheduleDTO dto:doctorSchedules){
+        for(FinalScheduleVO dto:doctorSchedules){
             LocalDate currentDate = dto.getDate();
             if (dayMapping.containsKey(currentDate)) {
                 String dayOfWeek = dayMapping.get(currentDate);
-                ScheduleDTO scheduleDTO = new ScheduleDTO();
-                scheduleDTO.setDoctor_name(dto.getDoctor_name());
-                scheduleDTO.setTemplate_id(dto.getTemplate_id());
+//                ScheduleDTO scheduleDTO = new ScheduleDTO();
+//                scheduleDTO.setDoctor_name(dto.getDoctor);
+//                scheduleDTO.setTemplate_id(dto.getTemplate_id());
 
                 // 使用反射获取目标属性并添加对象
                 try {
                     // 1. 获取目标类的Class对象
-                    Class<?> targetClass = historyScheduleWeekVO.getClass();
+                    Class<?> targetClass = finalScheduleWeekVO.getClass();
 
                     // 2. 根据属性名（dayOfWeek的值）获取对应的Field对象
                     Field targetField = targetClass.getDeclaredField(dayOfWeek);
@@ -156,14 +158,14 @@ public class ScheduleServiceImpl implements ScheduleService {
                     targetField.setAccessible(true);
 
                     // 4. 获取该属性在当前对象中的值（即您需要的集合）
-                    Object fieldValue = targetField.get(historyScheduleWeekVO);
+                    Object fieldValue = targetField.get(finalScheduleWeekVO);
 
                     // 5. 安全检查：确保获取到的是一个List集合
                     if (fieldValue instanceof List) {
                         // 6. 将scheduleDTO添加到集合中
                         @SuppressWarnings("unchecked")
-                        List<ScheduleDTO> targetList = (List<ScheduleDTO>) fieldValue;
-                        targetList.add(scheduleDTO);
+                        List<FinalScheduleVO> targetList = (List<FinalScheduleVO>) fieldValue;
+                        targetList.add(dto);
                     } else {
                         // 处理类型不匹配的情况，例如记录错误日志
                         System.err.println("错误: 属性 " + dayOfWeek + " 不是List类型或为null。");
@@ -176,7 +178,7 @@ public class ScheduleServiceImpl implements ScheduleService {
                 }
             }
         }
-        return Result.success(historyScheduleWeekVO);
+        return Result.success(finalScheduleWeekVO);
     }
     /******************************************************/
     private void executeScheduleDate(DoctorSchedule doctorSchedule, String date, Integer code) {

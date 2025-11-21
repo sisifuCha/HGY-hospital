@@ -11,7 +11,14 @@
         <result column="left_source_count" property="available_slots"/>
         <result column="status" property="status"/>
     </resultMap>
-
+    <resultMap id="FinalScheduleVOMap" type="com.example.pojo.vo.FinalScheduleVO">
+        <result column="doc_name" property="doc_name"/>
+        <result column="left_source_count" property="left_source_count"/>
+        <result column="depart_name" property="depart"/>
+        <result column="title_name" property="title"/>
+        <result column="template_id" property="template_id"/>
+        <result column="schedule_date" property="date"/>
+    </resultMap>
     <resultMap id="HistoryScheduleDTOMap" type="com.example.pojo.dto.HistoryScheduleDTO">
         <result column="name" property="doctor_name"/>
         <result column="schedule_date" property="date"/>

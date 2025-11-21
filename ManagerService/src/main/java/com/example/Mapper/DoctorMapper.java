@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.example.pojo.entity.Doctor;
 import com.example.pojo.entity.DoctorSchedule;
+import com.example.pojo.vo.FinalScheduleVO;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.ResultMap;
 import org.apache.ibatis.annotations.Select;
@@ -34,10 +35,21 @@ public interface DoctorMapper extends BaseMapper<Doctor> {
     IPage<Doctor> selectDoctorPage(IPage<Doctor> page, @Param("ew") QueryWrapper<Doctor> queryWrapper);
 
     //根据时间范围和科室获取排班信息
-    @Select("SELECT ds.id, ds.doc_id, ds.template_id, ds.schedule_date, ds.left_source_count " +
-            "FROM doc_schedule_record ds INNER JOIN doctor d ON ds.doc_id = d.id " +
-            "WHERE ds.schedule_date >= #{startTime} AND ds.schedule_date <= #{endTime} AND d.depart_id = #{departId}")
-    @ResultMap("DoctorScheduleResultMap")
+    @Select("SELECT" +
+            " u.name AS doc_name," +
+            "ds.left_source_count AS left_source_count," +
+            "t.name AS title_name," +
+            "ds.template_id AS template_id," +
+            "ds.schedule_date AS schedule_date," +
+            "dp.name AS depart_name " +
+            "FROM " +
+            "\"user\" u INNER JOIN doctor d ON d.id=u.id " +
+            "INNER JOIN department dp ON dp.id=d.depart_id " +
+            "INNER JOIN doc_schedule_record ds ON ds.doc_id=d.id " +
+            "INNER JOIN title_number_source t ON t.id=d.doc_title_id " +
+            "WHERE ds.schedule_date <= #{endTime} AND ds.schedule_date >= #{startTime} " +
+            "AND dp.id = #{departId}")
+    @ResultMap("FinalScheduleVOMap")
     // 或者如果MyBatis-Plus能自动找到，可直接写resultMap的id
-    List<DoctorSchedule> selectDoctorSchedule(@Param("startTime") LocalDate startTime, @Param("endTime") LocalDate endTime, @Param("departId") String departId);
+    List<FinalScheduleVO> selectDoctorSchedule(@Param("startTime") LocalDate startTime, @Param("endTime") LocalDate endTime, @Param("departId") String departId);
 }
