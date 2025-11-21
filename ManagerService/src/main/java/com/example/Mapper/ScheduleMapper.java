@@ -31,4 +31,7 @@ public interface ScheduleMapper extends BaseMapper<DoctorSchedule> {
             "AND dep.name = #{depart_name}") // 确保参数化查询
     @ResultMap("HistoryScheduleDTOMap")
     List<HistoryScheduleDTO> getScheduleHistory(LocalDate Mon, LocalDate Sun, String depart_name);
+
+    @Select("SELECT id FROM doc_schedule_record")
+    List<String> getIdList();
 }

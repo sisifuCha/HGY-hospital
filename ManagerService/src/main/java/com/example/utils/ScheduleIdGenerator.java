@@ -1,10 +1,12 @@
 package com.example.utils;
 
 import com.example.Mapper.ScheduleMapper;
+import io.swagger.v3.oas.models.security.SecurityScheme;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component; // 新增注解
 
 import javax.annotation.PostConstruct; // 新增导入
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -25,16 +27,19 @@ public class ScheduleIdGenerator {
 
     public void initCounter() { // 改为实例方法
         String maxId = scheduleMapper.getMaxId();
-        //TODO 获取所有ID通过ID排序
-        if (maxId != null && maxId.startsWith(PREFIX) && maxId.length() > 3) {
-            try {
-                String numberPart = maxId.substring(3);
-                int extractedValue = Integer.parseInt(numberPart);
-                counter.set(extractedValue);
-                counter.set(1050);
-            } catch (NumberFormatException e) {
-                System.err.println("数字转换错误: " + e.getMessage());
-            }
+        //获取所有的ID
+        List<String> IdList = scheduleMapper.getIdList();
+        //获取所有ID的数字部分
+        List<Integer> IdValueList = new ArrayList<>();
+        for(String Id:IdList) {
+            String value = Id.substring(3);
+            int extractValue = Integer.parseInt(value);
+            IdValueList.add(extractValue);
         }
+        Integer max = 0;
+        for (Integer value:IdValueList) {
+            if (value>max){max=value;}
+        }
+        counter.set(max);
     }
 }
