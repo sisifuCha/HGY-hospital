@@ -13,6 +13,8 @@ import com.example.pojo.dto.DoctorsRequestDTO;
 import com.example.pojo.entity.Department;
 import com.example.pojo.entity.Doctor;
 import com.example.pojo.entity.DoctorSchedule;
+import com.example.pojo.vo.FinalScheduleVO;
+import com.example.pojo.vo.FinalScheduleWeekVO;
 import com.example.pojo.vo.ScheduleWeekVO;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -101,11 +103,12 @@ public class DoctorServiceImpl implements DoctorService {
     }
 
     @Override
-    public Result<ScheduleWeekVO> getScheduleWeek(Integer week, String departId) {
+    public Result<FinalScheduleWeekVO> getScheduleWeek(Integer week, String departName) {
         LocalDate currentDate = LocalDate.now();
         LocalDate monday;
         LocalDate sunday;
 
+        String departId = DepartmentMapper.getIdByName(departName);
         // 获取当前日期是星期几（1-7，1代表星期一，7代表星期日）
         int dayOfWeek = currentDate.getDayOfWeek().getValue();
 
@@ -113,7 +116,8 @@ public class DoctorServiceImpl implements DoctorService {
             // 获取本周周一和周日的日期
             monday = currentDate.minusDays(dayOfWeek - 1); // 本周一
             sunday = monday.plusDays(6); // 本周日
-            List<DoctorSchedule> doctorSchedules = DoctorMapper.selectDoctorSchedule(monday,sunday,departId);
+            //TODO 把这个函数改了
+            List<FinalScheduleVO> doctorSchedules = DoctorMapper.selectDoctorSchedule(monday,sunday,departId);
             //处理VO
             return Result.success(getScheduleWeekVO(doctorSchedules));
         } else if (week == 1) {
@@ -121,7 +125,7 @@ public class DoctorServiceImpl implements DoctorService {
             LocalDate nextMonday = currentDate.plusDays(8 - dayOfWeek); // 下周一
             monday = nextMonday;
             sunday = nextMonday.plusDays(6); // 下周日
-            List<DoctorSchedule> doctorSchedules = DoctorMapper.selectDoctorSchedule(monday,sunday,departId);
+            List<FinalScheduleVO> doctorSchedules = DoctorMapper.selectDoctorSchedule(monday,sunday,departId);
             //处理VO
             return Result.success(getScheduleWeekVO(doctorSchedules));
         } else {
@@ -130,10 +134,11 @@ public class DoctorServiceImpl implements DoctorService {
 
     }
 
-    private ScheduleWeekVO getScheduleWeekVO(List<DoctorSchedule> doctorSchedules){
-        ScheduleWeekVO res = new ScheduleWeekVO();
-        for (DoctorSchedule doctorSchedule : doctorSchedules) {
+    private FinalScheduleWeekVO getScheduleWeekVO(List<FinalScheduleVO> doctorSchedules){
+        FinalScheduleWeekVO res = new FinalScheduleWeekVO();
+        for (FinalScheduleVO doctorSchedule : doctorSchedules) {
             LocalDate date = doctorSchedule.getDate();
+            //处理vo
             switch (date.getDayOfWeek().getValue()) {
                 case 1:
                     res.getMon().add(doctorSchedule);

@@ -6,6 +6,8 @@ import com.example.pojo.dto.DoctorDTO;
 import com.example.pojo.dto.DoctorsRequestDTO;
 import com.example.pojo.entity.Department;
 import com.example.pojo.entity.Doctor;
+import com.example.pojo.vo.FinalScheduleVO;
+import com.example.pojo.vo.FinalScheduleWeekVO;
 import com.example.pojo.vo.ScheduleWeekVO;
 
 import javax.print.Doc;
@@ -34,5 +36,5 @@ public interface DoctorService {
     Result<IPage<Doctor>> getDoctorListWithPlus(int page, int num, String filterName, String filterValue);
 
     List<Department> getDepartmentOptions();
-    Result<ScheduleWeekVO> getScheduleWeek(Integer week,String departId);
+    Result<FinalScheduleWeekVO> getScheduleWeek(Integer week, String departName);
 }

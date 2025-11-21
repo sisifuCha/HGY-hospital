@@ -24,12 +24,13 @@
 
     </resultMap>
 
-    <resultMap id="DoctorScheduleResultMap" type="com.example.pojo.entity.DoctorSchedule">
-        <id column="id" property="schedule_id"/>
-        <result column="doc_id" property="doctor_id"/>
-        <result column="template_id" property="schedule_time_id"/>
+    <resultMap id="FinalScheduleVOMap" type="com.example.pojo.vo.FinalScheduleVO">
+        <result column="doc_name" property="doc_name"/>
+        <result column="left_source_count" property="left_source_count"/>
+        <result column="depart_name" property="depart"/>
+        <result column="title_name" property="title"/>
+        <result column="template_id" property="template_id"/>
         <result column="schedule_date" property="date"/>
-        <result column="left_source_count" property="available_slots"/>
     </resultMap>
     <!-- 根据医生ID查询完整信息（联表查询） -->
     <select id="selectById" parameterType="string" resultMap="FullDoctorResultMap">
