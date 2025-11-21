@@ -23,8 +23,8 @@ public interface DoctorService {
     // 获取加号请求通知
     SseEmitter getAddNumberNotifications(String docId);
 
-    // 审核加号请求
-    Result<Void> reviewAddNumberRequest(AddNumberDecisionRequest request);
+    // 审核加号请求，返回包含后续操作码的响应数据
+    Result<java.util.Map<String, String>> reviewAddNumberRequest(AddNumberDecisionRequest request);
 
     // 获取本科室排班列表
     List<DepartmentShiftDto> getDepartmentShifts(String docId);
@@ -52,4 +52,7 @@ public interface DoctorService {
 
     // 修改医生个人信息
     Result<Void> updateDoctorProfile(String doctorId, DoctorProfileUpdateRequest profileData);
+
+    // 通知加号申请变更（供数据库监听器调用）
+    void notifyAddNumberChange(String docId);
 }

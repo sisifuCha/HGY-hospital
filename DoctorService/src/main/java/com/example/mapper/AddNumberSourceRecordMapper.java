@@ -11,7 +11,7 @@ import java.util.List;
 public interface AddNumberSourceRecordMapper extends BaseMapper<AddNumberSourceRecord> {
     @Select("SELECT * FROM \"add_number_source_record\" WHERE \"sch_id\" IN " +
            "(SELECT \"id\" FROM \"doc_schedule_record\" WHERE \"doc_id\" = #{docId}) " +
-           "AND \"status\" = 'pending'")
+           "AND \"status\" = '待审核'")
     List<AddNumberSourceRecord> getPendingRequests(@Param("docId") String docId);
 
        @Select({
@@ -27,7 +27,7 @@ public interface AddNumberSourceRecordMapper extends BaseMapper<AddNumberSourceR
               "JOIN \"patient\" p ON ans.patient_id = p.\"id\"",
               "JOIN \"user\" u ON p.\"id\" = u.\"id\"",
               "JOIN \"doc_schedule_record\" dsr ON ans.sch_id = dsr.\"id\"",
-              "WHERE dsr.\"doc_id\" = #{docId} AND ans.\"status\" = 'pending'",
+              "WHERE dsr.\"doc_id\" = #{docId} AND ans.\"status\" = '待审核'",
               "ORDER BY ans.apply_time DESC"
        })
        List<AddNumberApplicationRow> selectPendingApplicationRows(@Param("docId") String docId);

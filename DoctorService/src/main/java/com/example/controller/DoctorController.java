@@ -54,7 +54,7 @@ public class DoctorController {
 
     @PostMapping("/add_number_result")
     public ResponseEntity<Map<String, Object>> reviewAddNumberRequest(@RequestBody AddNumberDecisionRequest request) {
-        Result<Void> result = doctorService.reviewAddNumberRequest(request);
+        Result<java.util.Map<String, String>> result = doctorService.reviewAddNumberRequest(request);
         return toResponseEntity(result);
     }
 
