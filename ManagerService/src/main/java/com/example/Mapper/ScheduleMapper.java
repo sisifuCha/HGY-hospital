@@ -24,7 +24,7 @@ public interface ScheduleMapper extends BaseMapper<DoctorSchedule> {
     int deleteSchedule(LocalDate date,String template_id,String doc_id);
 
     @Select("SELECT u.name, ds.schedule_date, ds.template_id " +
-            "FROM doc_schedule_record ds INNER JOIN `user` u ON u.id = ds.doc_id " +
+            "FROM doc_schedule_record ds INNER JOIN \"user\" u ON u.id = ds.doc_id " +
             "INNER JOIN doctor d ON d.id = u.id " +
             "INNER JOIN department dep ON d.depart_id = dep.id " +
             "WHERE ds.schedule_date >= #{Mon} AND ds.schedule_date <= #{Sun} " +

@@ -31,6 +31,7 @@ public class ScheduleIdGenerator {
                 String numberPart = maxId.substring(3);
                 int extractedValue = Integer.parseInt(numberPart);
                 counter.set(extractedValue);
+                counter.set(1050);
             } catch (NumberFormatException e) {
                 System.err.println("数字转换错误: " + e.getMessage());
             }

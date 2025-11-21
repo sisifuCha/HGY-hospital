@@ -35,7 +35,7 @@ public class ScheduleController {
     }
 
     @GetMapping("/GetSchedulesHistory")
-    public Result<HistoryScheduleWeekVO> getSchedulesHistory(LocalDate date , String depart_name){
+    public Result<HistoryScheduleWeekVO> getSchedulesHistory(@RequestParam LocalDate date ,@RequestParam String depart_name){
         System.out.println("收到了获取值班历史的请求"+date.toString()+depart_name);
         return scheduleService.getScheduleHistory(date,depart_name);
     }

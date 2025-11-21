@@ -13,7 +13,7 @@
     </resultMap>
 
     <resultMap id="HistoryScheduleDTOMap" type="com.example.pojo.dto.HistoryScheduleDTO">
-        <result column="name" property="name"/>
+        <result column="name" property="doctor_name"/>
         <result column="schedule_date" property="date"/>
         <result column="template_id" property="template_id"/>
     </resultMap>
