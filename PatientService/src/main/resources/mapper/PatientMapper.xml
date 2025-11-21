@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.Mapper.PatientMapper">
+
+    <update id="updateProfile">
+        UPDATE patient
+        <set>
+            <if test="profile.name != null">name = #{profile.name},</if>
+            <if test="profile.gender != null">gender = #{profile.gender},</if>
+            <if test="profile.birthDate != null">birth_date = #{profile.birthDate}::date,</if>
+            <if test="profile.phone != null">phone = #{profile.phone},</if>
+            <if test="profile.address != null">address = #{profile.address},</if>
+            <if test="profile.medicalHistory != null">medical_history = #{profile.medicalHistory},</if>
+            <if test="profile.allergies != null">allergies = #{profile.allergies},</if>
+        </set>
+        WHERE id = #{patientId}
+    </update>
+
+    <select id="findProfileById" resultType="com.example.pojo.vo.PatientProfileVo">
+        SELECT
+            id AS "patientId",
+            name,
+            gender,
+            birth_date AS "birthDate",
+            phone,
+            address,
+            medical_history AS "medicalHistory",
+            allergies
+        FROM patient
+        WHERE id = #{patientId}
+    </select>
+
+</mapper>
