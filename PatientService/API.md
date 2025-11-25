@@ -327,3 +327,53 @@
 }
 ```
 - 常见 code：400 参数错误；403 无权限；404 未找到；409 业务冲突；423 资源锁定；500 服务器错误。
+
+
+//加号功能
+说明：表名 add_number_source_record，用于患者申请特需号（加号）。关键字段：id, patientId, scheduleRecordId, requestedFee, finalFee, status, applyTime, decisionTime, doctorId, comment。
+1. 创建加号申请
+   URL: POST /api/add-number-requests
+   Body:
+   {
+   "patientId": "PAT0001",
+   "scheduleRecordId": "SCH7890",
+   "requestedFee": 200,
+   "reason": "希望加诊"
+   }
+   Success (201):
+   {
+   "id": "REQ0001",
+   "patientId": "PAT0001",
+   "scheduleRecordId": "SCH7890",
+   "requestedFee": 200,
+   "status": "APPLYING",
+   "applyTime": "2025-11-15T09:30:12"
+   }
+   校验要点：非空校验、复合键去重（同一 patientId + scheduleRecordId 在 APPLYING/APPROVED 下不允许重复）、排班是否存在、日期未过。
+2. 患者查询自己的申请列表
+
+URL: GET /api/add-number-requests?patientId=PAT0001&page=1&pageSize=20
+Success (200)：分页列表，包含状态与时间。
+3. 获取单条申请
+   URL: GET /api/add-number-requests/{id}
+   Success (200)：返回完整记录。
+4. 医生处理（同意/拒绝）
+   URL: PUT /api/add-number-requests/{id}/decision
+   Body:
+   {
+   "approved": true,
+   "finalFee": 300,
+   "comment": "医生同意加号，收取加号费300"
+   }
+   Success (200)：返回更新后的状态（APPROVED 或 REJECTED）。
+   校验要点：只能由排班对应的医生或有权限账户处理；当前状态必须为 APPLYING。
+5. 患者取消申请
+   URL: DELETE /api/add-number-requests/{id}
+   Success (200)：返回 CANCELLED 状态。
+   校验要点：仅在 APPLYING 状态允许取消（或按策略放宽）。
+   状态枚举（示例）
+   APPLYING：申请中
+   APPROVED：已同意（可创建挂号/扣费等）
+   REJECTED：已拒绝
+   CANCELLED：已取消
+   COMPLETED：已完成（医生端确认就诊后）
