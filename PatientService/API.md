@@ -330,50 +330,58 @@
 
 
 //加号功能
-说明：表名 add_number_source_record，用于患者申请特需号（加号）。关键字段：id, patientId, scheduleRecordId, requestedFee, finalFee, status, applyTime, decisionTime, doctorId, comment。
-1. 创建加号申请
-   URL: POST /api/add-number-requests
-   Body:
-   {
-   "patientId": "PAT0001",
-   "scheduleRecordId": "SCH7890",
-   "requestedFee": 200,
-   "reason": "希望加诊"
-   }
-   Success (201):
-   {
-   "id": "REQ0001",
-   "patientId": "PAT0001",
-   "scheduleRecordId": "SCH7890",
-   "requestedFee": 200,
-   "status": "APPLYING",
-   "applyTime": "2025-11-15T09:30:12"
-   }
-   校验要点：非空校验、复合键去重（同一 patientId + scheduleRecordId 在 APPLYING/APPROVED 下不允许重复）、排班是否存在、日期未过。
-2. 患者查询自己的申请列表
+# 患者申请加号 - API 文档
 
-URL: GET /api/add-number-requests?patientId=PAT0001&page=1&pageSize=20
-Success (200)：分页列表，包含状态与时间。
-3. 获取单条申请
-   URL: GET /api/add-number-requests/{id}
-   Success (200)：返回完整记录。
-4. 医生处理（同意/拒绝）
-   URL: PUT /api/add-number-requests/{id}/decision
-   Body:
-   {
-   "approved": true,
-   "finalFee": 300,
-   "comment": "医生同意加号，收取加号费300"
-   }
-   Success (200)：返回更新后的状态（APPROVED 或 REJECTED）。
-   校验要点：只能由排班对应的医生或有权限账户处理；当前状态必须为 APPLYING。
-5. 患者取消申请
-   URL: DELETE /api/add-number-requests/{id}
-   Success (200)：返回 CANCELLED 状态。
-   校验要点：仅在 APPLYING 状态允许取消（或按策略放宽）。
-   状态枚举（示例）
-   APPLYING：申请中
-   APPROVED：已同意（可创建挂号/扣费等）
-   REJECTED：已拒绝
-   CANCELLED：已取消
-   COMPLETED：已完成（医生端确认就诊后）
+## 概述
+功能：患者在“当天”可以申请加号，选择科室与医生，填写理由，提交后进入审核流程。审核通过后锁定号源并进入缴费流程。
+
+状态：
+- PENDING（待审核）
+- APPROVED（已批准）
+- REJECTED（已驳回）
+
+时间限制：仅限申请当天（服务器校验 appointmentDate == 今日）。
+
+---
+
+## 接口列表
+
+### 1. 提交加号申请
+- URL: `POST /api/extra-apply`
+- 请求体 (application/json):
+    - `patientId` (Long) 必填
+    - `departmentId` (Long) 必填
+    - `doctorId` (Long) 必填
+    - `appointmentDate` (String, yyyy-MM-dd) 必填（仅当天允许）
+    - `reason` (String) 必填
+- 返回: 201 Created，body 包含创建记录 `id` 与完整记录
+
+### 2. 查询申请详情
+- URL: `GET /api/extra-apply/{id}`
+- 返回: 200 OK，body 为申请记录
+
+### 3. 按患者列出申请
+- URL: `GET /api/extra-apply?patientId={patientId}`
+- 返回: 200 OK，body 为申请列表
+
+### 4. 审核通过（医生/管理员）
+- URL: `PUT /api/extra-apply/{id}/approve`
+- 请求体 (application/json):
+    - `approverId` (Long) 可选
+- 返回: 200 OK，body 为更新后的记录
+- 备注：审批通过后将 `status` 置为 `APPROVED`，并将 `locked` 置为 true（锁定号源），后续触发缴费流程（此处只标记状态）
+
+### 5. 驳回申请
+- URL: `PUT /api/extra-apply/{id}/reject`
+- 请求体 (application/json):
+    - `approverId` (Long) 可选
+    - `rejectReason` (String) 可选
+- 返回: 200 OK，body 为更新后的记录
+
+---
+
+## 错误码（常见）
+- 400 Bad Request：参数缺失或 appointmentDate 非当天
+- 404 Not Found：记录不存在
+- 409 Conflict：尝试审批已处理的申请
+- 500 Internal Server Error：服务器异常
