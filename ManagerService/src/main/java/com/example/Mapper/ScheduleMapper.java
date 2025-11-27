@@ -47,4 +47,11 @@ public interface ScheduleMapper extends BaseMapper<DoctorSchedule> {
 
     @Update("UPDATE doc_schedule_record SET reason = #{reason},status = 1 WHERE id = #{schedule_id}")
     int stopSingle(String schedule_id,String reason);
+
+    int stopBatch(@Param("doctorIds") List<String> doc_ids,
+                  @Param("reason") String reason,
+                  @Param("startTemplate") String start_template,
+                  @Param("endTemplate") String end_template,
+                  @Param("startDate") LocalDate start_date,
+                  @Param("endDate") LocalDate end_date);
 }

@@ -7,6 +7,7 @@ import com.example.Mapper.ScheduleMapper;
 import com.example.pojo.dto.HistoryScheduleDTO;
 import com.example.pojo.dto.NextWeekScheduleDTO;
 import com.example.pojo.dto.ScheduleDTO;
+import com.example.pojo.dto.StopBatchScheduleDTO;
 import com.example.pojo.entity.DoctorSchedule;
 import com.example.pojo.vo.FinalScheduleVO;
 import com.example.pojo.vo.FinalScheduleWeekVO;
@@ -190,6 +191,25 @@ public class ScheduleServiceImpl implements ScheduleService {
         }catch (Exception e){
             e.printStackTrace();
             return  Result.fail("服务器错误");
+        }
+    }
+
+    @Override
+    public Result<Void> stopBatch(StopBatchScheduleDTO stopBatchScheduleDTO) {
+        try{
+            int affect = scheduleMapper.stopBatch(stopBatchScheduleDTO.getDoc_ids(),
+                    stopBatchScheduleDTO.getReason(),
+                    stopBatchScheduleDTO.getStart_time().getTemplate_id(),
+                    stopBatchScheduleDTO.getEnd_time().getTemplate_id(),
+                    stopBatchScheduleDTO.getStart_time().getDate(),
+                    stopBatchScheduleDTO.getEnd_time().getDate());
+            if (affect>0) {
+                return Result.success("成功终止",null);
+            }
+            return Result.fail("更新不完全");
+
+        }catch (Exception e){
+            return Result.fail(e.toString());
         }
     }
 

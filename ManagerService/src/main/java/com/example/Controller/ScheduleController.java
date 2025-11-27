@@ -4,6 +4,7 @@ import com.example.Conmon.result.Result;
 import com.example.Service.ScheduleService;
 import com.example.pojo.dto.HistoryScheduleDTO;
 import com.example.pojo.dto.NextWeekScheduleDTO;
+import com.example.pojo.dto.StopBatchScheduleDTO;
 import com.example.pojo.vo.FinalScheduleWeekVO;
 import com.example.pojo.vo.HistoryScheduleWeekVO;
 import com.example.pojo.vo.ScheduleWeekVO;
@@ -45,6 +46,11 @@ public class ScheduleController {
     public Result<Void> stopSingle (@RequestParam("schedule_id") String schedule_id,@RequestParam("reason") String reason) {
         System.out.println("收到了中止排班的请求");
         return scheduleService.stopSingle(schedule_id,reason);
+    }
+
+    @PostMapping("/stopBatchSchedule")
+    public Result<Void> stopBatch (@RequestBody()StopBatchScheduleDTO stopBatchScheduleDTO) {
+        return scheduleService.stopBatch(stopBatchScheduleDTO);
     }
 
 
