@@ -1,6 +1,7 @@
 package com.example.Service;
 
 import com.example.Conmon.result.Result;
+import com.example.pojo.dto.DelayBatchDTO;
 import com.example.pojo.dto.NextWeekScheduleDTO;
 import com.example.pojo.dto.ScheduleDTO;
 import com.example.pojo.dto.StopBatchScheduleDTO;
@@ -29,4 +30,7 @@ public interface ScheduleService {
 
     //中止批量排班
     public Result<Void> stopBatch(StopBatchScheduleDTO stopBatchScheduleDTO);
+
+    //批量延后排班
+    public Result<Void> delayBatch(DelayBatchDTO delayBatchDTO);
 }

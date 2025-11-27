@@ -2,6 +2,7 @@ package com.example.Controller;
 
 import com.example.Conmon.result.Result;
 import com.example.Service.ScheduleService;
+import com.example.pojo.dto.DelayBatchDTO;
 import com.example.pojo.dto.HistoryScheduleDTO;
 import com.example.pojo.dto.NextWeekScheduleDTO;
 import com.example.pojo.dto.StopBatchScheduleDTO;
@@ -51,6 +52,11 @@ public class ScheduleController {
     @PostMapping("/stopBatchSchedule")
     public Result<Void> stopBatch (@RequestBody()StopBatchScheduleDTO stopBatchScheduleDTO) {
         return scheduleService.stopBatch(stopBatchScheduleDTO);
+    }
+
+    @PostMapping("/batchDelay")
+    public Result<Void> batchDelay(@RequestBody()DelayBatchDTO delayBatchDTO){
+        return scheduleService.delayBatch(delayBatchDTO);
     }
 
 

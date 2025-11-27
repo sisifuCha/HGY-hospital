@@ -54,4 +54,12 @@ public interface ScheduleMapper extends BaseMapper<DoctorSchedule> {
                   @Param("endTemplate") String end_template,
                   @Param("startDate") LocalDate start_date,
                   @Param("endDate") LocalDate end_date);
+
+    int delayBatch(@Param("doctorIds") List<String> doc_ids,
+                  @Param("reason") String reason,
+                  @Param("startTemplate") String start_template,
+                  @Param("endTemplate") String end_template,
+                  @Param("startDate") LocalDate start_date,
+                  @Param("endDate") LocalDate end_date,
+                   @Param("delay_days") Integer delay_days);
 }

@@ -65,5 +65,34 @@
                 </if>
         </where>
     </update>
+    <update id="delayBatch">
+        UPDATE doc_schedule_record
+        SET reason = #{reason},
+        schedule_date = schedule_date + INTERVAL '1' DAY * #{delay_days}
+        <where>
+            <!-- 首先，ID集合是必须的 -->
+            <if test="doctorIds != null and !doctorIds.isEmpty()">
+                doc_id IN
+                <foreach collection="doctorIds" item="docId" open="(" separator="," close=")">
+                    #{docId}
+                </foreach>
+            </if>
+            <if test="startDate != null and endDate != null">
+                AND schedule_date BETWEEN #{startDate} AND #{endDate}
+            </if>
+            <!-- 条件3：起始时段过滤 -->
+            <if test="startTemplate != null and startDate != null">
+                AND (schedule_date > #{startDate}
+                OR (schedule_date = #{startDate} AND CAST(SUBSTRING(template_id FROM '[0-9]+') AS INTEGER) &gt;=
+                CAST(SUBSTRING(#{startTemplate} FROM '[0-9]+') AS INTEGER)))
+            </if>
 
+            <!-- 条件4：结束时段过滤 -->
+            <if test="endTemplate != null and endDate != null">
+                AND (schedule_date &lt; #{endDate}
+                OR (schedule_date = #{endDate} AND CAST(SUBSTRING(template_id FROM '[0-9]+') AS INTEGER) &lt;=
+                CAST(SUBSTRING(#{endTemplate} FROM '[0-9]+') AS INTEGER)))
+            </if>
+        </where>
+    </update>
 </mapper>
