@@ -18,6 +18,7 @@
         <result column="title_name" property="title"/>
         <result column="template_id" property="template_id"/>
         <result column="schedule_date" property="date"/>
+        <result column="schedule_id" property="schedule_id"/>
     </resultMap>
     <resultMap id="HistoryScheduleDTOMap" type="com.example.pojo.dto.HistoryScheduleDTO">
         <result column="name" property="doctor_name"/>

@@ -30,6 +30,7 @@ public interface ScheduleMapper extends BaseMapper<DoctorSchedule> {
             "t.name AS title_name," +
             "ds.template_id AS template_id," +
             "ds.schedule_date AS schedule_date," +
+            "ds.id AS schedule_id," +
             "dp.name AS depart_name " +
             "FROM " +
             "\"user\" u INNER JOIN doctor d ON d.id=u.id " +
