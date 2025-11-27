@@ -22,4 +22,7 @@ public interface ScheduleService {
 
     //获取某科室的排班历史
     public Result<FinalScheduleWeekVO> getScheduleHistory(LocalDate date, String depart_name);
+
+    //中止某个排班
+    public Result<Void> stopSingle(String schedule_id,String reason);
 }

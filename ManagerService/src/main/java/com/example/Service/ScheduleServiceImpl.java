@@ -180,6 +180,19 @@ public class ScheduleServiceImpl implements ScheduleService {
         }
         return Result.success(finalScheduleWeekVO);
     }
+
+    @Override
+    public Result<Void> stopSingle(String schedule_id, String reason) {
+        try {
+            int affectedRow = scheduleMapper.stopSingle(schedule_id, reason);
+            if (affectedRow>0) {return  Result.success("操作成功",null);}
+            else return Result.fail("排班不存在");
+        }catch (Exception e){
+            e.printStackTrace();
+            return  Result.fail("服务器错误");
+        }
+    }
+
     /******************************************************/
     private void executeScheduleDate(DoctorSchedule doctorSchedule, String date, Integer code) {
         // 创建日期缩写与DayOfWeek的映射关系

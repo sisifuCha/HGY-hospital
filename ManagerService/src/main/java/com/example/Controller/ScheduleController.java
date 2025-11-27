@@ -40,4 +40,12 @@ public class ScheduleController {
         System.out.println("收到了获取值班历史的请求"+date.toString()+depart_name);
         return scheduleService.getScheduleHistory(date,depart_name);
     }
+
+    @PostMapping("/stopSingle/Schedule")
+    public Result<Void> stopSingle (@RequestParam("schedule_id") String schedule_id,@RequestParam("reason") String reason) {
+        System.out.println("收到了中止排班的请求");
+        return scheduleService.stopSingle(schedule_id,reason);
+    }
+
+
 }
