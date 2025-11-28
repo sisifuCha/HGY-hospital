@@ -31,6 +31,8 @@ import com.example.mapper.model.DepartmentShiftRow;
 import com.example.mapper.model.PatientRecordRow;
 import com.example.mapper.model.PatientSummaryRow;
 import com.example.mapper.model.SelfShiftRow;
+import com.example.mapper.MessageRecordMapper;
+import com.example.entity.MessageRecord;
 import com.example.service.DoctorService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -70,6 +72,9 @@ public class DoctorServiceImpl implements DoctorService {
 
     @Autowired
     private PayRecordMapper payRecordMapper;
+
+    @Autowired
+    private MessageRecordMapper messageRecordMapper;
 
     private static final ZoneId DEFAULT_ZONE = ZoneId.systemDefault();
 
@@ -405,7 +410,7 @@ public class DoctorServiceImpl implements DoctorService {
             originalSchedule.getId(),
             targetSchId,
             request.getReason(),
-            "pending",
+            "待审核",
             targetDate,
             templateId,
             request.getChangeType(),
@@ -653,6 +658,27 @@ public class DoctorServiceImpl implements DoctorService {
 
     private List<NotificationMessageDto> loadSystemNotifications(String docId) {
         List<NotificationMessageDto> notifications = new ArrayList<>();
+        
+        // 从 message_record 表加载未发送的消息
+        List<MessageRecord> unsentMessages = messageRecordMapper.selectUnsentMessagesForDoctor(docId);
+        List<Integer> sentMessageIds = new ArrayList<>();
+        
+        for (MessageRecord msg : unsentMessages) {
+            NotificationMessageDto dto = new NotificationMessageDto();
+            dto.setId("msg-" + msg.getId());
+            dto.setTitle(msg.getTitle());
+            dto.setContent(msg.getContent());
+            dto.setCreatedAt(toOffsetDateTime(msg.getCreatedTime()));
+            notifications.add(dto);
+            sentMessageIds.add(msg.getId());
+        }
+        
+        // 标记这些消息为已发送，并更新 updated_time
+        if (!sentMessageIds.isEmpty()) {
+            messageRecordMapper.batchUpdateStatusToSent(sentMessageIds);
+        }
+        
+        // 继续添加班次变更通知（保持原有逻辑）
         for (ScheduleChangeRecordRow row : scheduleChangeRecordMapper.findByDoctor(docId)) {
             NotificationMessageDto dto = new NotificationMessageDto();
             dto.setId("schedule-change-" + row.getOriginalScheduleId() + "-" + row.getTargetScheduleId());
