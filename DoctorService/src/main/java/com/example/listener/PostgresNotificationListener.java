@@ -1,6 +1,9 @@
 package com.example.listener;
 
+import com.example.mapper.AddNumberSourceRecordMapper;
+import com.example.mapper.model.AddNumberApplicationRow;
 import com.example.service.DoctorService;
+import com.example.service.MessageRecordService;
 import org.postgresql.PGConnection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,6 +30,12 @@ public class PostgresNotificationListener {
     
     @Autowired
     private DoctorService doctorService;
+
+    @Autowired
+    private MessageRecordService messageRecordService;
+
+    @Autowired
+    private AddNumberSourceRecordMapper addNumberSourceRecordMapper;
     
     /**
      * 应用启动后自动开始监听数据库通知
@@ -60,6 +69,22 @@ public class PostgresNotificationListener {
                             
                             // 触发 SSE 推送
                             try {
+                                // 查询最新的待审核加号申请，获取患者姓名
+                                AddNumberApplicationRow latestApplication = 
+                                    addNumberSourceRecordMapper.selectLatestPendingApplicationRow(docId);
+                                
+                                // 向 message_record 表插入消息记录
+                                if (latestApplication != null && latestApplication.getPatientName() != null) {
+                                    try {
+                                        messageRecordService.createAddNumberApplicationMessage(
+                                            latestApplication.getPatientName(), docId);
+                                        logger.info("  ✓ 消息记录已创建，医生ID: {}, 患者: {}", 
+                                            docId, latestApplication.getPatientName());
+                                    } catch (Exception e) {
+                                        logger.error("  ✗ 创建消息记录失败，医生ID: {}", docId, e);
+                                    }
+                                }
+
                                 doctorService.notifyAddNumberChange(docId);
                                 logger.info("  ✓ SSE推送成功，医生ID: {}", docId);
                             } catch (Exception e) {
