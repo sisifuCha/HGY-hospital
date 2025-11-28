@@ -167,3 +167,60 @@
 
 ### 5.8 结论
 除错误码与未实施的校验/业务分支外，系统已实现：接口稳定可访问、响应结构统一基础、核心路由与资源命名明确、性能响应快速。现阶段适合作为“功能骨架”继续填充业务逻辑。建议在保持现有可用性的同时，按照迭代策略逐步补齐状态码与规则实现，最终将宽容通过率向严格通过率对齐。
+
+## 6. 候补挂号（waiting_queue）与患者加号申请（patient_extra_apply）测试
+
+### 6.1 前置条件
+- 本地/测试 DB 已存在 patient、doctor、doc_schedule_record 相关基础数据（或在测试开始前插入）。
+- BASE_URL 可访问（例如 http://localhost:8082）。
+
+### 6.2 用例概览（最小集）
+- TC-EXTRA-001 提交加号申请（成功）
+  - 请求：POST /api/extra-apply（body 含 patientId/departmentId/doctorId/appointmentDate=今日/reason）
+  - 期望：201，body 包含 id、status=PENDING、locked=false，DB 中 patient_extra_apply 有记录。
+- TC-EXTRA-002 提交加号申请（失败：appointmentDate 非今日）
+  - 期望：400 Bad Request 或 400 响应（含错误说明）。
+- TC-EXTRA-003 列表查询（按 patientId）
+  - 请求：GET /api/extra-apply?patientId={id}
+  - 期望：200，返回刚创建记录。
+- TC-EXTRA-004 审批通过
+  - 请求：PUT /api/extra-apply/{id}/approve
+  - 期望：200，status=APPROVED，locked=true，DB 更新时间 updated_at。
+- TC-EXTRA-005 审批驳回
+  - 请求：PUT /api/extra-apply/{id}/reject?rejectReason=xx
+  - 期望：200，status=REJECTED，rejectReason 被写入。
+
+- TC-WAIT-001 候补入队（模拟号源无余）
+  - 场景：当 schedule 的号源已满时，将患者写入 waiting_queue（由业务触发）
+  - 检查：waiting_queue 表插入记录，status=例如 PENDING/WAITING，apply_time 为 now。
+
+### 6.3 快速 curl 验证脚本（示例）
+- 创建加号申请：
+  curl -X POST "$BASE_URL/api/extra-apply" -H "Content-Type: application/json" -d '{
+    "patientId": 123,
+    "departmentId": 10,
+    "doctorId": 20,
+    "appointmentDate": "'"$(date +%F)"'",
+    "reason": "候补/加号测试"
+  }' -v
+
+- 查询：
+  curl "$BASE_URL/api/extra-apply?patientId=123" | jq
+
+- 审批通过：
+  curl -X PUT "$BASE_URL/api/extra-apply/1/approve" -v
+
+- 手动校验 DB（psql）：
+  SELECT id, patient_id, appointment_date, status, locked, created_at FROM patient_extra_apply WHERE patient_id=123 ORDER BY created_at DESC LIMIT 5;
+
+### 6.4 验收重点（自动化断言建议）
+- 接口层断言：HTTP status、body.status 字段、locked 字段。
+- 数据层断言：表中对应字段是否写入（status/locked/rejectReason）。
+- 边界：appointmentDate 必须是当天；重复申请返回冲突（409）或被拒绝。
+- 并发场景（候补）：并发创建挂号导致号源耗尽时，只有部分成功，其他写入 waiting_queue（可用 JMeter / k6 验证）。
+
+### 6.5 更简单的方法（无需 Apifox）
+- curl + jq：适合命令行快速验证与 CI 脚本（可放到简单 shell 脚本中）。
+- 简易集成测试：Spring Boot Test + MockMvc：
+  - 用 @SpringBootTest 启动上下文，使用 Testcontainers（可选）或内嵌 H2/Postgres 数据库初始化测试数据。
+  - 编写 3~6 个关键场景的测试用例作为回归。

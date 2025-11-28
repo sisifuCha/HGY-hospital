@@ -12,27 +12,27 @@
 
     <insert id="insertWaiting">
         INSERT INTO waiting_queue (patient_id, sch_id, apply_time, status)
-        VALUES (#{patientId}, #{scheduleRecordId}, NOW(), '排队中')
+        VALUES (#{patientId}, #{scheduleRecordId}, CURRENT_TIMESTAMP, '排队中')
     </insert>
 
     <select id="findWaitingByPatientAndSchedule" resultMap="WaitingMap">
-        SELECT id, patient_id, sch_id, apply_time, status
-        FROM waiting_queue
-        WHERE patient_id = #{patientId} AND sch_id = #{scheduleRecordId}
-        ORDER BY apply_time ASC
+        SELECT w.id, w.patient_id, w.sch_id, w.apply_time, w.status
+        FROM waiting_queue w
+        WHERE w.patient_id = #{patientId} AND w.sch_id = #{scheduleRecordId}
+        ORDER BY w.apply_time ASC
         LIMIT 1
     </select>
 
     <select id="findWaitingById" resultType="com.example.pojo.dto.WaitingDto">
-        SELECT id AS waitingId, patient_id AS patientId, sch_id AS scheduleRecordId, apply_time AS applyTime, status
-        FROM waiting_queue
-        WHERE id = #{waitingId}
+        SELECT w.id AS waitingId, w.patient_id AS patientId, w.sch_id AS scheduleRecordId, w.apply_time AS applyTime, w.status
+        FROM waiting_queue w
+        WHERE w.id = #{waitingId}
     </select>
 
     <select id="countActiveWaitingByKey" resultType="int">
         SELECT COUNT(*)
-        FROM waiting_queue
-        WHERE patient_id = #{patientId} AND sch_id = #{scheduleRecordId} AND status = '排队中'
+        FROM waiting_queue w
+        WHERE w.patient_id = #{patientId} AND w.sch_id = #{scheduleRecordId} AND w.status = '排队中'
     </select>
 
     <select id="countWaitingByPatientAndDate" resultType="int">
@@ -47,25 +47,25 @@
         FROM waiting_queue w
         WHERE w.sch_id = #{scheduleRecordId}
           AND w.status = '排队中'
-          AND w.apply_time < (
+          AND w.apply_time &lt; (
               SELECT apply_time FROM waiting_queue WHERE patient_id = #{patientId} AND sch_id = #{scheduleRecordId} ORDER BY apply_time LIMIT 1
           )
     </select>
 
     <select id="findWaitingsBySchedule" resultMap="WaitingMap">
-        SELECT id, patient_id, sch_id, apply_time, status
-        FROM waiting_queue
-        WHERE sch_id = #{scheduleRecordId} AND status = '排队中'
-        ORDER BY apply_time ASC
+        SELECT w.id, w.patient_id, w.sch_id, w.apply_time, w.status
+        FROM waiting_queue w
+        WHERE w.sch_id = #{scheduleRecordId} AND w.status = '排队中'
+        ORDER BY w.apply_time ASC
     </select>
 
     <select id="findWaitingsByPatient" resultType="com.example.pojo.dto.WaitingDto">
-        SELECT id AS waitingId, patient_id AS patientId, sch_id AS scheduleRecordId, apply_time AS applyTime, status
+        SELECT w.id AS waitingId, w.patient_id AS patientId, w.sch_id AS scheduleRecordId, w.apply_time AS applyTime, w.status
         FROM waiting_queue w
         JOIN doc_schedule_record dsr ON w.sch_id = dsr.id
         WHERE w.patient_id = #{patientId}
         <if test="date != null and date != ''">
-            AND to_char(dsr.schedule_date, 'YYYY-MM-DD') = #{date}
+            AND CAST(dsr.schedule_date AS VARCHAR) = #{date}
         </if>
         ORDER BY dsr.schedule_date DESC, w.apply_time DESC
     </select>
@@ -87,4 +87,3 @@
     </select>
 
 </mapper>
-

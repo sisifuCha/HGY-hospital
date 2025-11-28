@@ -161,3 +161,24 @@ create table public.waiting_queue (
 create index idx_waiting_schedule on waiting_queue using btree (sch_id);
 create index idx_waiting_patient on waiting_queue using btree (patient_id);
 comment on table public.waiting_queue is '候补队列表';
+
+-- 患者加号申请记录表（供 API /api/extra-apply 使用）
+create table public.patient_extra_apply (
+    id bigserial primary key,
+    patient_id bigint not null,
+    department_id bigint not null,
+    doctor_id bigint not null,
+    appointment_date date not null,
+    reason text not null,
+    status varchar(32) not null default 'PENDING', -- PENDING / APPROVED / REJECTED
+    locked boolean not null default false,
+    reject_reason text,
+    created_at timestamp without time zone default now(),
+    updated_at timestamp without time zone default now(),
+    foreign key (patient_id) references public.patient (id) match simple on update cascade on delete cascade,
+    foreign key (doctor_id) references public.doctor (id) match simple on update cascade on delete set null,
+    foreign key (department_id) references public.department (id) match simple on update cascade on delete set null
+);
+create index idx_patient_extra_apply_patient on patient_extra_apply using btree (patient_id);
+create index idx_patient_extra_apply_status on patient_extra_apply using btree (status);
+comment on table public.patient_extra_apply is '患者当天加号申请记录表';

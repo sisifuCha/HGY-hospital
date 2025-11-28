@@ -4,9 +4,13 @@ import com.example.conmon.result.Result;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.beans.factory.annotation.Value;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    @Value("${app.debug:false}")
+    private boolean appDebug;
 
     @ExceptionHandler(DuplicateRegistrationException.class)
     public Result<Void> handleDuplicate(DuplicateRegistrationException ex) {
@@ -53,6 +57,10 @@ public class GlobalExceptionHandler {
     public Result<Void> handleGeneral(Exception ex) {
         // Log the exception for debugging purposes
         System.err.println("General exception: " + ex.getMessage());
+        if (appDebug) {
+            // In dev mode return the exception message to help debugging
+            return Result.fail(500, ex.getMessage() != null ? ex.getMessage() : "服务器开小差，请稍后重试");
+        }
         return Result.fail(500, "服务器开小差，请稍后重试");
     }
 }

@@ -7,11 +7,13 @@ import com.example.extra.service.PatientExtraApplyService;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.context.annotation.Primary;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 
+@Primary
 @Service
 public class PatientExtraApplyServiceImpl implements PatientExtraApplyService {
 

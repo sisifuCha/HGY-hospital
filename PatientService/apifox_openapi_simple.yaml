@@ -1,0 +1,282 @@
+openapi: 3.0.3
+info:
+  title: HGY Hospital - PatientService (Waiting & Extra Apply) - Simple
+  version: 1.0.0
+servers:
+  - url: "http://localhost:8082"
+    description: Local dev server
+paths:
+  /api/registrations/waiting:
+    post:
+      summary: Create a waiting (候补挂号)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateWaitingRequest'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultWaiting'
+    get:
+      summary: Get waiting list by schedule
+      parameters:
+        - name: scheduleRecordId
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultWaitingList'
+    delete:
+      summary: Cancel waiting
+      parameters:
+        - name: patientId
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: waitingId
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+  /api/registrations/waiting/patient:
+    get:
+      summary: Get waiting by patient and optional date
+      parameters:
+        - name: patientId
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: date
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: OK
+  /api/registrations/waiting/confirm:
+    post:
+      summary: Confirm waiting -> convert to registration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                waitingId:
+                  type: string
+      responses:
+        '200':
+          description: OK
+
+  /api/extra-apply:
+    post:
+      summary: Submit an extra-apply
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatientExtraApplyCreate'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                  msg:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/PatientExtraApplyItem'
+    get:
+      summary: List extra-apply for a patient
+      parameters:
+        - name: patientId
+          in: query
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: OK
+  /api/extra-apply/{id}:
+    get:
+      summary: Get extra-apply by id
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: OK
+  /api/extra-apply/{id}/approve:
+    put:
+      summary: Approve an extra-apply
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: approverId
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: OK
+  /api/extra-apply/{id}/reject:
+    put:
+      summary: Reject an extra-apply
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: approverId
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: rejectReason
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+
+components:
+  schemas:
+    CreateWaitingRequest:
+      type: object
+      required:
+        - patientId
+        - scheduleRecordId
+      properties:
+        patientId:
+          type: string
+        scheduleRecordId:
+          type: string
+    WaitingItem:
+      type: object
+      properties:
+        waitingId:
+          type: string
+        patientId:
+          type: string
+        scheduleRecordId:
+          type: string
+        applyTime:
+          type: string
+          format: date-time
+        status:
+          type: string
+        position:
+          type: integer
+        limitCount:
+          type: integer
+    ResultWaiting:
+      type: object
+      properties:
+        code:
+          type: integer
+        msg:
+          type: string
+        data:
+          $ref: '#/components/schemas/WaitingItem'
+    ResultWaitingList:
+      type: object
+      properties:
+        code:
+          type: integer
+        msg:
+          type: string
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/WaitingItem'
+    PatientExtraApplyCreate:
+      type: object
+      required:
+        - patientId
+        - departmentId
+        - doctorId
+        - appointmentDate
+        - reason
+      properties:
+        patientId:
+          type: integer
+        departmentId:
+          type: integer
+        doctorId:
+          type: integer
+        appointmentDate:
+          type: string
+          format: date
+        reason:
+          type: string
+    PatientExtraApplyItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        patientId:
+          type: integer
+        departmentId:
+          type: integer
+        doctorId:
+          type: integer
+        appointmentDate:
+          type: string
+          format: date
+        reason:
+          type: string
+        status:
+          type: string
+        locked:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        rejectReason:
+          type: string
+    ResultPatientExtraApply:
+      type: object
+      properties:
+        code:
+          type: integer
+        msg:
+          type: string
+        data:
+          $ref: '#/components/schemas/PatientExtraApplyItem'

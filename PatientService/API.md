@@ -385,3 +385,68 @@
 - 404 Not Found：记录不存在
 - 409 Conflict：尝试审批已处理的申请
 - 500 Internal Server Error：服务器异常
+
+### 测试指南（快速上手 — 候补挂号 & 患者加号申请）
+
+建议工具
+- 推荐：Apifox / Postman（可保存集合与环境变量）。
+- 更轻量：curl + jq（命令行），或直接用浏览器插件 Rested/RESTer。
+- CI 集成：使用 Spring Boot MockMvc 或集成测试（见下面“简易自动化”）。
+
+准备工作（环境变量）
+- BASE_URL=http://localhost:8082
+- TEST_PATIENT_ID=PAT0005 或在 DB 中准备一个 patient record（参考 hopital_new.sql）。
+- TEST_DOCTOR_ID=DOC0006、TEST_SCH_ID=SCH1032（用于模拟）
+
+Apifox / Postman 快速步骤
+1. 导入接口（将 README / API.md 或 OpenAPI 导入到 Apifox）。
+2. 在环境中配置 BASE_URL、token（若需）。
+3. 用例顺序：
+   - 提交加号申请（POST /api/extra-apply）
+     Request:
+     {
+       "patientId": 123,
+       "departmentId": 10,
+       "doctorId": 20,
+       "appointmentDate": "2025-11-14",
+       "reason": "当天临时加号"
+     }
+     预期：201 Created，返回包含 id、status=PENDING、locked=false。
+   - 查询（GET /api/extra-apply?patientId=123）
+     预期：列表包含刚创建的记录。
+   - 审核通过（PUT /api/extra-apply/{id}/approve）
+     预期：status -> APPROVED，locked=true。
+   - 审核驳回（PUT /api/extra-apply/{id}/reject?rejectReason=...）
+     预期：status -> REJECTED，rejectReason 被设置。
+
+curl 示例（快速 smoke）
+- 提交申请：
+  curl -X POST "$BASE_URL/api/extra-apply" -H "Content-Type: application/json" -d '{
+    "patientId": 123,
+    "departmentId": 10,
+    "doctorId": 20,
+    "appointmentDate": "2025-11-14",
+    "reason": "临时加号测试"
+  }' -v
+
+- 列表查询：
+  curl "$BASE_URL/api/extra-apply?patientId=123"
+
+- 审核通过：
+  curl -X PUT "$BASE_URL/api/extra-apply/1/approve"
+
+数据库检查（手工或脚本）
+- patient_extra_apply 表：确认记录存在，检查 status/locked/created_at/updated_at。
+- waiting_queue 表（候补）: 确认在候补场景下 sch_id、patient_id、status 等字段记录正确。
+
+简单自动化建议
+- 单元/集成：使用 Spring Boot Test + MockMvc 增加 3 个关键场景：
+  1) 提交成功（必填字段、appointmentDate 为今日）
+  2) 提交失败（缺少字段或 appointmentDate 非今日 → 400）
+  3) 审批流（approve/reject 状态变更）
+- 如果需要并发测试候补队列，编写一个简单的并发脚本（多线程并行 POST/PUT 或用 Apache JMeter）。
+
+注意事项
+- 后端应在接口层校验 appointmentDate 是否为当天（避免前端绕过），并对重复申请、防刷做速率限制或幂等处理。
+- 审批通过后需要把 locked 置为 true（用于后续扣号/付款流程），测试时确认该字段变化。
+- 若系统尚未启用鉴权，请在测试环境中注意数据隔离，避免污染生产数据。

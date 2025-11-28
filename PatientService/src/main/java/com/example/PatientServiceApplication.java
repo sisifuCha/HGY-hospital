@@ -7,7 +7,7 @@ import org.springframework.boot.web.servlet.ServletComponentScan;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 @SpringBootApplication
-@MapperScan("com.example.Mapper")
+@MapperScan(basePackages = {"com.example.Mapper", "com.example.extra.mapper"})
 @ServletComponentScan
 @EnableTransactionManagement // 开启事务管理
 public class PatientServiceApplication {

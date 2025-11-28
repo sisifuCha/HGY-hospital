@@ -3,6 +3,7 @@ package com.example.Config;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.Session;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -10,6 +11,10 @@ import org.springframework.stereotype.Component;
 public class SSHConnection {
 
     private Session session = null;
+
+    // SSH enable switch for local testing
+    @Value("${ssh.enabled:false}")
+    private boolean sshEnabled;
 
     // SSH 连接与端口转发配置常量（已对齐管理端配置）
     private final String SSH_REMOTE_SERVER = "124.71.238.8"; // SSH服务器公网IP（管理端一致）
@@ -29,6 +34,10 @@ public class SSHConnection {
     }
 
     public void connect() {
+        if (!sshEnabled) {
+            log.info("ssh.enabled is false — skipping SSH connection (local test mode)");
+            return;
+        }
         try {
             if (session != null && session.isConnected()) {
                 return; // 已连接无需重复连接

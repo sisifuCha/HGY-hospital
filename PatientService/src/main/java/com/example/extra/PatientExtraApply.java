@@ -1,29 +1,6 @@
 // java
-package com.example.extra.entity;
+package com.example.extra;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
-import lombok.*;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-@TableName("patient_extra_apply")
-public class PatientExtraApply {
-    @TableId(type = IdType.AUTO)
-    private Long id;
-    private Long patientId;
-    private Long departmentId;
-    private Long doctorId;
-    private LocalDate appointmentDate;
-    private String reason;
-    private String status; // PENDING / APPROVED / REJECTED
-    private Boolean locked;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
-    private String rejectReason;
-}
+// 该文件原先与 com.example.extra.entity.PatientExtraApply 重复。
+// 已将重复类移除，实体请使用：com.example.extra.entity.PatientExtraApply
+// 若需要可删除此文件。

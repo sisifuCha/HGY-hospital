@@ -24,6 +24,11 @@ public class Result<T> {
         return new Result<>(200, msg, data);
     }
 
+    // Return created (201) result wrapper
+    public static <T> Result<T> created(T data) {
+        return new Result<>(201, "created", data);
+    }
+
     public static <T> Result<T> fail(Integer code, String msg) {
         return new Result<>(code, msg, null);
     }
