@@ -1,10 +1,8 @@
 package com.example.Mapper;
 
-import com.example.pojo.dto.RegistrationDto;
+import com.example.pojo.dto.DepartmentWithSubDepartmentsDto;
 import com.example.pojo.dto.DoctorWithSchedulesDto;
-import com.example.pojo.dto.RegistrationQueryDto;
 import com.example.pojo.entity.Doctor;
-import com.example.pojo.vo.RegistrationVo;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -15,15 +13,5 @@ import java.util.List;
 public interface RegistrationMapper {
     List<DoctorWithSchedulesDto> findDoctorsWithSchedulesByDepartmentAndDate(@Param("departmentId") String departmentId, @Param("date") LocalDate date);
     Doctor findDoctorDetailsById(@Param("doctorId") String doctorId);
-    Integer countActiveRegistrationByKey(@Param("patientId") String patientId, @Param("scheduleRecordId") String scheduleRecordId);
-    int decrementScheduleLeftSource(@Param("scheduleRecordId") String scheduleRecordId);
-    int incrementScheduleLeftSource(@Param("scheduleRecordId") String scheduleRecordId);
-    int insertRegistration(@Param("patientId") String patientId, @Param("scheduleRecordId") String scheduleRecordId, @Param("status") String status);
-    String getRegistrationStatusByKey(@Param("patientId") String patientId, @Param("scheduleRecordId") String scheduleRecordId);
-    int updateRegistrationStatusToCanceled(@Param("patientId") String patientId, @Param("scheduleRecordId") String scheduleRecordId);
-    RegistrationDto findRegistrationByKey(@Param("patientId") String patientId, @Param("scheduleRecordId") String scheduleRecordId);
-
-    List<RegistrationVo> findRegistrationsByQuery(@Param("query") RegistrationQueryDto queryDto, @Param("offset") int offset, @Param("limit") int limit);
-    long countRegistrationsByQuery(@Param("query") RegistrationQueryDto queryDto);
-    RegistrationVo findRegistrationByPatientAndSchedule(@Param("patientId") String patientId, @Param("scheduleRecordId") String scheduleRecordId);
+    List<DepartmentWithSubDepartmentsDto> findAllDepartmentsWithSubDepartments();
 }

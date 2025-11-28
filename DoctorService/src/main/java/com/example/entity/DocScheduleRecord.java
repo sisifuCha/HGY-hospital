@@ -8,7 +8,6 @@ public class DocScheduleRecord implements Serializable {
     private String templateId;
     private Date scheduleDate;
     private Integer leftSourceCount;
-    private String status; // '0' or '1' or other
     private String docId;
 
     // Getters and Setters
@@ -50,13 +49,5 @@ public class DocScheduleRecord implements Serializable {
 
     public void setDocId(String docId) {
         this.docId = docId;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
     }
 }

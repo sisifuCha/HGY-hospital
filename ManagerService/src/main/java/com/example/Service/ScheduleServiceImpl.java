@@ -4,7 +4,9 @@ import com.example.Conmon.result.Result;
 import com.example.Mapper.DepartmentMapper;
 import com.example.Mapper.DoctorMapper;
 import com.example.Mapper.ScheduleMapper;
-import com.example.pojo.dto.*;
+import com.example.pojo.dto.HistoryScheduleDTO;
+import com.example.pojo.dto.NextWeekScheduleDTO;
+import com.example.pojo.dto.ScheduleDTO;
 import com.example.pojo.entity.DoctorSchedule;
 import com.example.pojo.vo.FinalScheduleVO;
 import com.example.pojo.vo.FinalScheduleWeekVO;
@@ -178,60 +180,6 @@ public class ScheduleServiceImpl implements ScheduleService {
         }
         return Result.success(finalScheduleWeekVO);
     }
-
-    @Override
-    public Result<Void> stopSingle(String schedule_id, String reason) {
-        try {
-            int affectedRow = scheduleMapper.stopSingle(schedule_id, reason);
-            if (affectedRow>0) {return  Result.success("操作成功",null);}
-            else return Result.fail("排班不存在");
-        }catch (Exception e){
-            e.printStackTrace();
-            return  Result.fail("服务器错误");
-        }
-    }
-
-    @Override
-    public Result<Void> stopBatch(StopBatchScheduleDTO stopBatchScheduleDTO) {
-        try{
-            int affect = scheduleMapper.stopBatch(stopBatchScheduleDTO.getDoc_ids(),
-                    stopBatchScheduleDTO.getReason(),
-                    stopBatchScheduleDTO.getStart_time().getTemplate_id(),
-                    stopBatchScheduleDTO.getEnd_time().getTemplate_id(),
-                    stopBatchScheduleDTO.getStart_time().getDate(),
-                    stopBatchScheduleDTO.getEnd_time().getDate());
-            if (affect>0) {
-                return Result.success("成功终止",null);
-            }
-            return Result.fail("更新不完全");
-
-        }catch (Exception e){
-            return Result.fail(e.toString());
-        }
-    }
-
-    @Override
-    public Result<Void> delayBatch(DelayBatchDTO delayBatchDTO) {
-
-        try{
-            int affect = scheduleMapper.delayBatch(delayBatchDTO.getDoc_ids(),
-                    delayBatchDTO.getReason(),
-                    delayBatchDTO.getStart_time().getTemplate_id(),
-                    delayBatchDTO.getEnd_time().getTemplate_id(),
-                    delayBatchDTO.getStart_time().getDate(),
-                    delayBatchDTO.getEnd_time().getDate(),
-                    delayBatchDTO.getDelay_days());
-            if (affect>0) {
-                return Result.success("成功延后",null);
-            }
-            return Result.fail("更新不完全");
-
-        }catch (Exception e){
-            return Result.fail(e.toString());
-        }
-
-    }
-
     /******************************************************/
     private void executeScheduleDate(DoctorSchedule doctorSchedule, String date, Integer code) {
         // 创建日期缩写与DayOfWeek的映射关系

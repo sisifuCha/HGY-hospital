@@ -1,6 +1,8 @@
 package com.example.Mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.example.pojo.dto.HistoryScheduleDTO;
+import com.example.pojo.dto.ScheduleDTO;
 import com.example.pojo.entity.DoctorSchedule;
 import com.example.pojo.vo.FinalScheduleVO;
 import org.apache.ibatis.annotations.*;
@@ -28,8 +30,6 @@ public interface ScheduleMapper extends BaseMapper<DoctorSchedule> {
             "t.name AS title_name," +
             "ds.template_id AS template_id," +
             "ds.schedule_date AS schedule_date," +
-            "ds.id AS schedule_id," +
-            "ds.status AS status," +
             "dp.name AS depart_name " +
             "FROM " +
             "\"user\" u INNER JOIN doctor d ON d.id=u.id " +
@@ -43,22 +43,4 @@ public interface ScheduleMapper extends BaseMapper<DoctorSchedule> {
 
     @Select("SELECT id FROM doc_schedule_record")
     List<String> getIdList();
-
-    @Update("UPDATE doc_schedule_record SET reason = #{reason},status = 1 WHERE id = #{schedule_id}")
-    int stopSingle(String schedule_id,String reason);
-
-    int stopBatch(@Param("doctorIds") List<String> doc_ids,
-                  @Param("reason") String reason,
-                  @Param("startTemplate") String start_template,
-                  @Param("endTemplate") String end_template,
-                  @Param("startDate") LocalDate start_date,
-                  @Param("endDate") LocalDate end_date);
-
-    int delayBatch(@Param("doctorIds") List<String> doc_ids,
-                  @Param("reason") String reason,
-                  @Param("startTemplate") String start_template,
-                  @Param("endTemplate") String end_template,
-                  @Param("startDate") LocalDate start_date,
-                  @Param("endDate") LocalDate end_date,
-                   @Param("delay_days") Integer delay_days);
 }

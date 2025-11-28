@@ -20,29 +20,14 @@ public class UserController {
     private UserService userService;
 
     @PostMapping("/login")
-    public Result<String> login(@RequestBody LoginRequest loginRequest) {
-        try {
-            return userService.login(loginRequest);
-        } catch (IllegalArgumentException ex) {
-            return Result.fail(401, "密码错误");
-        } catch (Exception ex) {
-            return Result.fail(404, "用户不存在");
-        }
+    public Result login(@RequestBody LoginRequest loginRequest) {
+        return userService.login(loginRequest);
     }
 
     @PostMapping("/register")
-    public Result<String> register(@RequestBody RegisterRequest registerRequest) {
-        try {
-            return userService.register(registerRequest);
-        } catch (IllegalArgumentException ex) {
-            return Result.fail(409, "账户已存在");
-        } catch (Exception ex) {
-            return Result.fail(400, "注册失败");
-        }
+    public Result register(@RequestBody RegisterRequest registerRequest) {
+        return userService.register(registerRequest);
     }
 
-    @GetMapping("/patient-id")
-    public Result<String> getPatientId(@RequestParam("account") String account) {
-        return userService.getPatientIdByAccount(account);
-    }
+
 }
