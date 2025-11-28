@@ -386,67 +386,169 @@
 - 409 Conflict：尝试审批已处理的申请
 - 500 Internal Server Error：服务器异常
 
-### 测试指南（快速上手 — 候补挂号 & 患者加号申请）
+---
 
-建议工具
-- 推荐：Apifox / Postman（可保存集合与环境变量）。
-- 更轻量：curl + jq（命令行），或直接用浏览器插件 Rested/RESTer。
-- CI 集成：使用 Spring Boot MockMvc 或集成测试（见下面“简易自动化”）。
+## 候补挂号（Waiting）接口返回说明
+说明：所有候补挂号相关接口均使用项目统一返回结构 Result<T>：
+{
+  "code": <int>,
+  "msg": "<string>",
+  "data": <object|null>
+}
+常见：code=200 表示 success，code=201 表示 created，其他为错误码。
 
-准备工作（环境变量）
-- BASE_URL=http://localhost:8082
-- TEST_PATIENT_ID=PAT0005 或在 DB 中准备一个 patient record（参考 hopital_new.sql）。
-- TEST_DOCTOR_ID=DOC0006、TEST_SCH_ID=SCH1032（用于模拟）
+1) 创建候补挂号
+- URL: POST /api/registrations/waiting
+- Request body: { "patientId": "17", "scheduleRecordId": "SCH_TEST_1" }
+- Success Response (200) - data 为单个候补项（WaitingDto）
+  WaitingDto 字段说明：
+  - waitingId (String|Long)：候补记录内部 id（mind: 在 H2 中为自增 Long）
+  - patientId (String)：患者 id
+  - scheduleRecordId (String)：排班记录 id
+  - applyTime (String)：申请时间，ISO datetime 字符串
+  - status (String)：状态（例如："排队中" / "已取消" / "已成功预约"）
+  - position (Integer)：当前在队列中的位置（1 为第一位）
+  - limitCount (Integer)：当日剩余可候补次数
 
-Apifox / Postman 快速步骤
-1. 导入接口（将 README / API.md 或 OpenAPI 导入到 Apifox）。
-2. 在环境中配置 BASE_URL、token（若需）。
-3. 用例顺序：
-   - 提交加号申请（POST /api/extra-apply）
-     Request:
-     {
-       "patientId": 123,
-       "departmentId": 10,
-       "doctorId": 20,
-       "appointmentDate": "2025-11-14",
-       "reason": "当天临时加号"
-     }
-     预期：201 Created，返回包含 id、status=PENDING、locked=false。
-   - 查询（GET /api/extra-apply?patientId=123）
-     预期：列表包含刚创建的记录。
-   - 审核通过（PUT /api/extra-apply/{id}/approve）
-     预期：status -> APPROVED，locked=true。
-   - 审核驳回（PUT /api/extra-apply/{id}/reject?rejectReason=...）
-     预期：status -> REJECTED，rejectReason 被设置。
+  示例：
+  {
+    "code": 200,
+    "msg": "success",
+    "data": {
+      "waitingId": "1",
+      "patientId": "17",
+      "scheduleRecordId": "SCH_TEST_1",
+      "applyTime": "2025-11-28T13:21:15",
+      "status": "排队中",
+      "position": 1,
+      "limitCount": 2
+    }
+  }
 
-curl 示例（快速 smoke）
-- 提交申请：
-  curl -X POST "$BASE_URL/api/extra-apply" -H "Content-Type: application/json" -d '{
-    "patientId": 123,
-    "departmentId": 10,
-    "doctorId": 20,
-    "appointmentDate": "2025-11-14",
-    "reason": "临时加号测试"
-  }' -v
+2) 根据排班查询候补列表
+- URL: GET /api/registrations/waiting?scheduleRecordId={id}
+- Success Response (200) - data 为一个对象，包含列表与计数
+  data 字段说明：
+  - scheduleRecordId (String)
+  - waitingCount (Integer)
+  - waitingList (Array<WaitingDto>)
 
-- 列表查询：
-  curl "$BASE_URL/api/extra-apply?patientId=123"
+  示例：
+  {
+    "code": 200,
+    "msg": "success",
+    "data": {
+      "scheduleRecordId": "SCH_TEST_1",
+      "waitingCount": 3,
+      "waitingList": [ /* WaitingDto 列表 */ ]
+    }
+  }
 
-- 审核通过：
-  curl -X PUT "$BASE_URL/api/extra-apply/1/approve"
+3) 根据患者查询候补项
+- URL: GET /api/registrations/waiting/patient?patientId={patientId}[&date=YYYY-MM-DD]
+- Success Response (200) - data 为对象：
+  - patientId (String)
+  - items (Array<WaitingDto>)
 
-数据库检查（手工或脚本）
-- patient_extra_apply 表：确认记录存在，检查 status/locked/created_at/updated_at。
-- waiting_queue 表（候补）: 确认在候补场景下 sch_id、patient_id、status 等字段记录正确。
+  示例：
+  {
+    "code": 200,
+    "msg": "success",
+    "data": {
+      "patientId": "17",
+      "items": [ /* WaitingDto */ ]
+    }
+  }
 
-简单自动化建议
-- 单元/集成：使用 Spring Boot Test + MockMvc 增加 3 个关键场景：
-  1) 提交成功（必填字段、appointmentDate 为今日）
-  2) 提交失败（缺少字段或 appointmentDate 非今日 → 400）
-  3) 审批流（approve/reject 状态变更）
-- 如果需要并发测试候补队列，编写一个简单的并发脚本（多线程并行 POST/PUT 或用 Apache JMeter）。
+4) 取消候补
+- URL: DELETE /api/registrations/waiting?patientId={patientId}&waitingId={waitingId}
+- Success Response (200) - data 为已更新的 WaitingDto（status 会变为 "已取消"）
 
-注意事项
-- 后端应在接口层校验 appointmentDate 是否为当天（避免前端绕过），并对重复申请、防刷做速率限制或幂等处理。
-- 审批通过后需要把 locked 置为 true（用于后续扣号/付款流程），测试时确认该字段变化。
-- 若系统尚未启用鉴权，请在测试环境中注意数据隔离，避免污染生产数据。
+5) 确认候补（转为正式挂号）
+- URL: POST /api/registrations/waiting/confirm
+- Request body: { "waitingId": "..." }
+- Success Response (200) - data 为已更新的 WaitingDto（status: "已成功预约"，并填入 registrationId）
+
+---
+
+## 患者加号（Extra Apply）接口返回说明
+说明：加号接口也使用统一返回结构 Result<T>。创建接口返回 201 created（Result.created），其他接口返回 200 或错误码。
+
+1) 提交加号申请
+- URL: POST /api/extra-apply
+- Request body (application/json):
+  {
+    "patientId": 17,
+    "departmentId": 1,
+    "doctorId": 1,
+    "appointmentDate": "2025-11-28",
+    "reason": "紧急加号"
+  }
+- Success Response (201 Created) - data 为 PatientExtraApplyItem，字段：
+  - id (Long)：申请记录主键
+  - patientId (Long)
+  - departmentId (Long)
+  - doctorId (Long)
+  - appointmentDate (String, YYYY-MM-DD)
+  - reason (String)
+  - status (String): PENDING / APPROVED / REJECTED
+  - locked (Boolean): 是否锁定号源（审批通过时设为 true）
+  - createdAt (String, datetime)
+  - updatedAt (String, datetime)
+  - rejectReason (String|null)
+
+  示例成功响应：
+  {
+    "code": 201,
+    "msg": "created",
+    "data": {
+      "id": 1,
+      "patientId": 17,
+      "departmentId": 1,
+      "doctorId": 1,
+      "appointmentDate": "2025-11-28",
+      "reason": "紧急加号",
+      "status": "PENDING",
+      "locked": false,
+      "createdAt": "2025-11-28T13:21:15.380625",
+      "updatedAt": "2025-11-28T13:21:15.380625",
+      "rejectReason": null
+    }
+  }
+
+2) 查询申请详情
+- URL: GET /api/extra-apply/{id}
+- Success Response (200) - data 为 PatientExtraApplyItem（同上字段）
+
+3) 按患者列出申请
+- URL: GET /api/extra-apply?patientId={patientId}
+- Success Response (200) - data 为 Array<PatientExtraApplyItem>
+  示例：
+  {
+    "code": 200,
+    "msg": "success",
+    "data": [ /* PatientExtraApplyItem 列表 */ ]
+  }
+
+4) 审核通过
+- URL: PUT /api/extra-apply/{id}/approve[?approverId=...]
+- Success Response (200) - data 为更新后的 PatientExtraApplyItem（status: APPROVED, locked: true）
+
+5) 驳回申请
+- URL: PUT /api/extra-apply/{id}/reject?[approverId=...&rejectReason=...]
+- Success Response (200) - data 为更新后的 PatientExtraApplyItem（status: REJECTED, rejectReason 填写）
+
+---
+
+## 返回包装 Result<T> 说明
+统一结构：
+- code (Integer)：状态码，200 / 201 表示成功，其它为错误；
+- msg (String)：消息文本（如 "success" / "created" / 错误描述）；
+- data (T|null)：实际数据对象或 null。
+
+示例错误响应：
+{
+  "code": 400,
+  "msg": "patientId不能为空",
+  "data": null
+}

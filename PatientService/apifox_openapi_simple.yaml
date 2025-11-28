@@ -36,7 +36,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ResultWaitingList'
+                $ref: '#/components/schemas/ResultWaitingListObject'
     delete:
       summary: Cancel waiting
       parameters:
@@ -53,6 +53,10 @@ paths:
       responses:
         '200':
           description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultWaiting'
   /api/registrations/waiting/patient:
     get:
       summary: Get waiting by patient and optional date
@@ -71,6 +75,10 @@ paths:
       responses:
         '200':
           description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultWaitingByPatient'
   /api/registrations/waiting/confirm:
     post:
       summary: Confirm waiting -> convert to registration
@@ -86,6 +94,10 @@ paths:
       responses:
         '200':
           description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultWaiting'
 
   /api/extra-apply:
     post:
@@ -102,14 +114,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  code:
-                    type: integer
-                  msg:
-                    type: string
-                  data:
-                    $ref: '#/components/schemas/PatientExtraApplyItem'
+                $ref: '#/components/schemas/ResultPatientExtraApply'
     get:
       summary: List extra-apply for a patient
       parameters:
@@ -121,6 +126,10 @@ paths:
       responses:
         '200':
           description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultPatientExtraApplyList'
   /api/extra-apply/{id}:
     get:
       summary: Get extra-apply by id
@@ -133,6 +142,10 @@ paths:
       responses:
         '200':
           description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultPatientExtraApply'
   /api/extra-apply/{id}/approve:
     put:
       summary: Approve an extra-apply
@@ -150,6 +163,10 @@ paths:
       responses:
         '200':
           description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultPatientExtraApply'
   /api/extra-apply/{id}/reject:
     put:
       summary: Reject an extra-apply
@@ -172,6 +189,10 @@ paths:
       responses:
         '200':
           description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultPatientExtraApply'
 
 components:
   schemas:
@@ -203,6 +224,26 @@ components:
           type: integer
         limitCount:
           type: integer
+    WaitingListObject:
+      type: object
+      properties:
+        scheduleRecordId:
+          type: string
+        waitingCount:
+          type: integer
+        waitingList:
+          type: array
+          items:
+            $ref: '#/components/schemas/WaitingItem'
+    WaitingByPatientObject:
+      type: object
+      properties:
+        patientId:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/WaitingItem'
     ResultWaiting:
       type: object
       properties:
@@ -212,7 +253,7 @@ components:
           type: string
         data:
           $ref: '#/components/schemas/WaitingItem'
-    ResultWaitingList:
+    ResultWaitingListObject:
       type: object
       properties:
         code:
@@ -220,9 +261,16 @@ components:
         msg:
           type: string
         data:
-          type: array
-          items:
-            $ref: '#/components/schemas/WaitingItem'
+          $ref: '#/components/schemas/WaitingListObject'
+    ResultWaitingByPatient:
+      type: object
+      properties:
+        code:
+          type: integer
+        msg:
+          type: string
+        data:
+          $ref: '#/components/schemas/WaitingByPatientObject'
     PatientExtraApplyCreate:
       type: object
       required:
@@ -280,3 +328,14 @@ components:
           type: string
         data:
           $ref: '#/components/schemas/PatientExtraApplyItem'
+    ResultPatientExtraApplyList:
+      type: object
+      properties:
+        code:
+          type: integer
+        msg:
+          type: string
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/PatientExtraApplyItem'
