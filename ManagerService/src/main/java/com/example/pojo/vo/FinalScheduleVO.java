@@ -13,4 +13,5 @@ public class FinalScheduleVO {
     private String title;
     private String template_id;
     private LocalDate date;
+    private Integer status;
 }

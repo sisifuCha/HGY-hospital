@@ -1,8 +1,6 @@
 package com.example.Mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.example.pojo.dto.HistoryScheduleDTO;
-import com.example.pojo.dto.ScheduleDTO;
 import com.example.pojo.entity.DoctorSchedule;
 import com.example.pojo.vo.FinalScheduleVO;
 import org.apache.ibatis.annotations.*;
@@ -31,6 +29,7 @@ public interface ScheduleMapper extends BaseMapper<DoctorSchedule> {
             "ds.template_id AS template_id," +
             "ds.schedule_date AS schedule_date," +
             "ds.id AS schedule_id," +
+            "ds.status AS status," +
             "dp.name AS depart_name " +
             "FROM " +
             "\"user\" u INNER JOIN doctor d ON d.id=u.id " +
