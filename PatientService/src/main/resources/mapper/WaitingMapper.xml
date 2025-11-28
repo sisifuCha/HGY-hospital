@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.example.Mapper.WaitingMapper">
+
+    <resultMap id="WaitingMap" type="com.example.pojo.dto.WaitingDto">
+        <id property="waitingId" column="id"/>
+        <result property="patientId" column="patient_id"/>
+        <result property="scheduleRecordId" column="sch_id"/>
+        <result property="applyTime" column="apply_time"/>
+        <result property="status" column="status"/>
+    </resultMap>
+
+    <insert id="insertWaiting">
+        INSERT INTO waiting_queue (patient_id, sch_id, apply_time, status)
+        VALUES (#{patientId}, #{scheduleRecordId}, NOW(), '排队中')
+    </insert>
+
+    <select id="findWaitingByPatientAndSchedule" resultMap="WaitingMap">
+        SELECT id, patient_id, sch_id, apply_time, status
+        FROM waiting_queue
+        WHERE patient_id = #{patientId} AND sch_id = #{scheduleRecordId}
+        ORDER BY apply_time ASC
+        LIMIT 1
+    </select>
+
+    <select id="findWaitingById" resultType="com.example.pojo.dto.WaitingDto">
+        SELECT id AS waitingId, patient_id AS patientId, sch_id AS scheduleRecordId, apply_time AS applyTime, status
+        FROM waiting_queue
+        WHERE id = #{waitingId}
+    </select>
+
+    <select id="countActiveWaitingByKey" resultType="int">
+        SELECT COUNT(*)
+        FROM waiting_queue
+        WHERE patient_id = #{patientId} AND sch_id = #{scheduleRecordId} AND status = '排队中'
+    </select>
+
+    <select id="countWaitingByPatientAndDate" resultType="int">
+        SELECT COUNT(*)
+        FROM waiting_queue w
+        JOIN doc_schedule_record dsr ON w.sch_id = dsr.id
+        WHERE w.patient_id = #{patientId} AND to_char(dsr.schedule_date, 'YYYY-MM-DD') = #{date}
+    </select>
+
+    <select id="countWaitingBefore" resultType="int">
+        SELECT COUNT(*) + 1
+        FROM waiting_queue w
+        WHERE w.sch_id = #{scheduleRecordId}
+          AND w.status = '排队中'
+          AND w.apply_time < (
+              SELECT apply_time FROM waiting_queue WHERE patient_id = #{patientId} AND sch_id = #{scheduleRecordId} ORDER BY apply_time LIMIT 1
+          )
+    </select>
+
+    <select id="findWaitingsBySchedule" resultMap="WaitingMap">
+        SELECT id, patient_id, sch_id, apply_time, status
+        FROM waiting_queue
+        WHERE sch_id = #{scheduleRecordId} AND status = '排队中'
+        ORDER BY apply_time ASC
+    </select>
+
+    <select id="findWaitingsByPatient" resultType="com.example.pojo.dto.WaitingDto">
+        SELECT id AS waitingId, patient_id AS patientId, sch_id AS scheduleRecordId, apply_time AS applyTime, status
+        FROM waiting_queue w
+        JOIN doc_schedule_record dsr ON w.sch_id = dsr.id
+        WHERE w.patient_id = #{patientId}
+        <if test="date != null and date != ''">
+            AND to_char(dsr.schedule_date, 'YYYY-MM-DD') = #{date}
+        </if>
+        ORDER BY dsr.schedule_date DESC, w.apply_time DESC
+    </select>
+
+    <update id="updateWaitingStatusToCanceled">
+        UPDATE waiting_queue SET status = '已取消' WHERE id = #{waitingId}
+    </update>
+
+    <update id="updateWaitingStatusToConfirmed">
+        UPDATE waiting_queue SET status = '已成功预约', registration_id = #{registrationId} WHERE id = #{waitingId}
+    </update>
+
+    <select id="countScheduleRecordById" resultType="int">
+        SELECT COUNT(*) FROM doc_schedule_record WHERE id = #{scheduleRecordId}
+    </select>
+
+    <select id="getScheduleLeftSource" resultType="int">
+        SELECT left_source_count FROM doc_schedule_record WHERE id = #{scheduleRecordId}
+    </select>
+
+</mapper>
+

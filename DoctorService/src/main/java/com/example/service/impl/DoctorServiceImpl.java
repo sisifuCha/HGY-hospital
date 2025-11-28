@@ -15,12 +15,16 @@ import com.example.dto.SelfShiftDto;
 import com.example.entity.Doctor;
 import com.example.entity.DocScheduleRecord;
 import com.example.entity.AddNumberSourceRecord;
+import com.example.entity.PayRecord;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import com.example.utils.*;
 import com.example.mapper.DoctorMapper;
 import com.example.mapper.DocScheduleRecordMapper;
 import com.example.mapper.DocScheduleChangeRecordMapper;
 import com.example.mapper.RegisterRecordMapper;
 import com.example.mapper.AddNumberSourceRecordMapper;
+import com.example.mapper.PayRecordMapper;
 import com.example.mapper.DocScheduleChangeRecordMapper.ScheduleChangeRecordRow;
 import com.example.mapper.model.AddNumberApplicationRow;
 import com.example.mapper.model.DepartmentShiftRow;
@@ -63,6 +67,9 @@ public class DoctorServiceImpl implements DoctorService {
 
     @Autowired
     private DocScheduleChangeRecordMapper scheduleChangeRecordMapper;
+
+    @Autowired
+    private PayRecordMapper payRecordMapper;
 
     private static final ZoneId DEFAULT_ZONE = ZoneId.systemDefault();
 
@@ -114,7 +121,7 @@ public class DoctorServiceImpl implements DoctorService {
 
     @Override
     @Transactional
-    public Result<Void> reviewAddNumberRequest(AddNumberDecisionRequest request) {
+    public Result<java.util.Map<String, String>> reviewAddNumberRequest(AddNumberDecisionRequest request) {
         if (request == null || !StringUtils.hasText(request.getAddId())) {
             return Result.fail(400, "加号id不能为空");
         }
@@ -136,15 +143,84 @@ public class DoctorServiceImpl implements DoctorService {
             return Result.fail(404, "未找到关联排班记录");
         }
 
-        String status = request.isApproved() ? "approved" : "rejected";
+        String status = request.isApproved() ? "已同意" : "已拒绝";
         int affected = addNumberSourceRecordMapper.updateRequestStatus(key.getPatientId(), key.getScheduleId(), status);
         if (affected == 0) {
             return Result.fail(500, "更新加号申请失败");
         }
 
+        // 如果审核通过,生成支付订单(后台处理,医生端不返回订单信息)
+        if (request.isApproved()) {
+            try {
+                // 查询医生职称ID
+                String docTitleId = doctorMapper.getDoctorTitleId(schedule.getDocId());
+                if (!StringUtils.hasText(docTitleId)) {
+                    return Result.fail(500, "医生信息不完整,无法生成订单");
+                }
+                
+                // 查询职称对应的原价
+                BigDecimal oriCost = payRecordMapper.getTitleOriCost(docTitleId);
+                if (oriCost == null) {
+                    return Result.fail(500, "未找到医生职称费用信息");
+                }
+                
+                // 查询患者报销比例
+                Integer reimbursePercent = payRecordMapper.getPatientReimbursePercent(key.getPatientId());
+                if (reimbursePercent == null) {
+                    reimbursePercent = 0; // 默认不报销
+                }
+                
+                // 计算实际支付金额: ori_amount * (1 - percent/100)
+                BigDecimal askPayAmount = oriCost.multiply(
+                    BigDecimal.valueOf(100 - reimbursePercent)
+                ).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+                
+                // 先检查 schedule.status 是否为 '0' 或 '1'
+                // DocScheduleRecord 实体当前未包含 status 字段，假设 mapper 能返回 status 字符串
+                String scheduleStatus = schedule.getStatus();
+                if (!"0".equals(scheduleStatus) && !"1".equals(scheduleStatus)) {
+                    return Result.fail(400, "该排班不可加号");
+                }
+
+                // 插入 register_record (status='待支付')
+                com.example.entity.RegisterRecord rr = new com.example.entity.RegisterRecord();
+                rr.setPatientId(key.getPatientId());
+                rr.setSchId(key.getScheduleId());
+                rr.setRegisterTime(new java.util.Date());
+                rr.setStatus("待支付");
+                int rInserted = registerRecordMapper.insertRegisterRecord(rr);
+                if (rInserted == 0) {
+                    return Result.fail(500, "插入挂号记录失败");
+                }
+
+                // 创建支付记录，使用 UUID 作为 id，pay_status 使用中文 '待支付'
+                PayRecord payRecord = new PayRecord();
+                payRecord.setId(java.util.UUID.randomUUID().toString());
+                payRecord.setPayStatus("待支付");
+                payRecord.setOriAmount(oriCost);
+                payRecord.setAskPayAmount(askPayAmount);
+                payRecord.setPatientId(key.getPatientId());
+                payRecord.setSchId(schedule.getId());
+                // pay_time为null,待支付时更新
+
+                int inserted = payRecordMapper.insertPayRecord(payRecord);
+                if (inserted == 0) {
+                    return Result.fail(500, "生成支付订单失败");
+                }
+                
+            } catch (Exception e) {
+                return Result.fail(500, "生成支付订单时发生错误: " + e.getMessage());
+            }
+        }
+        
+        java.util.Map<String, String> payload = new java.util.HashMap<>();
+        payload.put("decision", status);
+        payload.put("message", request.isApproved() ? "加号申请已批准" : "加号申请已拒绝");
+
+        // 推送给医生的订阅端以更新申请列表
         emitAddNumberSnapshot(schedule.getDocId(), null);
 
-        return Result.success(null, "审核完成");
+        return Result.success(payload, "审核完成");
     }
 
     @Override
@@ -256,7 +332,16 @@ public class DoctorServiceImpl implements DoctorService {
             return Result.fail(404, "未找到原班次记录");
         }
 
-        // 4. 根据 changeType 处理不同逻辑
+        // 4. 检查是否存在待处理的重复申请
+        int pendingCount = scheduleChangeRecordMapper.countPendingByDocAndSchedule(
+            request.getDocId(),
+            originalSchedule.getId()
+        );
+        if (pendingCount > 0) {
+            return Result.fail(409, "该班次已有待处理的变更申请，请勿重复提交");
+        }
+
+        // 5. 根据 changeType 处理不同逻辑
         String targetSchId = null;
         LocalDate targetDate = null;
         String templateId = null;
@@ -314,7 +399,7 @@ public class DoctorServiceImpl implements DoctorService {
             targetSchId = targetSchedule.getId();
         }
 
-        // 5. 插入变更记录
+        // 6. 插入变更记录
         int affected = scheduleChangeRecordMapper.insertChangeRequest(
             request.getDocId(),
             originalSchedule.getId(),
@@ -328,10 +413,10 @@ public class DoctorServiceImpl implements DoctorService {
         );
 
         if (affected == 0) {
-            return Result.fail(500, "插入变更记录失败");
+            return Result.fail(409, "插入变更记录失败，可能存在并发冲突");
         }
 
-        // 6. 推送通知
+        // 7. 推送通知
         emitNotificationSnapshot(request.getDocId(), null);
 
         return Result.success(null, "班次变更申请已提交");
@@ -446,6 +531,12 @@ public class DoctorServiceImpl implements DoctorService {
         }
 
         return Result.success(null, "医生信息已更新");
+    }
+
+    @Override
+    public void notifyAddNumberChange(String docId) {
+        // 数据库触发器通知加号申请变更，推送 SSE 更新
+        emitAddNumberSnapshot(docId, null);
     }
 
     private SseEmitter createEmitter(Map<String, SseEmitter> store, String key) {
@@ -600,13 +691,15 @@ public class DoctorServiceImpl implements DoctorService {
 
     private String readableStatus(String status) {
         if (!StringUtils.hasText(status)) {
-            return "pending";
+            return "待审核";
         }
         switch (status.toLowerCase()) {
+            case "已同意":
             case "approved":
-                return "approved";
+                return "已同意";
+            case "已拒绝":
             case "rejected":
-                return "rejected";
+                return "已拒绝";
             default:
                 return status;
         }

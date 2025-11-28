@@ -71,20 +71,146 @@
         WHERE d.id = #{doctorId}
     </select>
 
-    <select id="findAllDepartmentsWithSubDepartments" resultType="com.example.pojo.dto.DepartmentWithSubDepartmentsDto">
-        WITH parent_departments AS (
-            SELECT id, name
-            FROM department
-            WHERE father_id IS NULL
-        )
-        SELECT
-            p.id,
-            p.name,
-            (
-                SELECT json_agg(json_build_object('id', s.id, 'name', s.name))
-                FROM department s
-                WHERE s.father_id = p.id
-            ) AS subDepartments
-        FROM parent_departments p;
+    <!-- 计数：同一患者+排班的有效挂号（已预约 / 已就诊） -->
+    <select id="countActiveRegistrationByKey" resultType="int">
+        SELECT COUNT(*)
+        FROM register_record rr
+        WHERE rr.patient_ID = #{patientId}
+          AND rr.sch_ID = #{scheduleRecordId}
+          AND rr.status IN ('已预约','已就诊')
     </select>
+
+    <!-- 扣减剩余号源，要求 > 0 -->
+    <update id="decrementScheduleLeftSource">
+        UPDATE doc_schedule_record
+        SET left_source_count = left_source_count - 1
+        WHERE id = #{scheduleRecordId}
+          AND left_source_count > 0
+    </update>
+
+    <!-- 回补剩余号源（取消时可用） -->
+    <update id="incrementScheduleLeftSource">
+        UPDATE doc_schedule_record
+        SET left_source_count = left_source_count + 1
+        WHERE id = #{scheduleRecordId}
+    </update>
+
+    <!-- 插入挂号记录：status 使用中文 '已预约' 或传入的中文枚举 -->
+    <insert id="insertRegistration">
+        INSERT INTO register_record (patient_ID, sch_ID, register_time, status)
+        VALUES (#{patientId}, #{scheduleRecordId}, NOW(), #{status})
+    </insert>
+
+    <select id="findRegistrationByPatientAndSchedule" resultType="com.example.pojo.vo.RegistrationVo">
+        SELECT
+            rr.patient_ID AS "patientId",
+            p.name AS "patientName",
+            rr.sch_ID AS "scheduleRecordId",
+            doc.id AS "doctorId",
+            u.name AS "doctorName",
+            d.id AS "departmentId",
+            d.name AS "departmentName",
+            doc.clinic_id AS "clinicId",
+            c.name AS "clinicName",
+            dsr.schedule_date AS "registrationDate",
+            st.time_period_name AS "timePeriodName",
+            tns.ori_cost AS "registrationFee",
+            rr.status,
+            rr.register_time AS "registerTime"
+        FROM
+            register_record rr
+                JOIN patient p ON rr.patient_ID = p.id
+                JOIN doc_schedule_record dsr ON rr.sch_ID = dsr.id
+                JOIN doctor doc ON dsr.doc_id = doc.id
+                JOIN "user" u ON doc.id = u.id
+                JOIN department d ON doc.depart_id = d.id
+                LEFT JOIN clinic c ON doc.clinic_id = c.id
+                JOIN schedule_template st ON dsr.template_id = st.id
+                LEFT JOIN title_number_source tns ON doc.doc_title_id = tns.id
+        WHERE rr.patient_ID = #{patientId} AND rr.sch_ID = #{scheduleRecordId}
+    </select>
+
+    <select id="findRegistrationByKey" resultType="com.example.pojo.dto.RegistrationDto">
+        SELECT
+            rr.patient_id AS "patientId",
+            rr.sch_id AS "scheduleRecordId",
+            rr.register_time AS "registerTime",
+            rr.status AS "status"
+        FROM
+            register_record rr
+        WHERE
+            rr.patient_id = #{patientId} AND rr.sch_id = #{scheduleRecordId}
+    </select>
+
+    <select id="getRegistrationStatusByKey" resultType="string">
+        SELECT status
+        FROM register_record
+        WHERE patient_id = #{patientId} AND sch_id = #{scheduleRecordId}
+    </select>
+
+    <update id="updateRegistrationStatusToCanceled">
+        UPDATE register_record
+        SET status = '已取消'
+        WHERE patient_id = #{patientId} AND sch_id = #{scheduleRecordId}
+    </update>
+
+    <sql id="registrationQueryConditions">
+        <where>
+            rr.patient_id = #{query.patientId}
+            <if test="query.date != null">
+                AND dsr.schedule_date = #{query.date}
+            </if>
+            <if test="query.fromDate != null">
+                AND dsr.schedule_date &gt;= #{query.fromDate}
+            </if>
+            <if test="query.toDate != null">
+                AND dsr.schedule_date &lt;= #{query.toDate}
+            </if>
+            <if test="query.status != null and query.status != ''">
+                AND rr.status = #{query.status}
+            </if>
+            <if test="query.statusList != null and !query.statusList.isEmpty()">
+                AND rr.status IN
+                <foreach item="item" collection="query.statusList" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+        ORDER BY dsr.schedule_date DESC, st.start_time
+    </sql>
+
+    <select id="findRegistrationsByQuery" resultType="com.example.pojo.vo.RegistrationVo">
+        SELECT
+            rr.patient_id AS "patientId",
+            p.name AS "patientName",
+            rr.sch_id AS "scheduleRecordId",
+            doc.id AS "doctorId",
+            u.name AS "doctorName",
+            d.id AS "departmentId",
+            d.name AS "departmentName",
+            dsr.schedule_date AS "registrationDate",
+            st.time_period_name AS "timePeriodName",
+            rr.status,
+            rr.register_time AS "registerTime"
+        FROM
+            register_record rr
+            JOIN patient p ON rr.patient_ID = p.id
+            JOIN doc_schedule_record dsr ON rr.sch_ID = dsr.id
+            JOIN doctor doc ON dsr.doc_id = doc.id
+            JOIN "user" u ON doc.id = u.id
+            JOIN department d ON doc.depart_id = d.id
+            JOIN schedule_template st ON dsr.template_id = st.id
+        <include refid="registrationQueryConditions"/>
+        ORDER BY rr.register_time DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="countRegistrationsByQuery" resultType="long">
+        SELECT count(*)
+        FROM
+            register_record rr
+            JOIN doc_schedule_record dsr ON rr.sch_id = dsr.id
+        <include refid="registrationQueryConditions"/>
+    </select>
+
 </mapper>

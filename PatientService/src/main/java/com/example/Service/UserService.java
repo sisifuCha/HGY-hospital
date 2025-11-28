@@ -24,5 +24,10 @@ public interface UserService {
      */
     Result<String> register(RegisterRequest registerRequest);
 
-
+    /**
+     * 根据登录账号获取患者ID
+     * @param account 登录账号
+     * @return 患者ID（如 PAT0001）
+     */
+    Result<String> getPatientIdByAccount(String account);
 }

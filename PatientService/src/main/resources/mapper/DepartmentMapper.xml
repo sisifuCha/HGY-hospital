@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.example.Mapper.DepartmentMapper">
+
+    <!-- 定义一个基础的ResultMap，用于映射Department实体 -->
+    <resultMap id="BaseResultMap" type="com.example.pojo.entity.Department">
+        <id column="id" property="id" jdbcType="VARCHAR"/>
+        <result column="name" property="name" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <!-- 查询所有一级科室（根科室） -->
+    <select id="findAllRootDepartments" resultMap="BaseResultMap">
+        SELECT
+            id,
+            name
+        FROM
+            department
+        WHERE
+            father_id IS NULL OR father_id = ''
+        ORDER BY
+            id
+    </select>
+
+    <!-- 根据父科室ID查询所有子科室（修复空白字符匹配问题 + 正确列名） -->
+    <select id="findSubDepartmentsByFatherId" resultMap="BaseResultMap" parameterType="java.lang.String">
+        SELECT
+            id,
+            name
+        FROM
+            department
+        WHERE
+            TRIM(father_id) = TRIM(#{fatherId})
+        ORDER BY
+            id
+    </select>
+
+    <!-- DTO：父科室与其子科室展开成行，由 collection 自动组装为列表 -->
+    <resultMap id="DepartmentWithSubDepartmentsMap" type="com.example.pojo.dto.DepartmentWithSubDepartmentsDto">
+        <id property="id" column="p_id"/>
+        <result property="name" column="p_name"/>
+        <collection property="subDepartments" ofType="com.example.pojo.dto.SubDepartmentDto">
+            <id property="id" column="c_id"/>
+            <result property="name" column="c_name"/>
+        </collection>
+    </resultMap>
+
+    <select id="findAllDepartmentsWithSubDepartments" resultMap="DepartmentWithSubDepartmentsMap">
+        SELECT
+            p.id   AS p_id,
+            p.name AS p_name,
+            c.id   AS c_id,
+            c.name AS c_name
+        FROM
+            department p
+        LEFT JOIN
+            department c ON TRIM(p.id) = TRIM(c.father_id)
+        WHERE
+            p.father_id IS NULL OR p.father_id = ''
+        ORDER BY
+            p.id, c.id
+    </select>
+</mapper>
