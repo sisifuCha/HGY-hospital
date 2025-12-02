@@ -1,8 +1,10 @@
 package com.example.Service;
 
 import com.example.Conmon.result.Result;
+import com.example.pojo.dto.DelayBatchDTO;
 import com.example.pojo.dto.NextWeekScheduleDTO;
 import com.example.pojo.dto.ScheduleDTO;
+import com.example.pojo.dto.StopBatchScheduleDTO;
 import com.example.pojo.entity.DoctorSchedule;
 import com.example.pojo.vo.FinalScheduleWeekVO;
 import com.example.pojo.vo.HistoryScheduleWeekVO;
@@ -22,4 +24,13 @@ public interface ScheduleService {
 
     //获取某科室的排班历史
     public Result<FinalScheduleWeekVO> getScheduleHistory(LocalDate date, String depart_name);
+
+    //中止某个排班
+    public Result<Void> stopSingle(String schedule_id,String reason);
+
+    //中止批量排班
+    public Result<Void> stopBatch(StopBatchScheduleDTO stopBatchScheduleDTO);
+
+    //批量延后排班
+    public Result<Void> delayBatch(DelayBatchDTO delayBatchDTO);
 }
