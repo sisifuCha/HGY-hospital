@@ -552,3 +552,174 @@
   "msg": "patientId不能为空",
   "data": null
 }
+
+## 3.6 评价与反馈
+说明：本节包含两部分：医生评价（患者就诊后对医生的评分与文字评价）和系统反馈（用户向平台提交问题/建议）。所有接口均使用项目统一返回结构 Result<T>：
+{
+  "code": <int>,
+  "msg": "<string>",
+  "data": <object|null>
+}
+
+注意：医生评价仅允许在对应挂号记录状态为“已就诊”后由该患者提交（后端需校验）。系统反馈任何已登录用户均可提交。
+
+---
+
+### 3.6.1 医生评价功能（Doctor Review）
+
+功能要点：
+- 仅已就诊的挂号记录允许评价；每条挂号仅能评价一次（可允许追加回复，设计时需明确）。
+- 评分为整数 1-5 星；可选文字评价；支持匿名选项（anonymous = true 时前端不显示患者信息）。
+- 提交后存储评价且可按医生汇总统计（平均分、评价数）。
+
+1) 提交评价
+- URL: POST /api/reviews
+- Method: POST
+- 请求体 (application/json):
+  {
+    "registrationId": "REG0123",   // 必填：挂号记录 id
+    "patientId": "PAT0001",        // 必填：提交者 id
+    "doctorId": "DOC0023",        // 必填：医生 id
+    "rating": 5,                    // 必填：1-5 整数
+    "comment": "医生诊疗很认真",    // 可选：文字评价
+    "anonymous": false              // 可选：是否匿名，默认 false
+  }
+- 校验要点：
+  - registrationId、patientId、doctorId、rating 必填。
+  - rating 范围 1-5。
+  - 校验 registrationId 是否存在且状态为 "已就诊"，且归属于 patientId。
+  - 同一 registrationId 不允许重复评价（已评价返回 409）。
+- 成功响应：201 Created
+  {
+    "code": 201,
+    "msg": "created",
+    "data": {
+      "reviewId": 1001,
+      "registrationId": "REG0123",
+      "patientId": "PAT0001",
+      "doctorId": "DOC0023",
+      "rating": 5,
+      "comment": "医生诊疗很认真",
+      "anonymous": false,
+      "createdAt": "2025-11-28T14:00:00"
+    }
+  }
+
+2) 查询医生评价列表（分页）
+- URL: GET /api/doctors/{doctorId}/reviews
+- Query Params:
+  - page (number, optional, default 1)
+  - pageSize (number, optional, default 20)
+- 成功响应：200
+  {
+    "code": 200,
+    "msg": "success",
+    "data": {
+      "page": 1,
+      "pageSize": 20,
+      "total": 123,
+      "items": [ /* ReviewItem 列表 */ ]
+    }
+  }
+- ReviewItem 字段说明：
+  - reviewId
+  - registrationId
+  - patientId （若 anonymous=true 则可返回 null 或空字符串）
+  - rating
+  - comment
+  - anonymous
+  - createdAt
+
+3) 查询单条评价
+- URL: GET /api/reviews/{reviewId}
+- 成功响应：200，data 为 ReviewItem
+
+4) 医生评价汇总（统计）
+- URL: GET /api/doctors/{doctorId}/reviews/stat
+- 返回：200
+  {
+    "code": 200,
+    "msg": "success",
+    "data": {
+      "doctorId": "DOC0023",
+      "averageRating": 4.6,
+      "ratingCount": 123,
+      "distribution": { "5": 80, "4": 25, "3": 10, "2": 6, "1": 2 }
+    }
+  }
+
+错误码（常见）：
+- 400 参数错误；
+- 403 无权（尝试对非本人挂号评价）；
+- 404 挂号记录或医生不存在；
+- 409 已评价；
+- 500 服务器错误。
+
+---
+
+### 3.6.2 系统反馈（System Feedback）
+功能要点：用户可以提交问题与建议，支持问题类型选择与文字描述；后台工作人员可查看并回复/更新处理状态。
+
+1) 提交反馈
+- URL: POST /api/feedbacks
+- 请求体 (application/json):
+  {
+    "userId": "USER123",           // 必填
+    "type": "系统问题 | 建议 | 其他", // 必填：预定义类型或枚举
+    "title": "登录异常",
+    "description": "在 XX 场景下无法登录，提示 500",
+    "contact": "13800138000"       // 可选：联系方式
+  }
+- 成功响应：201 Created
+  {
+    "code": 201,
+    "msg": "created",
+    "data": {
+      "feedbackId": 2001,
+      "userId": "USER123",
+      "type": "系统问题",
+      "title": "登录异常",
+      "description": "在 XX 场景下无法登录，提示 500",
+      "contact": "13800138000",
+      "status": "OPEN",            // OPEN / IN_PROGRESS / RESOLVED / CLOSED
+      "createdAt": "2025-11-28T14:10:00",
+      "updatedAt": "2025-11-28T14:10:00"
+    }
+  }
+
+2) 查询用户反馈列表（按用户）
+- URL: GET /api/feedbacks?userId={userId}&page=1&pageSize=20
+- 成功响应：200，data 为分页列表
+
+3) 管理员/客服查询所有反馈（可按状态/类型筛选）
+- URL: GET /api/feedbacks/admin?status=OPEN&type=系统问题&page=1
+- 权限：需管理员或客服权限
+- 成功响应：200，data 为分页列表
+
+4) 获取反馈详情
+- URL: GET /api/feedbacks/{feedbackId}
+- 成功响应：200，data 为反馈记录（包含处理记录/回复数组）
+
+5) 更新反馈状态（管理员）
+- URL: PUT /api/feedbacks/{feedbackId}/status
+- 请求体：{ "status": "IN_PROGRESS|RESOLVED|CLOSED", "operatorId": "ADMIN001", "comment": "处理说明" }
+- 成功响应：200，data 为更新后的记录
+
+错误码（常见）：
+- 400 参数错误；
+- 403 无权限（管理员操作）；
+- 404 反馈不存在；
+- 500 服务器错误。
+
+---
+
+## 3.6 功能实现要点 / 后端校验建议
+- 医生评价必须校验挂号状态为“已就诊”且患者和挂号归属一致。
+- 医生评分取整 1-5。
+- 匿名评价：存储时保留 patientId（用于后台审核），对外返回时可隐藏或置空 patientId。
+- 评分统计可在写入评价时更新统计表/缓存，也可在查询时按需计算；注意高并发下的一致性。
+- 系统反馈需记录操作人和处理记录（comment、operatorId、timestamp），便于历史追溯。
+
+## 统一返回说明（复述）
+- 成功：code = 200（普通成功）或 201（创建成功）
+- 失败：code != 200/201，msg 包含错误信息，data 为 null
