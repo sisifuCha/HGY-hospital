@@ -1,0 +1,486 @@
+Subject: [PATCH] 在变基之前未提交的更改 [更改]
+---
+Index: pom.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/pom.xml b/pom.xml
+--- a/pom.xml	(revision f32e1f5f478a8bfa2668ef728451e416a67e109b)
++++ b/pom.xml	(date 1761713807055)
+@@ -74,23 +74,17 @@
+ 			<artifactId>spring-boot-starter-test</artifactId>
+ 			<scope>test</scope>
+ 		</dependency>
+-		<dependency>
+-			<groupId>org.mybatis.spring.boot</groupId>
+-			<artifactId>mybatis-spring-boot-starter-test</artifactId>
+-			<version>3.0.5</version>
+-			<scope>test</scope>
+-		</dependency>
+-        <dependency>
+-            <groupId>mysql</groupId>
+-            <artifactId>mysql-connector-java</artifactId>
+-            <version>8.0.25</version>
+-        </dependency>
+         <!-- MyBatis-Plus Starter -->
+         <dependency>
+             <groupId>com.baomidou</groupId>
+             <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
+             <version>3.5.9</version>
+         </dependency>
++        <dependency>
++            <groupId>com.baomidou</groupId>
++            <artifactId>mybatis-plus-jsqlparser</artifactId>
++            <version>3.5.9</version> <!-- 确保与mybatis-plus-core版本一致 -->
++        </dependency>
+ 
+         <!-- 添加 Jakarta EE 依赖 -->
+         <dependency>
+@@ -108,6 +102,11 @@
+             <groupId>com.jcraft</groupId>
+             <artifactId>jsch</artifactId>
+             <version>0.1.55</version>
++        </dependency>
++        <dependency>
++            <groupId>com.github.pagehelper</groupId>
++            <artifactId>pagehelper</artifactId>
++            <version>5.3.2</version>
+         </dependency>
+ 	</dependencies>
+ 	<dependencyManagement>
+Index: ManagerService/src/main/resources/mapper/DoctorMapper.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/ManagerService/src/main/resources/mapper/DoctorMapper.xml b/ManagerService/src/main/resources/mapper/DoctorMapper.xml
+--- a/ManagerService/src/main/resources/mapper/DoctorMapper.xml	(revision f32e1f5f478a8bfa2668ef728451e416a67e109b)
++++ b/ManagerService/src/main/resources/mapper/DoctorMapper.xml	(date 1761716161736)
+@@ -72,54 +72,54 @@
+         AND id != #{userId}
+     </select>
+ 
+-    <!-- 新增：查询所有医生的完整信息 -->
+-    <select id="selectAllFullDoctors" resultMap="FullDoctorResultMap">
++    <select id="getDoctorList" resultMap="FullDoctorResultMap">
+         SELECT
+-        d.id as d_id,
++        d.id,
+         d.doc_title_id,
+         d.clinic_id,
+         d.status,
+-        u.user_id,
+-        u.user_name,
+-        u.user_gender,
+-        u.user_account,
+-        u.user_email,
+-        u.user_password,
+-        u.user_phone
++        u.name,
++        u.sex,
++        u.account,
++        u.email,
++        u.pass,
++        u.phone_num
+         FROM
+         doctor d
+-        INNER JOIN
+-        user u ON d.user_id = u.user_id
++        INNER JOIN "user" u ON d.id = u.id
++        <where>
++            <!-- 原有的动态过滤条件 -->
++            <if test="filter_value != null and filter_value != ''">
++                <choose>
++                    <!-- 注意：确保这里的字段名（如clinic_id）与实际数据库列名一致 -->
++                    <when test="filter_name == 'clinic_id'">
++                        d.clinic_id = #{filter_value}
++                    </when>
++                    <when test="filter_name == 'doc_title_id'">
++                        d.doc_title_id = #{filter_value}
++                    </when>
++                </choose>
++            </if>
++            <!-- 可以继续添加其他公共或动态条件 -->
++        </where>
++        ORDER BY d.id DESC
+     </select>
+-
+-    <!-- 新增：根据条件动态查询医生信息 -->
+-    <select id="selectDoctorsByCondition" parameterType="map" resultMap="FullDoctorResultMap">
++    <select id="selectDoctorPage" resultMap="FullDoctorResultMap">
+         SELECT
+-        d.id as d_id,
++        d.id,
+         d.doc_title_id,
+         d.clinic_id,
+         d.status,
+-        u.user_id,
+-        u.user_name,
+-        u.user_gender,
+-        u.user_account,
+-        u.user_email,
+-        u.user_password,
+-        u.user_phone
++        u.name,
++        u.sex,
++        u.account,
++        u.email,
++        u.pass,
++        u.phone_num
+         FROM
+         doctor d
+-        INNER JOIN
+-        user u ON d.user_id = u.user_id
+-        <where>
+-            <if test="departmentId != null and departmentId != ''">
+-                AND d.clinic_id = #{departmentId}
+-            </if>
+-            <if test="doctorStatus != null and doctorStatus != ''">
+-                AND d.status = #{doctorStatus}
+-            </if>
+-            <if test="userName != null and userName != ''">
+-                AND u.user_name LIKE CONCAT('%', #{userName}, '%')
+-            </if>
+-        </where>
++        INNER JOIN "user" u ON d.id = u.id
++        <!-- 使用 MyBatis-Plus 提供的 ${ew.customSqlSegment} 来注入 QueryWrapper 构造的条件 -->
++        ${ew.customSqlSegment}
+     </select>
+ </mapper>
+\ No newline at end of file
+Index: ManagerService/src/main/java/com/example/pojo/dto/LoginRequest.java
+===================================================================
+diff --git a/ManagerService/src/main/java/com/example/pojo/dto/LoginRequest.java b/ManagerService/src/main/java/com/example/pojo/dto/LoginRequestDTO.java
+rename from ManagerService/src/main/java/com/example/pojo/dto/LoginRequest.java
+rename to ManagerService/src/main/java/com/example/pojo/dto/LoginRequestDTO.java
+--- a/ManagerService/src/main/java/com/example/pojo/dto/LoginRequest.java	(revision f32e1f5f478a8bfa2668ef728451e416a67e109b)
++++ b/ManagerService/src/main/java/com/example/pojo/dto/LoginRequestDTO.java	(date 1761704831818)
+@@ -1,9 +1,9 @@
+ package com.example.pojo.dto;
+-public class LoginRequest {
++public class LoginRequestDTO {
+     private String password;
+ 
+     // 必须有无参构造函数
+-    public LoginRequest() {}
++    public LoginRequestDTO() {}
+ 
+     // 必须有getter和setter方法
+     public String getPassword() {
+Index: ManagerService/src/main/java/com/example/Service/DoctorService.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/ManagerService/src/main/java/com/example/Service/DoctorService.java b/ManagerService/src/main/java/com/example/Service/DoctorService.java
+--- a/ManagerService/src/main/java/com/example/Service/DoctorService.java	(revision f32e1f5f478a8bfa2668ef728451e416a67e109b)
++++ b/ManagerService/src/main/java/com/example/Service/DoctorService.java	(date 1761716979434)
+@@ -1,7 +1,13 @@
+ package com.example.Service;
+ 
+-import com.example.conmon.result.Result;
++import com.baomidou.mybatisplus.core.metadata.IPage;
++import com.example.Conmon.result.Result;
+ import com.example.pojo.dto.DoctorDTO;
++import com.example.pojo.dto.DoctorsRequestDTO;
++import com.example.pojo.entity.Doctor;
++
++import javax.print.Doc;
++import java.util.List;
+ //import com.example.pojo.entity.Doctor;
+ 
+ public interface DoctorService {
+@@ -13,5 +19,8 @@
+     /**
+      * 根据ID获取医生信息
+      */
+-    //Result<Doctor> getDoctorById(String id);
++    Result<Doctor> getDoctorById(String id);
++
++
++    Result<IPage<Doctor>> getDoctorListWithPlus(int page, int num, String filterName, String filterValue);
+ }
+\ No newline at end of file
+Index: ManagerService/src/main/java/com/example/Service/DoctorServiceImpl.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/ManagerService/src/main/java/com/example/Service/DoctorServiceImpl.java b/ManagerService/src/main/java/com/example/Service/DoctorServiceImpl.java
+--- a/ManagerService/src/main/java/com/example/Service/DoctorServiceImpl.java	(revision f32e1f5f478a8bfa2668ef728451e416a67e109b)
++++ b/ManagerService/src/main/java/com/example/Service/DoctorServiceImpl.java	(date 1761717296662)
+@@ -2,15 +2,19 @@
+ 
+ //import com.example.Mapper.DoctorMapper;
+ //import com.example.pojo.entity.Doctor;
++import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
++import com.baomidou.mybatisplus.core.metadata.IPage;
++import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+ import com.example.Mapper.DoctorMapper;
+-import com.example.conmon.result.Result;
++import com.example.Conmon.result.Result;
+ import com.example.pojo.dto.DoctorDTO;
++import com.example.pojo.dto.DoctorsRequestDTO;
+ import com.example.pojo.entity.Doctor;
+ import org.springframework.beans.BeanUtils;
+ import org.springframework.beans.factory.annotation.Autowired;
+ import org.springframework.stereotype.Service;
+ 
+-import java.time.LocalDateTime;
++import java.util.List;
+ 
+ @Service
+ public class DoctorServiceImpl implements DoctorService {
+@@ -52,20 +56,28 @@
+         }
+     }
+ 
+-//    @Override
+-//    public Result<Doctor> getDoctorById(String id) {
+-//        try {
+-//            Doctor doctor = DoctorMapper.selectById(id);
+-//            if (doctor != null) {
+-//                return Result.success(doctor);
+-//            } else {
+-//                return Result.fail(404, "医生信息不存在");
+-//            }
+-//        } catch (Exception e) {
+-//            log.error("查询医生信息失败: {}", e.getMessage(), e);
+-//            return Result.fail("系统异常，查询失败");
+-//        }
+-//    }
++    @Override
++    public Result<Doctor> getDoctorById(String id) {
++        return null;
++    }
++
++    @Override
++    public Result<IPage<Doctor>> getDoctorListWithPlus(int page, int num, String filterName, String filterValue) {
++        Page<Doctor> pageParam = new Page<>(page, num);
++
++        // 使用MyBatis-Plus的查询条件
++        QueryWrapper<Doctor> queryWrapper = new QueryWrapper<>();
++        if (filterValue != null && !filterValue.isEmpty()) {
++            if ("clinic".equals(filterName)) {
++                queryWrapper.eq("d.clinic_id", filterValue);
++            } else if ("title".equals(filterName)) {
++                queryWrapper.eq("d.doc_title_id", filterValue);
++            }
++        }
++        queryWrapper.orderByDesc("d.id");
++
++        return Result.success(DoctorMapper.selectDoctorPage(pageParam, queryWrapper));
++    }
+ 
+     private Doctor convertToEntity(DoctorDTO dto) {
+         Doctor doctor = new Doctor();
+Index: ManagerService/src/main/java/com/example/conmon/result/Result.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/ManagerService/src/main/java/com/example/conmon/result/Result.java b/ManagerService/src/main/java/com/example/conmon/result/Result.java
+--- a/ManagerService/src/main/java/com/example/conmon/result/Result.java	(revision f32e1f5f478a8bfa2668ef728451e416a67e109b)
++++ b/ManagerService/src/main/java/com/example/conmon/result/Result.java	(date 1761704980003)
+@@ -1,4 +1,4 @@
+-package com.example.conmon.result;
++package com.example.Conmon.result;
+ 
+ import lombok.Data;
+ 
+Index: ManagerService/src/main/java/com/example/Mapper/DoctorMapper.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/ManagerService/src/main/java/com/example/Mapper/DoctorMapper.java b/ManagerService/src/main/java/com/example/Mapper/DoctorMapper.java
+--- a/ManagerService/src/main/java/com/example/Mapper/DoctorMapper.java	(revision f32e1f5f478a8bfa2668ef728451e416a67e109b)
++++ b/ManagerService/src/main/java/com/example/Mapper/DoctorMapper.java	(date 1761716099239)
+@@ -1,11 +1,12 @@
+ package com.example.Mapper;
+ 
++import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
++import com.baomidou.mybatisplus.core.metadata.IPage;
+ import com.example.pojo.entity.Doctor;
+-import io.swagger.v3.oas.models.security.SecurityScheme;
+ import org.apache.ibatis.annotations.Param;
+ import java.util.List;
+-import java.util.Map;
++
+ 
+ public interface DoctorMapper extends BaseMapper<Doctor> {
+ 
+@@ -18,9 +19,7 @@
+     // 检查账号名是否存在
+     int checkAccountNameExists(@Param("accountName") String accountName, String userId);
+ 
+-    // 查询所有医生的完整信息
+-    List<Doctor> selectAllFullDoctors();
+-
+-    // 根据条件动态查询医生信息
+-    List<Doctor> selectDoctorsByCondition(Map<String, Object> condition);
++    IPage<Doctor> selectDoctorPage(IPage<Doctor> page, @Param("ew") QueryWrapper<Doctor> queryWrapper);
++    //根据条件获取医生列表
++    List<Doctor> getDoctorList(String filter_name,String filter_value,Integer page,Integer num);
+ }
+\ No newline at end of file
+Index: ManagerService/src/main/java/com/example/Controller/LoginController.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/ManagerService/src/main/java/com/example/Controller/LoginController.java b/ManagerService/src/main/java/com/example/Controller/LoginController.java
+--- a/ManagerService/src/main/java/com/example/Controller/LoginController.java	(revision f32e1f5f478a8bfa2668ef728451e416a67e109b)
++++ b/ManagerService/src/main/java/com/example/Controller/LoginController.java	(date 1761704831743)
+@@ -1,6 +1,6 @@
+ package com.example.Controller;
+ 
+-import com.example.pojo.dto.LoginRequest;
++import com.example.pojo.dto.LoginRequestDTO;
+ import com.example.utils.JwtUtil;
+ import org.springframework.http.ResponseEntity;
+ import org.springframework.util.StringUtils;
+@@ -20,8 +20,8 @@
+     // 正确的密码常量
+     private static final String CORRECT_PASSWORD = "082109Zhr";
+ 
+-    @PostMapping(value = "/login")
+-    public ResponseEntity<Map<String, Object>> login(@RequestBody LoginRequest loginRequest) {
++    @PostMapping(value = "/admin/login")
++    public ResponseEntity<Map<String, Object>> login(@RequestBody LoginRequestDTO loginRequestDTO) {
+         //TODO 测试信息，要删掉
+         System.out.println("hello world");
+ 
+@@ -29,7 +29,7 @@
+         Map<String, Object> response = new HashMap<>();
+ 
+         // 检查密码是否为空
+-        if (!StringUtils.hasText(loginRequest.getPassword())) {
++        if (!StringUtils.hasText(loginRequestDTO.getPassword())) {
+             response.put("code", 400);
+             response.put("data", null);
+             response.put("msg", "密码不能为空");
+@@ -37,7 +37,7 @@
+         }
+ 
+         // 验证密码
+-        if (CORRECT_PASSWORD.equals(loginRequest.getPassword())) {
++        if (CORRECT_PASSWORD.equals(loginRequestDTO.getPassword())) {
+             // 密码正确，生成JWT令牌
+             try {
+                 String jwtToken = JwtUtil.generateToken("user"); // 可以根据需要传入用户名
+@@ -62,7 +62,7 @@
+             response.put("data", null);
+             response.put("msg", "fail");
+ 
+-            System.out.println("登录失败，输入密码: " + loginRequest.getPassword());
++            System.out.println("登录失败，输入密码: " + loginRequestDTO.getPassword());
+             return ResponseEntity.status(401).body(response);
+         }
+     }
+Index: ManagerService/src/main/java/com/example/Controller/DoctorController.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/ManagerService/src/main/java/com/example/Controller/DoctorController.java b/ManagerService/src/main/java/com/example/Controller/DoctorController.java
+--- a/ManagerService/src/main/java/com/example/Controller/DoctorController.java	(revision f32e1f5f478a8bfa2668ef728451e416a67e109b)
++++ b/ManagerService/src/main/java/com/example/Controller/DoctorController.java	(date 1761716931900)
+@@ -1,27 +1,34 @@
+ package com.example.Controller;
+ 
++import com.baomidou.mybatisplus.core.metadata.IPage;
+ import com.example.Service.DoctorService;
+-import com.example.conmon.result.Result;
++import com.example.Conmon.result.Result;
+ import com.example.pojo.dto.DoctorDTO;
++import com.example.pojo.dto.DoctorsRequestDTO;
++import com.example.pojo.entity.Doctor;
+ import org.springframework.beans.factory.annotation.Autowired;
+ import org.springframework.web.bind.annotation.*;
+ 
++import java.util.List;
++
+ @RestController
+-@RequestMapping("/doctor")
++@RequestMapping("/admin")
+ public class DoctorController {
+ 
+     @Autowired
+     private DoctorService doctorService;
+ 
+-    @PostMapping("/update")
++    @GetMapping("/getDoctors")
++    public Result<IPage<Doctor>> getDoctors(@RequestBody DoctorsRequestDTO doctorsRequestDTO) {
++        System.out.println(doctorService.getDoctorListWithPlus(doctorsRequestDTO.getPage(),
++                doctorsRequestDTO.getNum(),doctorsRequestDTO.getFilter_name(),doctorsRequestDTO.getFilter_value()));
++        return doctorService.getDoctorListWithPlus(doctorsRequestDTO.getPage(),
++                doctorsRequestDTO.getNum(),doctorsRequestDTO.getFilter_name(),doctorsRequestDTO.getFilter_value());
++    }
++
++    @PostMapping("/updateDoctor")
+     public Result<String> updateDoctor(@RequestBody DoctorDTO doctorDTO) {
+         System.out.println("接收到医生信息更新请求"+doctorDTO.toString());
+         return doctorService.updateDoctor(doctorDTO);
+     }
+-
+-//    @GetMapping("/{id}")
+-//    public Result<Doctor> getDoctor(@PathVariable String id) {
+-//        log.info("查询医生信息，ID: {}", id);
+-//        return doctorService.getDoctorById(id);
+-//    }
+ }
+\ No newline at end of file
+Index: ManagerService/src/main/java/com/example/pojo/dto/DoctorsRequestDTO.java
+===================================================================
+diff --git a/ManagerService/src/main/java/com/example/pojo/dto/DoctorsRequestDTO.java b/ManagerService/src/main/java/com/example/pojo/dto/DoctorsRequestDTO.java
+new file mode 100644
+--- /dev/null	(date 1761704831787)
++++ b/ManagerService/src/main/java/com/example/pojo/dto/DoctorsRequestDTO.java	(date 1761704831787)
+@@ -0,0 +1,19 @@
++package com.example.pojo.dto;
++
++import lombok.AllArgsConstructor;
++import lombok.Data;
++import lombok.NoArgsConstructor;
++
++@Data
++@NoArgsConstructor
++@AllArgsConstructor
++public class DoctorsRequestDTO {
++
++    private String filter_name;
++
++    private String filter_value;
++
++    private Integer page;
++
++    private Integer num;
++}
+Index: ManagerService/src/main/java/com/example/Config/MyBatisPlusConfig.java
+===================================================================
+diff --git a/ManagerService/src/main/java/com/example/Config/MyBatisPlusConfig.java b/ManagerService/src/main/java/com/example/Config/MyBatisPlusConfig.java
+new file mode 100644
+--- /dev/null	(date 1761713854210)
++++ b/ManagerService/src/main/java/com/example/Config/MyBatisPlusConfig.java	(date 1761713854210)
+@@ -0,0 +1,17 @@
++package com.example.Config;
++
++import com.baomidou.mybatisplus.annotation.DbType;
++import com.baomidou.mybatisplus.extension.plugins.MybatisPlusInterceptor;
++import com.baomidou.mybatisplus.extension.plugins.inner.PaginationInnerInterceptor;
++import org.springframework.context.annotation.Bean;
++import org.springframework.context.annotation.Configuration;
++
++@Configuration
++public class MyBatisPlusConfig {
++    @Bean
++    public MybatisPlusInterceptor mybatisPlusInterceptor() {
++        MybatisPlusInterceptor interceptor = new MybatisPlusInterceptor();
++        interceptor.addInnerInterceptor(new PaginationInnerInterceptor(DbType.POSTGRE_SQL));
++        return interceptor;
++    }
++}
+\ No newline at end of file

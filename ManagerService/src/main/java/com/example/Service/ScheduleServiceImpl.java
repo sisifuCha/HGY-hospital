@@ -6,6 +6,7 @@ import com.example.Mapper.DoctorMapper;
 import com.example.Mapper.ScheduleMapper;
 import com.example.pojo.dto.*;
 import com.example.pojo.entity.DoctorSchedule;
+import com.example.pojo.vo.AdjustItemsVO;
 import com.example.pojo.vo.FinalScheduleVO;
 import com.example.pojo.vo.FinalScheduleWeekVO;
 import com.example.pojo.vo.HistoryScheduleWeekVO;
@@ -37,7 +38,7 @@ public class ScheduleServiceImpl implements ScheduleService {
         // 调用MyBatis-Plus的insert方法
         int result = scheduleMapper.insert(schedule);
         if (result > 0) {
-            return Result.success("排班创建成功，记录ID为：" + schedule.getSchedule_id(),null);
+            return Result.success("排班创建成功，记录ID为：" + schedule.getSchedule_id(), null);
         } else {
             return Result.fail("排班创建失败。");
         }
@@ -46,8 +47,8 @@ public class ScheduleServiceImpl implements ScheduleService {
     @Override
     public Result<Void> createSchedules(NextWeekScheduleDTO nextWeekScheduleDTO, Integer week) {
         List<DoctorSchedule> schedules = new ArrayList<>();
-        //遍历nextWeekScheduleDTO的属性，处理其中的scheduleDTO对象
-        //java的反射机制，运行时获取类的信息
+        // 遍历nextWeekScheduleDTO的属性，处理其中的scheduleDTO对象
+        // java的反射机制，运行时获取类的信息
         try {
             // 获取对象的Class对象
             Class<?> clazz = nextWeekScheduleDTO.getClass();
@@ -78,7 +79,7 @@ public class ScheduleServiceImpl implements ScheduleService {
                             doctorSchedule.setDoctor_id(doctorMapper.getIdByName(dto.getDoctor_name()));
                             doctorSchedule.setSchedule_id(scheduleIdGenerator.getNextId());
                             doctorSchedule.setSchedule_time_id(dto.getTemplate_id());
-                            executeScheduleDate(doctorSchedule,fieldName,week);
+                            executeScheduleDate(doctorSchedule, fieldName, week);
                             schedules.add(doctorSchedule);
                         } else {
                             System.out.println("集合中包含非ScheduleDTO对象: " + item);
@@ -94,12 +95,12 @@ public class ScheduleServiceImpl implements ScheduleService {
             // 根据实际需求处理异常，这里返回错误结果
             return Result.fail("遍历对象属性时发生错误");
         }
-        try{
+        try {
             for (DoctorSchedule item : schedules) {
                 createSchedule(item);
             }
-            return Result.success("插入成功",null);
-        }catch (Exception e){
+            return Result.success("插入成功", null);
+        } catch (Exception e) {
             e.printStackTrace();
             return Result.fail("新排班插入数据库错误");
         }
@@ -112,7 +113,9 @@ public class ScheduleServiceImpl implements ScheduleService {
             String depart_id = departmentMapper.getIdByName(depart_name);
             String doc_id = doctorMapper.getIdByNameAndDepart(doctor_name, depart_id);
             int res = scheduleMapper.deleteSchedule(date, template_id, doc_id);
-            if (res > 0) {return Result.success(null);}
+            if (res > 0) {
+                return Result.success(null);
+            }
         } catch (Exception e) {
             return Result.fail("数据库错误");
         }
@@ -122,27 +125,27 @@ public class ScheduleServiceImpl implements ScheduleService {
     @Override
     public Result<FinalScheduleWeekVO> getScheduleHistory(LocalDate date, String depart_name) {
         FinalScheduleWeekVO finalScheduleWeekVO = new FinalScheduleWeekVO();
-        //获取date所在周的周一和周六时间
+        // 获取date所在周的周一和周六时间
         LocalDate monday = date.with(DayOfWeek.MONDAY);
         LocalDate sunday = date.with(DayOfWeek.SUNDAY);
-        List<FinalScheduleVO> doctorSchedules = scheduleMapper.getScheduleHistory(monday,sunday,depart_name);
-        //对实体做视图转换
-        Map<LocalDate,String> dayMapping = new HashMap<>();
-        dayMapping.put(date.with(DayOfWeek.MONDAY), "Mon");    // 周一
-        dayMapping.put(date.with(DayOfWeek.TUESDAY), "Tue");   // 周二
+        List<FinalScheduleVO> doctorSchedules = scheduleMapper.getScheduleHistory(monday, sunday, depart_name);
+        // 对实体做视图转换
+        Map<LocalDate, String> dayMapping = new HashMap<>();
+        dayMapping.put(date.with(DayOfWeek.MONDAY), "Mon"); // 周一
+        dayMapping.put(date.with(DayOfWeek.TUESDAY), "Tue"); // 周二
         dayMapping.put(date.with(DayOfWeek.WEDNESDAY), "Wed"); // 周三
-        dayMapping.put(date.with(DayOfWeek.THURSDAY), "Thu");  // 周四
-        dayMapping.put(date.with(DayOfWeek.FRIDAY), "Fri");    // 周五
-        dayMapping.put(date.with(DayOfWeek.SATURDAY), "Sat");  // 周六
-        dayMapping.put(date.with(DayOfWeek.SUNDAY), "Sun");    // 周日
-        //做周中分类
-        for(FinalScheduleVO dto:doctorSchedules){
+        dayMapping.put(date.with(DayOfWeek.THURSDAY), "Thu"); // 周四
+        dayMapping.put(date.with(DayOfWeek.FRIDAY), "Fri"); // 周五
+        dayMapping.put(date.with(DayOfWeek.SATURDAY), "Sat"); // 周六
+        dayMapping.put(date.with(DayOfWeek.SUNDAY), "Sun"); // 周日
+        // 做周中分类
+        for (FinalScheduleVO dto : doctorSchedules) {
             LocalDate currentDate = dto.getDate();
             if (dayMapping.containsKey(currentDate)) {
                 String dayOfWeek = dayMapping.get(currentDate);
-//                ScheduleDTO scheduleDTO = new ScheduleDTO();
-//                scheduleDTO.setDoctor_name(dto.getDoctor);
-//                scheduleDTO.setTemplate_id(dto.getTemplate_id());
+                // ScheduleDTO scheduleDTO = new ScheduleDTO();
+                // scheduleDTO.setDoctor_name(dto.getDoctor);
+                // scheduleDTO.setTemplate_id(dto.getTemplate_id());
 
                 // 使用反射获取目标属性并添加对象
                 try {
@@ -183,29 +186,31 @@ public class ScheduleServiceImpl implements ScheduleService {
     public Result<Void> stopSingle(String schedule_id, String reason) {
         try {
             int affectedRow = scheduleMapper.stopSingle(schedule_id, reason);
-            if (affectedRow>0) {return  Result.success("操作成功",null);}
-            else return Result.fail("排班不存在");
-        }catch (Exception e){
+            if (affectedRow > 0) {
+                return Result.success("操作成功", null);
+            } else
+                return Result.fail("排班不存在");
+        } catch (Exception e) {
             e.printStackTrace();
-            return  Result.fail("服务器错误");
+            return Result.fail("服务器错误");
         }
     }
 
     @Override
     public Result<Void> stopBatch(StopBatchScheduleDTO stopBatchScheduleDTO) {
-        try{
+        try {
             int affect = scheduleMapper.stopBatch(stopBatchScheduleDTO.getDoc_ids(),
                     stopBatchScheduleDTO.getReason(),
                     stopBatchScheduleDTO.getStart_time().getTemplate_id(),
                     stopBatchScheduleDTO.getEnd_time().getTemplate_id(),
                     stopBatchScheduleDTO.getStart_time().getDate(),
                     stopBatchScheduleDTO.getEnd_time().getDate());
-            if (affect>0) {
-                return Result.success("成功终止",null);
+            if (affect > 0) {
+                return Result.success("成功终止", null);
             }
             return Result.fail("更新不完全");
 
-        }catch (Exception e){
+        } catch (Exception e) {
             return Result.fail(e.toString());
         }
     }
@@ -213,7 +218,7 @@ public class ScheduleServiceImpl implements ScheduleService {
     @Override
     public Result<Void> delayBatch(DelayBatchDTO delayBatchDTO) {
 
-        try{
+        try {
             int affect = scheduleMapper.delayBatch(delayBatchDTO.getDoc_ids(),
                     delayBatchDTO.getReason(),
                     delayBatchDTO.getStart_time().getTemplate_id(),
@@ -221,12 +226,12 @@ public class ScheduleServiceImpl implements ScheduleService {
                     delayBatchDTO.getStart_time().getDate(),
                     delayBatchDTO.getEnd_time().getDate(),
                     delayBatchDTO.getDelay_days());
-            if (affect>0) {
-                return Result.success("成功延后",null);
+            if (affect > 0) {
+                return Result.success("成功延后", null);
             }
             return Result.fail("更新不完全");
 
-        }catch (Exception e){
+        } catch (Exception e) {
             return Result.fail(e.toString());
         }
 
@@ -236,13 +241,13 @@ public class ScheduleServiceImpl implements ScheduleService {
     private void executeScheduleDate(DoctorSchedule doctorSchedule, String date, Integer code) {
         // 创建日期缩写与DayOfWeek的映射关系
         Map<String, DayOfWeek> dayMapping = new HashMap<>();
-        dayMapping.put("mon", DayOfWeek.MONDAY);    // 周一
-        dayMapping.put("tue", DayOfWeek.TUESDAY);   // 周二
+        dayMapping.put("mon", DayOfWeek.MONDAY); // 周一
+        dayMapping.put("tue", DayOfWeek.TUESDAY); // 周二
         dayMapping.put("wed", DayOfWeek.WEDNESDAY); // 周三
-        dayMapping.put("thu", DayOfWeek.THURSDAY);  // 周四
-        dayMapping.put("fri", DayOfWeek.FRIDAY);    // 周五
-        dayMapping.put("sat", DayOfWeek.SATURDAY);  // 周六
-        dayMapping.put("sun", DayOfWeek.SUNDAY);    // 周日
+        dayMapping.put("thu", DayOfWeek.THURSDAY); // 周四
+        dayMapping.put("fri", DayOfWeek.FRIDAY); // 周五
+        dayMapping.put("sat", DayOfWeek.SATURDAY); // 周六
+        dayMapping.put("sun", DayOfWeek.SUNDAY); // 周日
 
         if (dayMapping.containsKey(date)) {
             DayOfWeek targetDayOfWeek = dayMapping.get(date);
@@ -251,7 +256,7 @@ public class ScheduleServiceImpl implements ScheduleService {
             if (code == 0) {
                 // 获取本周对应日期的日期[1](@ref)
                 targetDate = LocalDate.now().with(TemporalAdjusters.previousOrSame(targetDayOfWeek));
-            } else{
+            } else {
                 // 获取下周对应日期的日期[1](@ref)
                 LocalDate thisWeekDay = LocalDate.now().with(TemporalAdjusters.previousOrSame(targetDayOfWeek));
                 targetDate = thisWeekDay.plusWeeks(code);
@@ -262,6 +267,26 @@ public class ScheduleServiceImpl implements ScheduleService {
             // 如果传入的日期缩写不合法，可以记录日志或抛出异常
             // 这里设置为当前日期作为默认值
             doctorSchedule.setDate(LocalDate.now());
+        }
+    }
+
+    // 修改后
+
+    public Result<AdjustItemsVO> getShiftRequests(String status, String doc_id, LocalDate targetDateFrom,
+            LocalDate targetDateTo, Integer type, Integer page, Integer pageSize) {
+        try {
+            AdjustItemsVO adjustItemsVO = new AdjustItemsVO();
+            adjustItemsVO.setPage(page);
+            adjustItemsVO.setPageSize(pageSize);
+            // 使用setter方法而不是直接对getter赋值
+            List<AdjustItemDTO> items = scheduleMapper.getShiftRequests(status, doc_id, targetDateFrom,
+                    targetDateTo, type, page, pageSize);
+            adjustItemsVO.setItems(items);
+            // 返回成功的Result对象
+            return Result.success(adjustItemsVO);
+        } catch (Exception e) {
+            // 异常处理
+            return Result.fail(500, "查询班次调整申请失败: " + e.getMessage());
         }
     }
 }
