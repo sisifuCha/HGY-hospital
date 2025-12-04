@@ -55,4 +55,15 @@ public interface DoctorService {
 
     // 通知加号申请变更（供数据库监听器调用）
     void notifyAddNumberChange(String docId);
+
+    // 通知系统消息变更（供数据库监听器调用）
+    void notifySystemMessage(String docId);
+
+    /**
+     * 确认收到通知消息
+     * @param messageId 消息ID
+     * @param docId 医生ID
+     * @return 操作结果
+     */
+    Result<Void> confirmNotification(Integer messageId, String docId);
 }
