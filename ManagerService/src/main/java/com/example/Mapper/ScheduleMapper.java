@@ -88,4 +88,7 @@ public interface ScheduleMapper extends BaseMapper<DoctorSchedule> {
                         @Param("type") Integer type,
                         @Param("page") Integer page,
                         @Param("pageSize") Integer pageSize);
+
+        @Update("UPDATE doc_schedule_change_record SET status = #{status} WHERE ori_sch_id = #{id}")
+        int updateShiftRequestStatus(@Param("id") String id, @Param("status") String status);
 }

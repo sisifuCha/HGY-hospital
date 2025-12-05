@@ -92,4 +92,12 @@ public class ScheduleController {
         return scheduleService.getShiftRequests(status, doc_id, targetDateFrom, targetDateTo, type_int, page, pageSize);
     }
 
+    @PatchMapping("/shift-requests/{id}")
+    public Result<Void> handleShiftRequest(@PathVariable String id,
+            @RequestBody java.util.Map<String, String> requestBody) {
+        System.out.println("收到了处理排班调整请求: id=" + id + ", action=" + requestBody.get("action"));
+        String action = requestBody.get("action");
+        return scheduleService.handleShiftRequest(id, action);
+    }
+
 }

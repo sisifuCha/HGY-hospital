@@ -289,4 +289,30 @@ public class ScheduleServiceImpl implements ScheduleService {
             return Result.fail(500, "查询班次调整申请失败: " + e.getMessage());
         }
     }
+
+    @Override
+    public Result<Void> handleShiftRequest(String id, String action) {
+        try {
+            // 根据action确定status值
+            String status;
+            if ("APPROVE".equals(action)) {
+                status = "APPROVED";
+            } else if ("REJECT".equals(action)) {
+                status = "REJECTED";
+            } else {
+                return Result.fail("无效的操作类型: " + action);
+            }
+
+            // 更新数据库
+            int affectedRows = scheduleMapper.updateShiftRequestStatus(id, status);
+            if (affectedRows > 0) {
+                return Result.success("处理成功", null);
+            } else {
+                return Result.fail("排班调整请求不存在");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Result.fail("处理排班调整请求失败: " + e.getMessage());
+        }
+    }
 }

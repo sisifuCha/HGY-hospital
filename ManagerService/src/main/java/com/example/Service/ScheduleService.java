@@ -37,4 +37,7 @@ public interface ScheduleService {
 
     public Result<AdjustItemsVO> getShiftRequests(String status, String doc_id, LocalDate targetDateFrom,
             LocalDate targetDateTo, Integer type, Integer page, Integer pageSize);
+
+    // 处理排班调整请求（审批/拒绝）
+    public Result<Void> handleShiftRequest(String id, String action);
 }
