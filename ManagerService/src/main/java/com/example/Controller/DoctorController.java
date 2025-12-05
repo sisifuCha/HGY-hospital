@@ -2,7 +2,7 @@ package com.example.Controller;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.example.Service.DoctorService;
-import com.example.Conmon.result.Result;
+import com.example.conmon.result.Result;
 import com.example.pojo.dto.DoctorDTO;
 import com.example.pojo.dto.DoctorsRequestDTO;
 import com.example.pojo.entity.Department;

@@ -3,7 +3,7 @@ package com.example.pojo.entity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
-import com.example.Conmon.CommonData;
+import com.example.conmon.CommonData;
 import lombok.Data;
 
 import java.time.LocalDate;

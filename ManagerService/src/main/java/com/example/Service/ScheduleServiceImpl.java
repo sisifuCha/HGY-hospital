@@ -1,6 +1,6 @@
 package com.example.Service;
 
-import com.example.Conmon.result.Result;
+import com.example.conmon.result.Result;
 import com.example.Mapper.DepartmentMapper;
 import com.example.Mapper.DoctorMapper;
 import com.example.Mapper.ScheduleMapper;

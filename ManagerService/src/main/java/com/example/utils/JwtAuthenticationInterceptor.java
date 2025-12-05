@@ -1,6 +1,6 @@
 package com.example.utils;
 
-import com.example.Conmon.result.Result;
+import com.example.conmon.result.Result;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.http.HttpServletRequest;

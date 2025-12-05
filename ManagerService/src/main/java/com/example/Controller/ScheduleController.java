@@ -1,6 +1,6 @@
 package com.example.Controller;
 
-import com.example.Conmon.result.Result;
+import com.example.conmon.result.Result;
 import com.example.Service.ScheduleService;
 import com.example.pojo.dto.HistoryScheduleDTO;
 import com.example.pojo.dto.NextWeekScheduleDTO;
