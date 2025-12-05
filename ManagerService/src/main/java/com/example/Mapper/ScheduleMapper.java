@@ -73,7 +73,7 @@ public interface ScheduleMapper extends BaseMapper<DoctorSchedule> {
                         "type " +
                         "FROM doc_schedule_change_record " +
                         "INNER JOIN \"user\" u ON u.id=doc_schedule_change_record.doc_id " +
-                        "WHERE status = #{status} " +
+                        "WHERE (status = #{status}::varchar(20) OR #{status}::varchar(20) IS NULL) " +
                         "AND (doc_id = #{doc_id}::varchar(20) OR #{doc_id}::varchar(20) IS NULL) " +
                         "AND (target_date >= #{targetDateFrom}::date OR #{targetDateFrom}::date IS NULL) " +
                         "AND (target_date <= #{targetDateTo}::date OR #{targetDateTo}::date IS NULL) " +
@@ -88,4 +88,7 @@ public interface ScheduleMapper extends BaseMapper<DoctorSchedule> {
                         @Param("type") Integer type,
                         @Param("page") Integer page,
                         @Param("pageSize") Integer pageSize);
+
+        @Update("UPDATE doc_schedule_change_record SET status = #{action} WHERE ori_sch_id = #{id}")
+        int updateShiftRequest(String id,String action);
 }

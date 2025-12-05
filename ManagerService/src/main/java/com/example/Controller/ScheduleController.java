@@ -13,6 +13,7 @@ import com.example.pojo.vo.ScheduleWeekVO;
 
 import io.swagger.v3.oas.models.security.SecurityScheme.In;
 
+import lombok.Data;
 import org.apache.ibatis.javassist.tools.framedump;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cglib.core.Local;
@@ -89,7 +90,18 @@ public class ScheduleController {
                 type_int = 1;
                 break;
         }
+        if(status.equals("ALL")) status = null;
         return scheduleService.getShiftRequests(status, doc_id, targetDateFrom, targetDateTo, type_int, page, pageSize);
+    }
+    @PatchMapping("/shift-requests/{id}")
+    public Result<Void> updateShiftRequests(@RequestBody Action action, @PathVariable() String id) { // 类名也建议大写
+        return scheduleService.updateShiftRequest(id, action.getAction()); // 使用getter方法
+    }
+
+    // 静态内部类
+    @Data
+    public static class Action { // 类名首字母建议大写
+        private String action;
     }
 
 }

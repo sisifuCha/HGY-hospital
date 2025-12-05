@@ -289,4 +289,27 @@ public class ScheduleServiceImpl implements ScheduleService {
             return Result.fail(500, "查询班次调整申请失败: " + e.getMessage());
         }
     }
+
+    @Override
+    public Result<Void> updateShiftRequest(String id, String action) {
+        // TODO 实现mapper
+        String newStatus = "PENDING";
+        switch (action) {
+            case "APPROVE":
+                newStatus = "APPROVED";
+                break;
+            case "REJECT":
+                newStatus = "REJECTED";
+                break;
+            default:
+                break;
+        }
+        int row = scheduleMapper.updateShiftRequest(id, newStatus);
+        if (row > 0) {
+            return Result.success("更新成功", null);
+        } else {
+            return Result.fail("更新失败");
+        }
+
+    }
 }

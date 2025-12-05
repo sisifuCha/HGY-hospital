@@ -37,4 +37,6 @@ public interface ScheduleService {
 
     public Result<AdjustItemsVO> getShiftRequests(String status, String doc_id, LocalDate targetDateFrom,
             LocalDate targetDateTo, Integer type, Integer page, Integer pageSize);
+
+    public Result<Void> updateShiftRequest(String id,String action);
 }
