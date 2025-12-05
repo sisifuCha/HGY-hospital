@@ -14,6 +14,7 @@ import com.example.pojo.vo.ScheduleWeekVO;
 import com.example.utils.ScheduleIdGenerator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.lang.reflect.Field;
 import java.time.DayOfWeek;
@@ -290,26 +291,68 @@ public class ScheduleServiceImpl implements ScheduleService {
         }
     }
 
+    /**
+     * 处理调班申请的审批操作
+     * 支持批准和拒绝两种操作，根据调班类型执行相应的排班调整
+     * 
+     * @param id     调班申请ID
+     * @param action 操作类型：APPROVE（批准）或 REJECT（拒绝）
+     * @return 操作结果的Result对象
+     */
     @Override
+    @Transactional(rollbackFor = Exception.class) // 添加事务管理，确保审批操作的原子性
     public Result<Void> updateShiftRequest(String id, String action) {
-        // TODO 实现mapper
-        String newStatus = "PENDING";
-        switch (action) {
-            case "APPROVE":
-                newStatus = "APPROVED";
-                break;
-            case "REJECT":
-                newStatus = "REJECTED";
-                break;
-            default:
-                break;
-        }
-        int row = scheduleMapper.updateShiftRequest(id, newStatus);
-        if (row > 0) {
-            return Result.success("更新成功", null);
-        } else {
-            return Result.fail("更新失败");
-        }
+        try {
+            // 1. 根据操作类型确定新的状态
+            String newStatus = "PENDING";
+            switch (action) {
+                case "APPROVE":
+                    newStatus = "APPROVED";
+                    break;
+                case "REJECT":
+                    newStatus = "REJECTED";
+                    break;
+                default:
+                    return Result.fail(400, "无效的操作类型");
+            }
 
+            // 2. 获取调班申请详情，用于后续业务逻辑处理
+            Map<String, Object> requestDetail = scheduleMapper.getShiftRequestDetail(id);
+            if (requestDetail == null) {
+                return Result.fail(404, "调班申请不存在");
+            }
+
+            // 3. 更新调班申请的状态
+            int row = scheduleMapper.updateShiftRequest(id, newStatus);
+            if (row <= 0) {
+                return Result.fail(500, "更新申请状态失败");
+            }
+
+            // 4. 如果是拒绝操作，不需要修改原排班，直接返回成功
+            if ("REJECTED".equals(newStatus)) {
+                return Result.success("拒绝成功", null);
+            }
+
+            // 5. 处理批准操作，根据调班类型执行不同的排班调整
+            String oriScheId = String.valueOf(requestDetail.get("ori_sch_id"));
+            Integer type = (Integer) requestDetail.get("type");
+
+            if (type == 1) {
+                // 请假类型：将原排班记录状态改为1
+                scheduleMapper.updateScheduleStatus(oriScheId, "1");
+            } else if (type == 0) {
+                // 调班类型：更新原排班记录的时间和模板（type=0表示调班到目标时段）
+                String targetDate = String.valueOf(requestDetail.get("target_date"));
+                String templateId = String.valueOf(requestDetail.get("template_id"));
+                scheduleMapper.updateScheduleTime(oriScheId, targetDate, templateId);
+            }
+
+            // 6. 返回操作成功的结果
+            return Result.success("操作成功", null);
+        } catch (Exception e) {
+            // 7. 异常处理，记录错误信息并返回失败结果
+            e.printStackTrace();
+            return Result.fail(500, "操作失败: " + e.getMessage());
+        }
     }
 }

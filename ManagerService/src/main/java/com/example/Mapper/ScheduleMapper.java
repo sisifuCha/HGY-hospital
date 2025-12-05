@@ -8,6 +8,7 @@ import org.apache.ibatis.annotations.*;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map; // 添加Map导入以支持调班申请详情查询
 
 @Mapper
 public interface ScheduleMapper extends BaseMapper<DoctorSchedule> {
@@ -90,5 +91,49 @@ public interface ScheduleMapper extends BaseMapper<DoctorSchedule> {
                         @Param("pageSize") Integer pageSize);
 
         @Update("UPDATE doc_schedule_change_record SET status = #{action} WHERE ori_sch_id = #{id}")
-        int updateShiftRequest(String id,String action);
+        int updateShiftRequest(String id, String action);
+
+        /**
+         * 查询调班申请的详细信息
+         * 用于获取调班申请的完整数据，支持审批业务逻辑处理
+         * 
+         * @param id 调班申请ID
+         * @return 调班申请详细信息的Map集合
+         */
+        @Select("SELECT * FROM doc_schedule_change_record WHERE ori_sch_id = #{id}")
+        Map<String, Object> getShiftRequestDetail(String id);
+
+        /**
+         * 更新排班记录的状态
+         * 用于调班审批通过后更新原排班的状态
+         * 
+         * @param scheduleId 排班ID
+         * @param status     新状态
+         * @return 更新结果（影响行数）
+         */
+        @Update("UPDATE doc_schedule_record SET status = #{status} WHERE schedule_id = #{scheduleId}")
+        int updateScheduleStatus(@Param("scheduleId") String scheduleId, @Param("status") String status);
+
+        /**
+         * 更新排班记录的日期和时间段
+         * 用于调班类型的审批通过后，将原排班调整到新的时间
+         * 
+         * @param oriScheId  原排班ID
+         * @param date       新日期
+         * @param templateId 新的时间模板ID
+         * @return 更新结果（影响行数）
+         */
+        @Update("UPDATE doc_schedule_record SET schedule_date = #{date}, template_id = #{templateId} WHERE schedule_id = #{oriScheId}")
+        int updateScheduleTime(@Param("oriScheId") String oriScheId, @Param("date") String date,
+                        @Param("templateId") String templateId);
+
+        /**
+         * 根据ID删除排班记录
+         * 用于请假类型的审批通过后，删除原排班记录
+         * 
+         * @param scheduleId 排班ID
+         * @return 删除结果（影响行数）
+         */
+        @Delete("DELETE FROM doc_schedule_record WHERE schedule_id = #{scheduleId}")
+        int deleteScheduleById(String scheduleId);
 }
