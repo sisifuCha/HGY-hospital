@@ -78,4 +78,16 @@ public interface DoctorMapper {
        int updateDoctorProfile(@Param("doctorId") String doctorId,
                                                  @Param("clinicId") String clinicId,
                                                  @Param("titleId") String titleId);
+
+    /**
+     * 查询所有医生ID
+     */
+    @Select("SELECT \"id\" FROM \"doctor\"")
+    java.util.List<String> selectAllDoctorIds();
+
+    /**
+     * 查询指定科室的所有医生ID
+     */
+    @Select("SELECT \"id\" FROM \"doctor\" WHERE \"depart_id\" = #{departId}")
+    java.util.List<String> selectDoctorIdsByDepartment(@Param("departId") String departId);
 }

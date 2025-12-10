@@ -4,6 +4,7 @@ import com.example.dto.AddNumberDecisionRequest;
 import com.example.dto.DoctorLoginRequest;
 import com.example.dto.DoctorProfileDto;
 import com.example.dto.DoctorProfileUpdateRequest;
+import com.example.dto.NotificationAcceptedRequest;
 import com.example.dto.PatientStatusRequest;
 import com.example.dto.ScheduleChangeRequest;
 import com.example.service.DoctorService;
@@ -152,5 +153,28 @@ public class DoctorController {
                 break;
         }
         return ResponseEntity.status(status).body(result.toMap());
+    }
+
+    /**
+     * 确认收到通知消息
+     * 前端收到通知后调用此接口确认
+     */
+    @PostMapping("/notification_accepted")
+    public ResponseEntity<Map<String, Object>> notificationAccepted(@RequestBody NotificationAcceptedRequest request) {
+        Integer messageId = request.getMessageId();
+        if (messageId == null || request.getDocId() == null) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("code", 400);
+            error.put("message", "消息ID和医生ID不能为空");
+            return ResponseEntity.badRequest().body(error);
+        }
+        
+        Result<Void> result = doctorService.confirmNotification(messageId, request.getDocId());
+        
+        if (result.isSuccess()) {
+            return ResponseEntity.ok(result.toMap());
+        } else {
+            return ResponseEntity.badRequest().body(result.toMap());
+        }
     }
 }

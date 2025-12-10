@@ -25,13 +25,15 @@ import com.example.mapper.DocScheduleChangeRecordMapper;
 import com.example.mapper.RegisterRecordMapper;
 import com.example.mapper.AddNumberSourceRecordMapper;
 import com.example.mapper.PayRecordMapper;
-import com.example.mapper.DocScheduleChangeRecordMapper.ScheduleChangeRecordRow;
 import com.example.mapper.model.AddNumberApplicationRow;
 import com.example.mapper.model.DepartmentShiftRow;
 import com.example.mapper.model.PatientRecordRow;
 import com.example.mapper.model.PatientSummaryRow;
 import com.example.mapper.model.SelfShiftRow;
+import com.example.mapper.MessageRecordMapper;
+import com.example.entity.MessageRecord;
 import com.example.service.DoctorService;
+import com.example.service.MessageQueueService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -43,6 +45,7 @@ import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -70,6 +73,12 @@ public class DoctorServiceImpl implements DoctorService {
 
     @Autowired
     private PayRecordMapper payRecordMapper;
+
+    @Autowired
+    private MessageRecordMapper messageRecordMapper;
+
+    @Autowired
+    private MessageQueueService messageQueueService;
 
     private static final ZoneId DEFAULT_ZONE = ZoneId.systemDefault();
 
@@ -405,7 +414,7 @@ public class DoctorServiceImpl implements DoctorService {
             originalSchedule.getId(),
             targetSchId,
             request.getReason(),
-            "pending",
+            "待审核",
             targetDate,
             templateId,
             request.getChangeType(),
@@ -416,7 +425,44 @@ public class DoctorServiceImpl implements DoctorService {
             return Result.fail(409, "插入变更记录失败，可能存在并发冲突");
         }
 
-        // 7. 推送通知
+        // 7. 向 message_record 表插入班次变更申请消息
+        try {
+            MessageRecord msgRecord = new MessageRecord();
+            msgRecord.setTitle("班次变更申请已提交");
+            
+            String changeTypeDesc;
+            switch (request.getChangeType()) {
+                case 0:
+                    changeTypeDesc = String.format("调班到 %s %s", targetDate, getTimePeriodName(request.getTimePeriod()));
+                    break;
+                case 1:
+                    changeTypeDesc = String.format("请假 %d 小时", leaveTimeLength);
+                    break;
+                case 2:
+                    changeTypeDesc = String.format("与医生换班到 %s %s", targetDate, getTimePeriodName(request.getTimePeriod()));
+                    break;
+                default:
+                    changeTypeDesc = "变更申请";
+            }
+            
+            msgRecord.setContent(String.format("您的班次变更申请（%s）已提交，原班次：%s %s，理由：%s",
+                changeTypeDesc,
+                originalDate,
+                getTimePeriodName(originalTimePeriod),
+                request.getReason() != null ? request.getReason() : "无"));
+            msgRecord.setSenderType("system");
+            msgRecord.setReceiverType("specific_doctor");
+            msgRecord.setReceiverId(request.getDocId());
+            msgRecord.setStatus("unsent");
+            msgRecord.setReadStatus("unconfirmed");
+            
+            messageRecordMapper.insertMessage(msgRecord);
+        } catch (Exception e) {
+            // 消息插入失败不影响主流程
+            System.err.println("插入班次变更消息记录失败: " + e.getMessage());
+        }
+
+        // 8. 推送通知
         emitNotificationSnapshot(request.getDocId(), null);
 
         return Result.success(null, "班次变更申请已提交");
@@ -539,6 +585,12 @@ public class DoctorServiceImpl implements DoctorService {
         emitAddNumberSnapshot(docId, null);
     }
 
+    @Override
+    public void notifySystemMessage(String docId) {
+        // 数据库触发器通知消息记录变更，推送 SSE 更新
+        emitNotificationSnapshot(docId, null);
+    }
+
     private SseEmitter createEmitter(Map<String, SseEmitter> store, String key) {
         SseEmitter emitter = new SseEmitter(0L);
         store.put(key, emitter);
@@ -565,7 +617,7 @@ public class DoctorServiceImpl implements DoctorService {
         }
         Map<String, Object> payload = new HashMap<>();
         payload.put("notifications", loadSystemNotifications(docId));
-        sendEvent(notificationEmitters, docId, emitter, "notification", Result.success(payload));
+        sendEvent(notificationEmitters, docId, emitter, "notification-updated", Result.success(payload));
     }
 
     private void sendEvent(Map<String, SseEmitter> store, String key, SseEmitter emitter, String eventName, Object payload) {
@@ -653,17 +705,68 @@ public class DoctorServiceImpl implements DoctorService {
 
     private List<NotificationMessageDto> loadSystemNotifications(String docId) {
         List<NotificationMessageDto> notifications = new ArrayList<>();
-        for (ScheduleChangeRecordRow row : scheduleChangeRecordMapper.findByDoctor(docId)) {
+        String source = "redis"; // 数据来源标记
+        
+        try {
+            // 优先从 Redis 队列读取消息
+            List<MessageRecord> queuedMessages = messageQueueService.getQueuedMessages(docId);
+            
+            if (queuedMessages != null && !queuedMessages.isEmpty()) {
+                // 处理队列中的消息
+                for (MessageRecord msg : queuedMessages) {
+                    // 检查该医生是否已确认过此消息
+                    if (messageQueueService.isMessageSentToDoctor(msg.getId(), docId)) {
+                        // 已确认过，跳过并从队列移除
+                        messageQueueService.dequeueMessage(docId, msg.getId());
+                        continue;
+                    }
+                    
+                    NotificationMessageDto dto = new NotificationMessageDto();
+                    dto.setId("msg-" + msg.getId());
+                    dto.setTitle(msg.getTitle());
+                    dto.setContent(msg.getContent());
+                    dto.setCreatedAt(toOffsetDateTime(msg.getCreatedTime()));
+                    notifications.add(dto);
+                    
+                    // 从队列中移除 (消息已推送，但需等待前端调用 /notification_accepted 确认)
+                    messageQueueService.dequeueMessage(docId, msg.getId());
+                    
+                    // 注意：不再在这里调用 markMessageSentToDoctor
+                    // 改由前端调用 /notification_accepted 接口时才标记为 confirmed
+                }
+                System.out.println("[通知] 医生 " + docId + " 从 Redis 获取 " + notifications.size() + " 条消息 (待确认)");
+                return notifications;
+            }
+            source = "database"; // Redis 队列为空，使用数据库
+        } catch (Exception e) {
+            // Redis 异常时，降级到数据库查询
+            source = "database(degraded)";
+            System.err.println("[通知降级] Redis 异常，医生 " + docId + " 降级到数据库查询: " + e.getMessage());
+        }
+        
+        // 队列为空或 Redis 异常时,从数据库加载(兜底逻辑)
+        List<MessageRecord> unsentMessages = messageRecordMapper.selectUnsentMessagesForDoctor(docId);
+        
+        for (MessageRecord msg : unsentMessages) {
+            // 即使走数据库，也要检查 Redis 中该医生是否已确认
+            try {
+                if (messageQueueService.isMessageSentToDoctor(msg.getId(), docId)) {
+                    // Redis 中已标记为 confirmed，跳过
+                    continue;
+                }
+            } catch (Exception e) {
+                // Redis 检查失败，继续处理（宁可多发也不漏发）
+            }
+            
             NotificationMessageDto dto = new NotificationMessageDto();
-            dto.setId("schedule-change-" + row.getOriginalScheduleId() + "-" + row.getTargetScheduleId());
-            dto.setTitle("班次变更申请状态");
-            dto.setContent(String.format("原班次:%s 目标班次:%s 状态:%s",
-                    row.getOriginalScheduleId(),
-                    row.getTargetScheduleId(),
-                    readableStatus(row.getStatus())));
-            dto.setCreatedAt(OffsetDateTime.now(DEFAULT_ZONE));
+            dto.setId("msg-" + msg.getId());
+            dto.setTitle(msg.getTitle());
+            dto.setContent(msg.getContent());
+            dto.setCreatedAt(toOffsetDateTime(msg.getCreatedTime()));
             notifications.add(dto);
         }
+        
+        System.out.println("[通知] 医生 " + docId + " 从 " + source + " 获取 " + notifications.size() + " 条消息");
         return notifications;
     }
 
@@ -702,6 +805,57 @@ public class DoctorServiceImpl implements DoctorService {
                 return "已拒绝";
             default:
                 return status;
+        }
+    }
+
+    /**
+     * 根据时段编号获取时段名称
+     */
+    private String getTimePeriodName(Integer timePeriod) {
+        if (timePeriod == null) {
+            return "未知时段";
+        }
+        switch (timePeriod) {
+            case 1:
+                return "上午";
+            case 2:
+                return "下午";
+            case 3:
+                return "晚上";
+            default:
+                return "时段" + timePeriod;
+        }
+    }
+
+    @Override
+    public Result<Void> confirmNotification(Integer messageId, String docId) {
+        if (messageId == null || docId == null || docId.trim().isEmpty()) {
+            return Result.fail("参数错误：消息ID和医生ID不能为空");
+        }
+        
+        try {
+            // 标记该医生已确认此消息
+            boolean allConfirmed = messageQueueService.markMessageSentToDoctor(messageId, docId);
+            
+            System.out.println("[通知确认] 医生 " + docId + " 确认收到消息 " + messageId);
+            
+            // 检查消息类型，单发消息直接更新数据库
+            MessageRecord msg = messageRecordMapper.selectById(messageId);
+            if (msg != null && "specific_doctor".equals(msg.getReceiverType())) {
+                // 单发消息：直接更新数据库状态为 sent
+                messageRecordMapper.batchUpdateStatusToSent(Collections.singletonList(messageId));
+                System.out.println("[通知确认] 单发消息 " + messageId + " 已确认，更新数据库状态为 sent");
+            } else if (allConfirmed) {
+                // 群发消息：所有接收者都已确认，更新数据库状态为 sent
+                messageRecordMapper.batchUpdateStatusToSent(Collections.singletonList(messageId));
+                System.out.println("[通知确认] 群发消息 " + messageId + " 已被所有接收者确认，更新数据库状态为 sent");
+            }
+            
+            return Result.success(null);
+        } catch (Exception e) {
+            System.err.println("[通知确认] 确认消息失败: " + e.getMessage());
+            e.printStackTrace();
+            return Result.fail("确认消息失败: " + e.getMessage());
         }
     }
 }

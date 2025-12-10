@@ -42,4 +42,27 @@ public interface AddNumberSourceRecordMapper extends BaseMapper<AddNumberSourceR
            "WHERE \"patient_id\" = #{patientId} AND \"sch_id\" = #{schId}")
     AddNumberSourceRecord getRequest(@Param("patientId") String patientId, 
                                    @Param("schId") String schId);
+
+    /**
+     * 获取特定医生的最新待审核加号申请（包含患者姓名）
+     * 用于在收到数据库通知时创建消息记录
+     */
+    @Select({
+           "SELECT",
+           "  ans.patient_id   AS patientId,",
+           "  ans.sch_id       AS scheduleId,",
+           "  ans.apply_time   AS applyTime,",
+           "  ans.reason_text  AS applicationNote,",
+           "  u.\"name\"       AS patientName,",
+           "  dsr.schedule_date AS scheduleDate,",
+           "  dsr.template_id  AS templateId",
+           "FROM \"add_number_source_record\" ans",
+           "JOIN \"patient\" p ON ans.patient_id = p.\"id\"",
+           "JOIN \"user\" u ON p.\"id\" = u.\"id\"",
+           "JOIN \"doc_schedule_record\" dsr ON ans.sch_id = dsr.\"id\"",
+           "WHERE dsr.\"doc_id\" = #{docId} AND ans.\"status\" = '待审核'",
+           "ORDER BY ans.apply_time DESC",
+           "LIMIT 1"
+    })
+    AddNumberApplicationRow selectLatestPendingApplicationRow(@Param("docId") String docId);
 }
