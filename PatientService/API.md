@@ -114,18 +114,18 @@
   {
     "patientId": "PAT0001",
     "scheduleRecordId": "SCH7890",
-    "confirm": true
+    <!-- "confirm": true -->
   }
   ```
 - 字段说明：
-  - `confirm`: true → 已预约；false → 预约中。
+  <!-- - `confirm`: true → 已预约；false → 预约中。 -->
 - Success Response (200):
   ```json
   {
     "patientId": "PAT0001",
     "scheduleRecordId": "SCH7890",
     "registerTime": "2025-11-15 09:30:12",
-    "status": "已预约"
+    "status": true
   }
   ```
 

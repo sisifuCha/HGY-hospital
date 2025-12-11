@@ -26,4 +26,6 @@ public interface RegistrationMapper {
     List<RegistrationVo> findRegistrationsByQuery(@Param("query") RegistrationQueryDto queryDto, @Param("offset") int offset, @Param("limit") int limit);
     long countRegistrationsByQuery(@Param("query") RegistrationQueryDto queryDto);
     RegistrationVo findRegistrationByPatientAndSchedule(@Param("patientId") String patientId, @Param("scheduleRecordId") String scheduleRecordId);
+    
+    Integer findScheduleLeftSource(@Param("scheduleRecordId") String scheduleRecordId);
 }

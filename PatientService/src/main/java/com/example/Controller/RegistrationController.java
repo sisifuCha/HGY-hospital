@@ -74,7 +74,7 @@ public class RegistrationController {
      */
     @PostMapping("/registrations")
     public Result<?> createRegistration(@RequestBody @Valid CreateRegistrationRequest req) {
-        RegistrationDto dto = registrationService.createRegistration(req.getPatientId(), req.getScheduleRecordId(), req.isConfirm());
+        RegistrationDto dto = registrationService.createRegistration(req.getPatientId(), req.getScheduleRecordId());
         return Result.success(dto);
     }
 

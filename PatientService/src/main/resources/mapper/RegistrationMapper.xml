@@ -70,14 +70,13 @@
             LEFT JOIN title_number_source tns on tns.id = d.doc_title_id
         WHERE d.id = #{doctorId}
     </select>
-
-    <!-- 计数：同一患者+排班的有效挂号（已预约 / 已就诊） -->
+    <!-- 计数：同一患者+排班的有效挂号（已挂号 / 已就诊 / 待支付） -->
     <select id="countActiveRegistrationByKey" resultType="int">
         SELECT COUNT(*)
         FROM register_record rr
         WHERE rr.patient_ID = #{patientId}
           AND rr.sch_ID = #{scheduleRecordId}
-          AND rr.status IN ('已预约','已就诊')
+          AND rr.status IN ('已挂号','已就诊','待支付')
     </select>
 
     <!-- 扣减剩余号源，要求 > 0 -->
@@ -94,6 +93,13 @@
         SET left_source_count = left_source_count + 1
         WHERE id = #{scheduleRecordId}
     </update>
+
+    <!-- 查询剩余号源 -->
+    <select id="findScheduleLeftSource" resultType="java.lang.Integer">
+        SELECT left_source_count
+        FROM doc_schedule_record
+        WHERE id = #{scheduleRecordId}
+    </select>
 
     <!-- 插入挂号记录：status 使用中文 '已预约' 或传入的中文枚举 -->
     <insert id="insertRegistration">
@@ -135,7 +141,7 @@
             rr.patient_id AS "patientId",
             rr.sch_id AS "scheduleRecordId",
             rr.register_time AS "registerTime",
-            rr.status AS "status"
+            CASE WHEN rr.status = '已挂号' OR rr.status = '待支付' THEN true ELSE false END AS "status"
         FROM
             register_record rr
         WHERE
