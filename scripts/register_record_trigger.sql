@@ -16,8 +16,8 @@ BEGIN
 
     -- 1. 处理 INSERT 操作
     IF TG_OP = 'INSERT' THEN
-        msg_title := '挂号提交成功';
-        msg_content := '您的挂号申请已提交，请等待确认。';
+        msg_title := '挂号成功';
+        msg_content := '您已成功挂号，请前往支付。';
         
         INSERT INTO message_record (title, content, sender_type, receiver_type, receiver_id, status, created_time)
         VALUES (msg_title, msg_content, 'system', 'specific_patient', receiver_id, 'unsent', NOW());
@@ -25,9 +25,9 @@ BEGIN
     -- 2. 处理 UPDATE 操作
     ELSIF TG_OP = 'UPDATE' THEN
         -- 留出判断逻辑接口
-        -- 这里可以根据 NEW.status 和 OLD.status 来确定 msg_type
-        -- 示例逻辑：
-        IF NEW.status = '已预约' AND OLD.status != '已预约' THEN
+        -- 这里根据 NEW.status 和 OLD.status 来确定 msg_type
+        -- 待支付/已挂号(已支付)/就诊中/已就诊/已取消
+        IF NEW.status = '已挂号' AND OLD.status != '已挂号' THEN
             msg_type := 'a';
         ELSIF NEW.status = '已取消' AND OLD.status != '已取消' THEN
             msg_type := 'b';
@@ -37,15 +37,15 @@ BEGIN
 
         -- 根据 msg_type 插入不同消息
         IF msg_type = 'a' THEN
-            msg_title := '挂号预约成功';
-            msg_content := '您的挂号申请已成功预约，请准时就诊。';
+            msg_title := '完成支付';
+            msg_content := '您的挂号申请已完成支付，请准时就诊。';
             
             INSERT INTO message_record (title, content, sender_type, receiver_type, receiver_id, status, created_time)
             VALUES (msg_title, msg_content, 'system', 'specific_patient', receiver_id, 'unsent', NOW());
             
         ELSIF msg_type = 'b' THEN
             msg_title := '挂号已取消';
-            msg_content := '您的挂号记录已取消。';
+            msg_content := '您的挂号已取消。';
             
             INSERT INTO message_record (title, content, sender_type, receiver_type, receiver_id, status, created_time)
             VALUES (msg_title, msg_content, 'system', 'specific_patient', receiver_id, 'unsent', NOW());

@@ -195,7 +195,7 @@ CREATE TABLE register_record (
 );
 
 COMMENT ON TABLE register_record IS '挂号记录表';
-COMMENT ON COLUMN register_record.status IS '挂号状态: 已预约/已就诊/已取消等';
+COMMENT ON COLUMN register_record.status IS '挂号状态: 排队中/待支付/已挂号/就诊中/已就诊/已取消等';
 
 /*==============================================================*/
 /* Table: alternate_record (候补记录表)                          */

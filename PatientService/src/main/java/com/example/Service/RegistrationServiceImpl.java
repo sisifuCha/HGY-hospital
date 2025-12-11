@@ -4,11 +4,11 @@ import com.example.Mapper.DepartmentMapper;
 import com.example.Mapper.RegistrationMapper;
 import com.example.conmon.exception.CreateFailedException;
 import com.example.conmon.exception.DuplicateRegistrationException;
-import com.example.conmon.exception.SourceFullException;
 import com.example.pojo.dto.DepartmentWithSubDepartmentsDto;
 import com.example.pojo.dto.DoctorWithSchedulesDto;
 import com.example.pojo.dto.RegistrationDto;
 import com.example.pojo.dto.RegistrationQueryDto;
+import com.example.pojo.dto.WaitingDto;
 import com.example.pojo.entity.Doctor;
 import com.example.pojo.vo.PageVo;
 import com.example.pojo.vo.RegistrationVo;
@@ -16,6 +16,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,11 +28,18 @@ import java.util.List;
 @Slf4j
 public class RegistrationServiceImpl implements RegistrationService {
 
+    private static final String WAITING_QUEUE_PREFIX = "waiting:queue:";
+    private static final String WAITING_SET_PREFIX = "waiting:set:";
+    private static final String WAITING_PATIENT_SCHEDULES_PREFIX = "waiting:patient_schedules:";
+
     @Autowired
     private RegistrationMapper registrationMapper;
 
     @Autowired
     private DepartmentMapper departmentMapper;
+
+    @Autowired
+    private RedisTemplate<String, Object> redisTemplate;
 
     @Override
     public List<DoctorWithSchedulesDto> getDoctorsWithSchedulesByDepartment(String departmentId, LocalDate date) {
@@ -60,7 +68,11 @@ public class RegistrationServiceImpl implements RegistrationService {
 
     @Override
     @Transactional
-    public RegistrationDto createRegistration(String patientId, String scheduleRecordId, boolean confirm) {
+    public RegistrationDto createRegistration(String patientId, String scheduleRecordId) {
+        RegistrationDto dto = new RegistrationDto();
+        dto.setPatientId(patientId);
+        dto.setScheduleRecordId(scheduleRecordId);
+
         // 检查是否已有挂号记录
         Integer dup = registrationMapper.countActiveRegistrationByKey(patientId, scheduleRecordId);
         if (dup != null && dup > 0) {
@@ -73,53 +85,28 @@ public class RegistrationServiceImpl implements RegistrationService {
             throw new IllegalArgumentException("排班记录不存在");
         }
         
-        String status;
-        boolean shouldDecrementSource = false;
-        
-        // 逻辑：有号源时直接预约，无号源时根据confirm参数决定
-        if (leftSource > 0) {
-            // 有号源：扣减号源，状态为"已预约"
-            status = "已预约";
-            shouldDecrementSource = true;
-        } else {
-            // 无号源：根据confirm参数
-            if (confirm) {
-                // confirm=true但无号源，抛出异常
-                throw new SourceFullException();
-            } else {
-                // confirm=false，无号源
-                // 不按API文档创建"预约中"记录，而是直接返回提示，不进行数据库操作
-                RegistrationDto dto = new RegistrationDto();
-                dto.setPatientId(patientId);
-                dto.setScheduleRecordId(scheduleRecordId);
-                dto.setStatus("无号源"); // 反馈无号源状态
-                return dto;
-            }
+        if (leftSource <= 0) {
+            dto.setStatus(false);
+            return dto;
         }
         
-        // 扣减号源（如果需要）
-        if (shouldDecrementSource) {
-            int updated = registrationMapper.decrementScheduleLeftSource(scheduleRecordId);
-            if (updated == 0) {
-                throw new SourceFullException();
-            }
+        // 有号源：扣减号源
+        int updated = registrationMapper.decrementScheduleLeftSource(scheduleRecordId);
+        if (updated == 0) {
+            dto.setStatus(false);
+            return dto;
         }
         
         // 插入挂号记录
-        int inserted = registrationMapper.insertRegistration(patientId, scheduleRecordId, status);
+        int inserted = registrationMapper.insertRegistration(patientId, scheduleRecordId, "待支付");
         if (inserted == 0) {
             // 插入失败，回滚号源扣减
-            if (shouldDecrementSource) {
-                registrationMapper.incrementScheduleLeftSource(scheduleRecordId);
-            }
+            registrationMapper.incrementScheduleLeftSource(scheduleRecordId);
             throw new CreateFailedException();
         }
         
         // 构造返回对象
-        RegistrationDto dto = new RegistrationDto();
-        dto.setPatientId(patientId);
-        dto.setScheduleRecordId(scheduleRecordId);
-        dto.setStatus(status);
+        dto.setStatus(true);
         dto.setRegisterTime(java.time.ZonedDateTime.now().format(java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME));
         return dto;
     }
@@ -150,9 +137,35 @@ public class RegistrationServiceImpl implements RegistrationService {
         }
         int updated = registrationMapper.updateRegistrationStatusToCanceled(patientId, scheduleRecordId);
         if (updated > 0) {
-            // 只有“已预约”的状态才需要回补号源
-            if ("已预约".equals(status)) {
-                registrationMapper.incrementScheduleLeftSource(scheduleRecordId);
+            // 只有“已挂号”或“待支付”的状态才需要回补号源
+            if ("已挂号".equals(status) || "待支付".equals(status)) {
+                // 检查候补队列
+                String queueKey = WAITING_QUEUE_PREFIX + scheduleRecordId;
+                Object nextPatientObj = redisTemplate.opsForList().leftPop(queueKey);
+
+                if (nextPatientObj != null) {
+                    // 有候补患者，直接转正
+                    WaitingDto waitingDto = (WaitingDto) nextPatientObj;
+                    String nextPatientId = waitingDto.getPatientId();
+                    log.info("Promoting waiting patient {} for schedule {}", nextPatientId, scheduleRecordId);
+
+                    // 插入挂号记录 (待支付)
+                    int inserted = registrationMapper.insertRegistration(nextPatientId, scheduleRecordId, "待支付");
+                    if (inserted > 0) {
+                        // 清理 Redis 集合
+                        String setKey = WAITING_SET_PREFIX + scheduleRecordId;
+                        String patientSchedulesKey = WAITING_PATIENT_SCHEDULES_PREFIX + nextPatientId;
+                        redisTemplate.opsForSet().remove(setKey, nextPatientId);
+                        redisTemplate.opsForSet().remove(patientSchedulesKey, scheduleRecordId);
+                        // 号源不回补，因为直接给了候补者
+                    } else {
+                        log.error("Failed to promote waiting patient {}, releasing source", nextPatientId);
+                        registrationMapper.incrementScheduleLeftSource(scheduleRecordId);
+                    }
+                } else {
+                    // 无候补，回补号源
+                    registrationMapper.incrementScheduleLeftSource(scheduleRecordId);
+                }
             }
         }
         return registrationMapper.findRegistrationByKey(patientId, scheduleRecordId);

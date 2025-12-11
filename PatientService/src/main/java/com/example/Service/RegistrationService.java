@@ -16,7 +16,7 @@ public interface RegistrationService {
     Doctor getDoctorDetailsById(String doctorId);
     List<DepartmentWithSubDepartmentsDto> getAllDepartments();
 
-    RegistrationDto createRegistration(String patientId, String scheduleRecordId, boolean confirm);
+    RegistrationDto createRegistration(String patientId, String scheduleRecordId);
     RegistrationDto cancelRegistration(String patientId, String scheduleRecordId);
     RegistrationDto getRegistrationByKey(String patientId, String scheduleRecordId);
 

@@ -38,6 +38,7 @@ public class MessageController {
                     Map<String, String> item = new HashMap<>();
                     item.put("title", msg.getTitle());
                     item.put("content", msg.getContent());
+                    item.put("timestamp", msg.getCreatedTime());
                     unsentList.add(item);
                     
                     // 更新 Redis 中的状态为 sent
@@ -48,8 +49,8 @@ public class MessageController {
         }
 
         Map<String, Object> response = new HashMap<>();
-        response.put("flag", flag);
-        response.put("list", unsentList);
+        response.put("status", flag);
+        response.put("messages", unsentList);
         
         return Result.success(response);
     }

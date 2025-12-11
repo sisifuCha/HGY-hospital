@@ -47,7 +47,7 @@
         FROM waiting_queue w
         WHERE w.sch_id = #{scheduleRecordId}
           AND w.status = '排队中'
-          AND w.apply_time < (
+          AND w.apply_time &lt; (
               SELECT apply_time FROM waiting_queue WHERE patient_id = #{patientId} AND sch_id = #{scheduleRecordId} ORDER BY apply_time LIMIT 1
           )
     </select>
@@ -75,7 +75,7 @@
     </update>
 
     <update id="updateWaitingStatusToConfirmed">
-        UPDATE waiting_queue SET status = '已成功预约', registration_id = #{registrationId} WHERE id = #{waitingId}
+        UPDATE waiting_queue SET status = '待支付', registration_id = #{registrationId} WHERE id = #{waitingId}
     </update>
 
     <select id="countScheduleRecordById" resultType="int">

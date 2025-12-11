@@ -9,5 +9,4 @@ public class CreateRegistrationRequest {
     private String patientId;
     @NotBlank(message = "scheduleRecordId不能为空")
     private String scheduleRecordId;
-    private boolean confirm = true;
 }
