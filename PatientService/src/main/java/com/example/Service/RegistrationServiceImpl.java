@@ -61,25 +61,61 @@ public class RegistrationServiceImpl implements RegistrationService {
     @Override
     @Transactional
     public RegistrationDto createRegistration(String patientId, String scheduleRecordId, boolean confirm) {
+        // 检查是否已有挂号记录
         Integer dup = registrationMapper.countActiveRegistrationByKey(patientId, scheduleRecordId);
         if (dup != null && dup > 0) {
             throw new DuplicateRegistrationException();
         }
-        // 中文枚举：预约中 / 已预约 / 已就诊 / 已取消 / 已过期
-        String status = confirm ? "已预约" : "预约中";
-        if (confirm) {
+        
+        // 检查剩余号源
+        Integer leftSource = registrationMapper.findScheduleLeftSource(scheduleRecordId);
+        if (leftSource == null) {
+            throw new IllegalArgumentException("排班记录不存在");
+        }
+        
+        String status;
+        boolean shouldDecrementSource = false;
+        
+        // 逻辑：有号源时直接预约，无号源时根据confirm参数决定
+        if (leftSource > 0) {
+            // 有号源：扣减号源，状态为"已预约"
+            status = "已预约";
+            shouldDecrementSource = true;
+        } else {
+            // 无号源：根据confirm参数
+            if (confirm) {
+                // confirm=true但无号源，抛出异常
+                throw new SourceFullException();
+            } else {
+                // confirm=false，无号源
+                // 不按API文档创建"预约中"记录，而是直接返回提示，不进行数据库操作
+                RegistrationDto dto = new RegistrationDto();
+                dto.setPatientId(patientId);
+                dto.setScheduleRecordId(scheduleRecordId);
+                dto.setStatus("无号源"); // 反馈无号源状态
+                return dto;
+            }
+        }
+        
+        // 扣减号源（如果需要）
+        if (shouldDecrementSource) {
             int updated = registrationMapper.decrementScheduleLeftSource(scheduleRecordId);
             if (updated == 0) {
                 throw new SourceFullException();
             }
         }
+        
+        // 插入挂号记录
         int inserted = registrationMapper.insertRegistration(patientId, scheduleRecordId, status);
         if (inserted == 0) {
-            if (confirm) {
+            // 插入失败，回滚号源扣减
+            if (shouldDecrementSource) {
                 registrationMapper.incrementScheduleLeftSource(scheduleRecordId);
             }
             throw new CreateFailedException();
         }
+        
+        // 构造返回对象
         RegistrationDto dto = new RegistrationDto();
         dto.setPatientId(patientId);
         dto.setScheduleRecordId(scheduleRecordId);

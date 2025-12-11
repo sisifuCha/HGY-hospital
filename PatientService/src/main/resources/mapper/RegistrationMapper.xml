@@ -95,6 +95,13 @@
         WHERE id = #{scheduleRecordId}
     </update>
 
+    <!-- 查询剩余号源 -->
+    <select id="findScheduleLeftSource" resultType="java.lang.Integer">
+        SELECT left_source_count
+        FROM doc_schedule_record
+        WHERE id = #{scheduleRecordId}
+    </select>
+
     <!-- 插入挂号记录：status 使用中文 '已预约' 或传入的中文枚举 -->
     <insert id="insertRegistration">
         INSERT INTO register_record (patient_ID, sch_ID, register_time, status)
