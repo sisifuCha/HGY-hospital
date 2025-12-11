@@ -27,6 +27,7 @@
 | blacklist | 黑名单记录 | sensitive_operation |
 | alternate_record | 候补挂号记录 | patient, doc_schedule_record |
 | add_number_source_record | 加号申请记录 | patient, doc_schedule_record |
+| register_rule | 挂号规则 | - |
 
 ## 3. 各表详细结构
 
@@ -112,7 +113,7 @@
 | patient_id | varchar(20) | PRIMARY KEY, FOREIGN KEY REFERENCES patient(id) | 患者ID |
 | sch_id | varchar(20) | PRIMARY KEY, FOREIGN KEY REFERENCES doc_schedule_record(id) | 排班ID |
 | register_time | timestamp | NULL | 挂号时间 |
-| status | varchar(20) | NULL | 挂号状态 |
+| status | varchar(20) | NULL | 挂号状态：待支付/已挂号/就诊中/已就诊/已取消'|
 
 **索引**：
 - idx_register_patient: patient_id
