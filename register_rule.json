@@ -1,0 +1,31 @@
+{
+  "register_rule" : {
+    "extra_register_time" : [ {
+      "reason" : "额外挂号原因11111111",
+      "time" : "2022-12-30"
+    }, {
+      "reason" : "额外挂号原因11111111",
+      "time" : "2022-12-30"
+    } ],
+    "release_time" : "号源发布时间，HH:MM:SS格式"
+  },
+  "refund_fee_rule" : {
+    "gradients" : [ {
+      "name" : "全额退款",
+      "time_condition" : "退号时间距离就诊时间24小时及以上",
+      "fee_ratio" : 0
+    }, {
+      "name" : "半额退款",
+      "time_condition" : "退号时间距离就诊时间12小时及以上24小时以下",
+      "fee_ratio" : 0.5
+    }, {
+      "name" : "20%退款",
+      "time_condition" : "退号时间距离就诊时间2小时及以上12小时以下",
+      "fee_ratio" : 0.2
+    }, {
+      "name" : "不予退款",
+      "time_condition" : "退号时间距离就诊时间2小时以下",
+      "fee_ratio" : 1
+    } ]
+  }
+}

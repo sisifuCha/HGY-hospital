@@ -11,6 +11,17 @@
         <result column="left_source_count" property="available_slots"/>
         <result column="status" property="status"/>
     </resultMap>
+    <resultMap id="AdjustItemDTOMap" type="com.example.pojo.dto.AdjustItemDTO">
+        <result column="ori_sch_id" property="id"/>
+        <result column="doc_id" property="docId"/>
+        <result column="name" property="docName"/>
+        <result column="ori_sch_id" property="oriScheId"/>
+        <result column="target_sche_id" property="targetScheId"/>
+        <result column="reason_text" property="reason"/>
+        <result column="status" property="status"/>
+        <result column="target_date" property="targetDate"/>
+        <result column="type" property="type"/>
+    </resultMap>
     <resultMap id="FinalScheduleVOMap" type="com.example.pojo.vo.FinalScheduleVO">
         <result column="doc_name" property="doc_name"/>
         <result column="left_source_count" property="left_source_count"/>
