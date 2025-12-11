@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.Mapper.CsvMapper">
+<!-- 不同表信息获取 -->
+    <select id="getDoctorInfo" resultType="java.util.Map">
+        SELECT
+            d.id,
+            u.name,
+            u.sex,
+            u.phone_num,
+            u.email,
+            d.doc_title_id,
+            d.depart_id,
+            d.status
+        FROM doctor d
+        JOIN "user" u ON d.id = u.id
+    </select>
+
+    <select id="getPatientInfo" resultType="java.util.Map">
+        SELECT
+            p.id,
+            u.name,
+            u.sex AS gender,
+            p.birth_date,
+            u.phone_num AS phone,
+            p.address
+        FROM patient p
+        JOIN "user" u ON p.id = u.id
+    </select>
+
+    <select id="getRegistrationRecord" resultType="java.util.Map">
+        SELECT
+            rr.patient_ID,
+            u.name AS patient_name,
+            rr.sch_ID,
+            rr.register_time,
+            rr.status
+        FROM register_record rr
+        JOIN "user" u ON rr.patient_ID = u.id
+        <where>
+            <if test="patientId != null and patientId != ''">
+                AND rr.patient_ID = #{patientId}
+            </if>
+            <if test="begin != null and begin != ''">
+                AND rr.register_time &gt;= to_timestamp(#{begin}, 'YYYY-MM-DD')
+            </if>
+            <if test="end != null and end != ''">
+                AND rr.register_time &lt;= to_timestamp(#{end}, 'YYYY-MM-DD')
+            </if>
+        </where>
+    </select>
+
+    <select id="getScheduleRecord" resultType="java.util.Map">
+        SELECT
+            dsr.id,
+            dsr.doc_id,
+            u.name AS doc_name,
+            dsr.schedule_date,
+            CASE dsr.template_id
+                WHEN 'TIME0001' THEN '上午 08:00-12:30'
+                WHEN 'TIME0002' THEN '下午 13:30-18:00'
+                ELSE dsr.template_id
+            END AS time_period,
+            dsr.left_source_count,
+            dsr.status
+        FROM doc_schedule_record dsr
+        JOIN doctor d ON dsr.doc_id = d.id
+        JOIN "user" u ON d.id = u.id
+        <where>
+            <if test="doctorId != null and doctorId != ''">
+                AND dsr.doc_id = #{doctorId}
+            </if>
+            <if test="begin != null and begin != ''">
+                AND dsr.schedule_date &gt;= to_date(#{begin}, 'YYYY-MM-DD')
+            </if>
+            <if test="end != null and end != ''">
+                AND dsr.schedule_date &lt;= to_date(#{end}, 'YYYY-MM-DD')
+            </if>
+        </where>
+    </select>
+
+</mapper>
