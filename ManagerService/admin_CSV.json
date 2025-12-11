@@ -1,0 +1,111 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "默认模块",
+    "description": "医院患者消息服务 API 文档",
+    "version": "1.0.0"
+  },
+  "tags": [
+    {
+      "name": "管理端"
+    },
+    {
+      "name": "管理端/数据中台"
+    }
+  ],
+  "paths": {
+    "/admin/getCSV": {
+      "get": {
+        "summary": "报表导出",
+        "deprecated": false,
+        "description": "医生信息表，患者信息表，患者挂号记录表（筛选器是患者id和时间），医生排班表（筛选器是医生id和时间）",
+        "tags": [
+          "管理端/数据中台"
+        ],
+        "parameters": [
+          {
+            "name": "type",
+            "in": "query",
+            "description": "DOC,PAT,REG,SCH分别对应医生信息表，患者信息表，挂号记录表和医生排班表",
+            "required": false,
+            "example": "DOC",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "query",
+            "description": "筛选器-人，这个参数是非必须的，即type为REG,SCH时候才启用",
+            "required": false,
+            "example": "DOC0007",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "begin",
+            "in": "query",
+            "description": "筛选器-起始时间，这个参数是非必须的，即type为REG,SCH时候才启用，时间格式为YYYY-MM-DD，下同",
+            "required": false,
+            "example": "2025-12-1",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "end",
+            "in": "query",
+            "description": "筛选器-起始时间，这个参数是非必须的，即type为REG,SCH时候才启用",
+            "required": false,
+            "example": "2025-12-3",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "$ref": "#/components/schemas/res"
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "res": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "integer"
+          },
+          "msg": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object",
+            "properties": {}
+          }
+        },
+        "required": [
+          "code",
+          "msg"
+        ]
+      }
+    },
+    "responses": {},
+    "securitySchemes": {}
+  },
+  "servers": [],
+  "security": []
+}
