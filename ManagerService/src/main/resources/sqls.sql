@@ -252,7 +252,7 @@ CREATE TABLE pay_record (
    ori_amount           NUMERIC(10,2)        NULL,
    ask_pay_amount       NUMERIC(10,2)        NULL,
    patient_ID           VARCHAR(20)          NULL,
-   doc_ID               VARCHAR(20)          NULL,
+   sch_ID               VARCHAR(20)          NULL,
    CONSTRAINT PK_PAY_RECORD PRIMARY KEY (id),
    CONSTRAINT CHK_amounts CHECK (ori_amount >= 0 AND ask_pay_amount >= 0)
 );

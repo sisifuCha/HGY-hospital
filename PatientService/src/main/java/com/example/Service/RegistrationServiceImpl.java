@@ -6,6 +6,7 @@ import com.example.conmon.exception.CreateFailedException;
 import com.example.conmon.exception.DuplicateRegistrationException;
 import com.example.pojo.dto.DepartmentWithSubDepartmentsDto;
 import com.example.pojo.dto.DoctorWithSchedulesDto;
+import com.example.pojo.dto.PaymentDto;
 import com.example.pojo.dto.RegistrationDto;
 import com.example.pojo.dto.RegistrationQueryDto;
 import com.example.pojo.dto.WaitingDto;
@@ -40,6 +41,9 @@ public class RegistrationServiceImpl implements RegistrationService {
 
     @Autowired
     private RedisTemplate<String, Object> redisTemplate;
+    
+    @Autowired
+    private PaymentService paymentService;
 
     @Override
     public List<DoctorWithSchedulesDto> getDoctorsWithSchedulesByDepartment(String departmentId, LocalDate date) {
@@ -100,13 +104,18 @@ public class RegistrationServiceImpl implements RegistrationService {
         // 插入挂号记录
         int inserted = registrationMapper.insertRegistration(patientId, scheduleRecordId, "待支付");
         if (inserted == 0) {
-            // 插入失败，回滚号源扣减
+            // 插入失败,回滚号源扣减
             registrationMapper.incrementScheduleLeftSource(scheduleRecordId);
             throw new CreateFailedException();
         }
         
+        // 挂号成功后自动创建支付订单
+        PaymentDto paymentDto = paymentService.createPayment(patientId, scheduleRecordId);
+        
         // 构造返回对象
         dto.setStatus(true);
+        dto.setPaymentId(paymentDto.getPaymentId());
+        dto.setAmount(paymentDto.getAskPayAmount());
         dto.setRegisterTime(java.time.ZonedDateTime.now().format(java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME));
         return dto;
     }
@@ -152,6 +161,14 @@ public class RegistrationServiceImpl implements RegistrationService {
                     // 插入挂号记录 (待支付)
                     int inserted = registrationMapper.insertRegistration(nextPatientId, scheduleRecordId, "待支付");
                     if (inserted > 0) {
+                        // 候补转正成功后，自动创建订单
+                        try {
+                            paymentService.createPayment(nextPatientId, scheduleRecordId);
+                            log.info("Payment order created for promoted patient {}", nextPatientId);
+                        } catch (Exception e) {
+                            log.error("Failed to create payment for promoted patient {}: {}", nextPatientId, e.getMessage());
+                        }
+                        
                         // 清理 Redis 集合
                         String setKey = WAITING_SET_PREFIX + scheduleRecordId;
                         String patientSchedulesKey = WAITING_PATIENT_SCHEDULES_PREFIX + nextPatientId;

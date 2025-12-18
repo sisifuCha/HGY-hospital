@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.example.Mapper.PaymentMapper">
+
+    <!-- 根据患者ID查询报销类型信息 -->
+    <select id="getReimburseTypeByPatient" resultType="com.example.pojo.entity.ReimburseType">
+        SELECT rt.id, rt.type, rt.percent
+        FROM patient p
+        JOIN reimburse_type rt ON p.reimburse_id = rt.id
+        WHERE p.id = #{patientId}
+    </select>
+
+    <!-- 根据排班记录查询挂号费（医生职称对应的费用） -->
+    <select id="getRegistrationFeeBySchedule" resultType="java.math.BigDecimal">
+        SELECT tns.ori_cost
+        FROM doc_schedule_record dsr
+        JOIN doctor d ON dsr.doc_id = d.id
+        JOIN title_number_source tns ON d.doc_title_id = tns.id
+        WHERE dsr.id = #{scheduleRecordId}
+    </select>
+
+    <!-- 根据排班记录查询医生ID -->
+    <select id="getDoctorIdBySchedule" resultType="string">
+        SELECT doc_id
+        FROM doc_schedule_record
+        WHERE id = #{scheduleRecordId}
+    </select>
+
+    <!-- 插入支付记录 -->
+    <insert id="insertPayment">
+        INSERT INTO pay_record (id, pay_time, pay_status, ori_amount, ask_pay_amount, patient_id, doc_id, sch_id)
+        VALUES (#{payment.id}, #{payment.payTime}, #{payment.payStatus}, #{payment.oriAmount}, 
+                #{payment.askPayAmount}, #{payment.patientId}, #{payment.docId}, #{payment.schId})
+    </insert>
+
+    <!-- 查询患者的所有支付记录 -->
+    <select id="findPaymentsByPatient" resultType="com.example.pojo.dto.PaymentDto">
+        SELECT
+            pr.id AS "paymentId",
+            pr.patient_id AS "patientId",
+            pr.sch_id AS "scheduleRecordId",
+            pr.doc_id AS "doctorId",
+            u.name AS "doctorName",
+            d.name AS "departmentName",
+            pr.pay_time AS "payTime",
+            pr.pay_status AS "payStatus",
+            pr.ori_amount AS "oriAmount",
+            pr.ask_pay_amount AS "askPayAmount",
+            rt.percent AS "reimbursePercent",
+            rt.type AS "reimburseType"
+        FROM pay_record pr
+        LEFT JOIN doctor doc ON pr.doc_id = doc.id
+        LEFT JOIN "user" u ON doc.id = u.id
+        LEFT JOIN department d ON doc.depart_id = d.id
+        LEFT JOIN patient p ON pr.patient_id = p.id
+        LEFT JOIN reimburse_type rt ON p.reimburse_id = rt.id
+        WHERE pr.patient_id = #{patientId}
+        ORDER BY pr.pay_time DESC
+    </select>
+
+    <!-- 根据ID查询支付记录详情 -->
+    <select id="findPaymentById" resultType="com.example.pojo.dto.PaymentDto">
+        SELECT
+            pr.id AS "paymentId",
+            pr.patient_id AS "patientId",
+            pr.sch_id AS "scheduleRecordId",
+            pr.doc_id AS "doctorId",
+            u.name AS "doctorName",
+            d.name AS "departmentName",
+            pr.pay_time AS "payTime",
+            pr.pay_status AS "payStatus",
+            pr.ori_amount AS "oriAmount",
+            pr.ask_pay_amount AS "askPayAmount",
+            rt.percent AS "reimbursePercent",
+            rt.type AS "reimburseType"
+        FROM pay_record pr
+        LEFT JOIN doctor doc ON pr.doc_id = doc.id
+        LEFT JOIN "user" u ON doc.id = u.id
+        LEFT JOIN department d ON doc.depart_id = d.id
+        LEFT JOIN patient p ON pr.patient_id = p.id
+        LEFT JOIN reimburse_type rt ON p.reimburse_id = rt.id
+        WHERE pr.id = #{paymentId}
+    </select>
+
+    <!-- 更新支付状态 -->
+    <update id="updatePaymentStatus">
+        UPDATE pay_record
+        SET pay_status = #{status},
+            pay_time = CASE WHEN #{status} = '已支付' THEN NOW() ELSE pay_time END
+        WHERE id = #{paymentId}
+    </update>
+
+    <!-- 查询医保账户 -->
+    <select id="getMedicalInsurance" resultType="com.example.pojo.entity.MedicalInsurance">
+        SELECT id, overage
+        FROM medical_insurance
+        WHERE id = #{medicalInsuranceId}
+    </select>
+
+    <!-- 扣减医保余额 -->
+    <update id="deductMedicalInsurance">
+        UPDATE medical_insurance
+        SET overage = overage - #{amount}
+        WHERE id = #{medicalInsuranceId}
+          AND overage >= #{amount}
+    </update>
+
+    <!-- 根据患者ID和排班ID查询支付记录 -->
+    <select id="findPaymentByPatientAndSchedule" resultType="com.example.pojo.entity.PayRecord">
+        SELECT id, pay_time AS "payTime", pay_status AS "payStatus", 
+               ori_amount AS "oriAmount", ask_pay_amount AS "askPayAmount",
+               patient_id AS "patientId", doc_id AS "docId", sch_id AS "schId"
+        FROM pay_record
+        WHERE patient_id = #{patientId} AND sch_id = #{scheduleRecordId}
+    </select>
+
+    <!-- 查询患者医保ID -->
+    <select id="getPatientMedicalInsuranceId" resultType="string">
+        SELECT medical_insuranceid
+        FROM patient
+        WHERE id = #{patientId}
+    </select>
+
+    <!-- 根据支付记录ID查询患者ID和排班ID -->
+    <select id="findPaymentInfoById" resultType="com.example.pojo.entity.PayRecord">
+        SELECT id, patient_id AS "patientId", sch_id AS "schId", pay_status AS "payStatus"
+        FROM pay_record
+        WHERE id = #{paymentId}
+    </select>
+
+</mapper>

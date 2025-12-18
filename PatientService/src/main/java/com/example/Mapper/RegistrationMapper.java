@@ -21,6 +21,7 @@ public interface RegistrationMapper {
     int insertRegistration(@Param("patientId") String patientId, @Param("scheduleRecordId") String scheduleRecordId, @Param("status") String status);
     String getRegistrationStatusByKey(@Param("patientId") String patientId, @Param("scheduleRecordId") String scheduleRecordId);
     int updateRegistrationStatusToCanceled(@Param("patientId") String patientId, @Param("scheduleRecordId") String scheduleRecordId);
+    int updateRegistrationStatusToConfirmed(@Param("patientId") String patientId, @Param("scheduleRecordId") String scheduleRecordId);
     RegistrationDto findRegistrationByKey(@Param("patientId") String patientId, @Param("scheduleRecordId") String scheduleRecordId);
 
     List<RegistrationVo> findRegistrationsByQuery(@Param("query") RegistrationQueryDto queryDto, @Param("offset") int offset, @Param("limit") int limit);
