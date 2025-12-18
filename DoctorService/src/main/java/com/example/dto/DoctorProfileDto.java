@@ -6,6 +6,7 @@ public class DoctorProfileDto {
     private String department;
     private String clinicId;
     private String title;
+    private String description;
 
     public String getDoctorId() {
         return doctorId;
@@ -45,5 +46,13 @@ public class DoctorProfileDto {
 
     public void setTitle(String title) {
         this.title = title;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
     }
 }
