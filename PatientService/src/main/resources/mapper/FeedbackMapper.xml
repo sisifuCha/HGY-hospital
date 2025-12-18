@@ -1,0 +1,12 @@
+<mapper namespace="com.example.Mapper.FeedbackMapper">
+
+    <insert id="insertFeedback">
+        INSERT INTO registration_feedback (registration_id, score, tags, comment, created_time)
+        VALUES (#{registrationId}, #{request.score}, #{request.tags}, #{request.comment}, NOW())
+    </insert>
+
+    <select id="fetchFeedback" resultType="com.example.dto.FeedbackResponse">
+        SELECT * FROM registration_feedback WHERE registration_id = #{registrationId}
+    </select>
+
+</mapper>

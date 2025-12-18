@@ -1,0 +1,31 @@
+### 智能导诊 - 获取建议
+POST http://localhost:8080/api/triage/suggestions
+Content-Type: application/json
+
+{
+  "patientId": "PAT0001",
+  "symptoms": ["胸闷", "心悸"],
+  "durationDays": 3,
+  "temperature": 37.5,
+  "allergies": ["青霉素"],
+  "history": ["高血压"],
+  "attachments": ["base64-自测心率图"],
+  "mode": "hybrid"
+}
+
+### 智能导诊 - 查询历史记录
+GET http://localhost:8080/api/triage/history?patientId=PAT0001
+
+### 就诊后评价 - 提交评价
+POST http://localhost:8080/api/registrations/REG000123/feedback
+Content-Type: application/json
+
+{
+  "patientId": "PAT0001",
+  "score": 5,
+  "tags": ["医生专业", "环境舒适"],
+  "comment": "医生讲解很耐心"
+}
+
+### 就诊后评价 - 查看评价
+GET http://localhost:8080/api/registrations/REG000123/feedback
