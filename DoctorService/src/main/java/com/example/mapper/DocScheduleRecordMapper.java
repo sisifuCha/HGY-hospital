@@ -53,10 +53,12 @@ public interface DocScheduleRecordMapper {
         "    WHERE dsr2.\"doc_id\" = #{docId}",
         "    LIMIT 1",
         ")",
+        "  AND dsr.\"doc_id\" != #{docId}",
         "  AND dsr.schedule_date >= #{fromDate}",
+        "  AND dsr.schedule_date <= #{toDate}",
         "ORDER BY dsr.schedule_date, st.start_time NULLS LAST, doc_user.\"name\""
     })
-    List<DepartmentShiftRow> selectDepartmentShiftRows(@Param("docId") String docId, @Param("fromDate") LocalDate fromDate);
+    List<DepartmentShiftRow> selectDepartmentShiftRows(@Param("docId") String docId, @Param("fromDate") LocalDate fromDate, @Param("toDate") LocalDate toDate);
 
     @Select({
         "SELECT",
@@ -69,9 +71,10 @@ public interface DocScheduleRecordMapper {
         "LEFT JOIN \"schedule_template\" st ON dsr.template_id = st.id",
         "WHERE dsr.\"doc_id\" = #{docId}",
         "  AND dsr.schedule_date >= #{fromDate}",
+        "  AND dsr.schedule_date <= #{toDate}",
         "ORDER BY dsr.schedule_date, st.start_time NULLS LAST"
     })
-    List<SelfShiftRow> selectSelfShiftRows(@Param("docId") String docId, @Param("fromDate") LocalDate fromDate);
+    List<SelfShiftRow> selectSelfShiftRows(@Param("docId") String docId, @Param("fromDate") LocalDate fromDate, @Param("toDate") LocalDate toDate);
 
     @Select({
         "SELECT dsr.*",

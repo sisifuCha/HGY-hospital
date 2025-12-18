@@ -234,7 +234,9 @@ public class DoctorServiceImpl implements DoctorService {
 
     @Override
     public List<DepartmentShiftDto> getDepartmentShifts(String docId) {
-        List<DepartmentShiftRow> rows = scheduleRecordMapper.selectDepartmentShiftRows(docId, LocalDate.now());
+        LocalDate now = LocalDate.now();
+        LocalDate twoWeeksLater = now.plusWeeks(2);
+        List<DepartmentShiftRow> rows = scheduleRecordMapper.selectDepartmentShiftRows(docId, now, twoWeeksLater);
         return rows.stream()
                 .map(this::mapDepartmentShift)
                 .collect(Collectors.toList());
@@ -242,7 +244,9 @@ public class DoctorServiceImpl implements DoctorService {
 
     @Override
     public List<SelfShiftDto> getSelfShifts(String docId) {
-        List<SelfShiftRow> rows = scheduleRecordMapper.selectSelfShiftRows(docId, LocalDate.now());
+        LocalDate now = LocalDate.now();
+        LocalDate twoWeeksLater = now.plusWeeks(2);
+        List<SelfShiftRow> rows = scheduleRecordMapper.selectSelfShiftRows(docId, now, twoWeeksLater);
         return rows.stream()
                 .map(this::mapSelfShift)
                 .collect(Collectors.toList());
@@ -297,6 +301,7 @@ public class DoctorServiceImpl implements DoctorService {
         dto.setName(doctor.getName());
         dto.setDepartment(doctor.getDepartmentName());
         dto.setTitle(StringUtils.hasText(doctor.getTitleName()) ? doctor.getTitleName() : "");
+        dto.setDescription(doctor.getDetails());
         return dto;
     }
 
