@@ -127,5 +127,23 @@
         FROM pay_record
         WHERE id = #{paymentId}
     </select>
+    <select id="findPaymentInfoById" resultType="com.example.pojo.entity.PayRecord">
+        SELECT id, patient_id AS patientId, sch_id AS schId, doc_id AS docId,
+               pay_status AS payStatus, ask_pay_amount AS askPayAmount
+        FROM pay_record
+        WHERE id = #{paymentId}
+    </select>
+    
+    <select id="findMedicalInsuranceIdByPatient" resultType="java.lang.String">
+        SELECT medical_insuranceid 
+        FROM patient 
+        WHERE id = #{patientId}
+    </select>
+    
+    <update id="refundToMedicalInsurance">
+        UPDATE medical_insurance
+        SET overage = overage + #{amount}
+        WHERE id = #{medicalInsuranceId}
+    </update>
 
 </mapper>

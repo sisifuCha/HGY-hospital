@@ -1,7 +1,9 @@
 package com.example.Service;
 
 import com.example.Mapper.PaymentMapper;
+import com.example.Mapper.RefundMapper;
 import com.example.Mapper.RegistrationMapper;
+import com.example.Mapper.WaitingMapper;
 import com.example.conmon.exception.CreateFailedException;
 import com.example.pojo.dto.PaymentDto;
 import com.example.pojo.entity.MedicalInsurance;
@@ -14,6 +16,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -27,6 +31,15 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Autowired
     private RegistrationMapper registrationMapper;
+    
+    @Autowired
+    private RefundMapper refundMapper;
+    
+    @Autowired
+    private WaitingMapper waitingMapper;
+    
+    @Autowired
+    private MessageService messageService;
 
     @Override
     @Transactional
@@ -142,6 +155,19 @@ public class PaymentServiceImpl implements PaymentService {
         // 5. 扣减医保余额
         int deducted = paymentMapper.deductMedicalInsurance(medicalInsuranceId, askPayAmount);
         if (deducted == 0) {
+            // 发送余额不足消息
+            try {
+                MedicalInsurance insuranceInfo = paymentMapper.getMedicalInsurance(medicalInsuranceId);
+                String currentBalance = insuranceInfo != null && insuranceInfo.getOverage() != null 
+                    ? insuranceInfo.getOverage().toString() : "0";
+                messageService.sendInsufficientBalanceMessage(
+                    payment.getPatientId(), 
+                    currentBalance, 
+                    askPayAmount.toString()
+                );
+            } catch (Exception e) {
+                log.warn("Failed to send insufficient balance message: {}", e.getMessage());
+            }
             throw new IllegalArgumentException("扣减医保余额失败，余额可能不足");
         }
 
@@ -160,7 +186,22 @@ public class PaymentServiceImpl implements PaymentService {
         log.info("Payment completed: {}, deducted {} from medical insurance: {}", 
                  paymentId, askPayAmount, medicalInsuranceId);
 
-        return paymentMapper.findPaymentById(paymentId);
+        // 8. 发送支付成功消息
+        PaymentDto result = paymentMapper.findPaymentById(paymentId);
+        try {
+            String doctorName = result.getDoctorName() != null ? result.getDoctorName() : "医生";
+            String scheduleTime = result.getPayTime() != null ? result.getPayTime().toString() : "就诊时段";
+            messageService.sendPaymentSuccessMessage(
+                payment.getPatientId(), 
+                doctorName, 
+                scheduleTime, 
+                askPayAmount.toString()
+            );
+        } catch (Exception e) {
+            log.warn("Failed to send payment success message: {}", e.getMessage());
+        }
+
+        return result;
     }
 
     @Override
@@ -176,26 +217,101 @@ public class PaymentServiceImpl implements PaymentService {
             throw new IllegalArgumentException("订单已取消，无法重复取消");
         }
 
-        // 2. 更新支付状态为已取消
+        // 2. 检查订单是否过期（获取排班开始时间）
+        LocalDateTime scheduleStartTime = waitingMapper.getScheduleStartTime(payment.getSchId());
+        if (scheduleStartTime == null) {
+            throw new IllegalArgumentException("无法获取排班信息");
+        }
+        
+        LocalDateTime now = LocalDateTime.now();
+        if (now.isAfter(scheduleStartTime)) {
+            throw new IllegalArgumentException("订单已过期，无法退款");
+        }
+
+        // 3. 计算退款比例
+        BigDecimal refundRate = calculateRefundRate(now, scheduleStartTime);
+        log.info("Calculated refund rate: {} for payment: {}", refundRate, paymentId);
+
+        // 4. 如果已支付，退还医保余额（按比例）
+        if ("已支付".equals(payment.getPayStatus())) {
+            BigDecimal refundAmount = payment.getAskPayAmount()
+                    .multiply(refundRate)
+                    .setScale(2, RoundingMode.HALF_UP);
+            
+            if (refundAmount.compareTo(BigDecimal.ZERO) > 0) {
+                // 查询医保账户
+                String medicalInsuranceId = paymentMapper.findMedicalInsuranceIdByPatient(payment.getPatientId());
+                if (medicalInsuranceId != null) {
+                    int refunded = paymentMapper.refundToMedicalInsurance(medicalInsuranceId, refundAmount);
+                    if (refunded > 0) {
+                        log.info("Refunded {} to medical insurance: {}", refundAmount, medicalInsuranceId);
+                    }
+                }
+            }
+            
+            // 回补号源
+            registrationMapper.incrementScheduleLeftSource(payment.getSchId());
+            log.info("Source restored for cancelled paid order: {}", paymentId);
+        }
+
+        // 5. 更新支付状态为已取消
         int updated = paymentMapper.updatePaymentStatus(paymentId, "已取消");
         if (updated == 0) {
             throw new CreateFailedException();
         }
 
-        // 3. 更新挂号记录状态为已取消
+        // 6. 更新挂号记录状态为已取消
         int regUpdated = registrationMapper.updateRegistrationStatusToCanceled(payment.getPatientId(), payment.getSchId());
         if (regUpdated == 0) {
             log.warn("Failed to update registration status for cancelled payment: {}", paymentId);
         }
 
-        // 4. 如果订单已支付，需要回补号源
-        if ("已支付".equals(payment.getPayStatus())) {
-            registrationMapper.incrementScheduleLeftSource(payment.getSchId());
-            log.info("Source restored for cancelled paid order: {}", paymentId);
+        log.info("Order cancelled: {}, refund rate: {}", paymentId, refundRate);
+
+        // 7. 发送退款成功消息
+        PaymentDto result = paymentMapper.findPaymentById(paymentId);
+        if ("已支付".equals(payment.getPayStatus()) && refundRate.compareTo(BigDecimal.ZERO) > 0) {
+            try {
+                BigDecimal refundAmount = payment.getAskPayAmount()
+                        .multiply(refundRate)
+                        .setScale(2, RoundingMode.HALF_UP);
+                String doctorName = result.getDoctorName() != null ? result.getDoctorName() : "医生";
+                String scheduleTime = "就诊时段";
+                String refundRatePercent = refundRate.multiply(BigDecimal.valueOf(100)).toString();
+                
+                messageService.sendRefundSuccessMessage(
+                    payment.getPatientId(), 
+                    doctorName, 
+                    scheduleTime, 
+                    refundAmount.toString(), 
+                    refundRatePercent
+                );
+            } catch (Exception e) {
+                log.warn("Failed to send refund success message: {}", e.getMessage());
+            }
         }
 
-        log.info("Order cancelled: {}", paymentId);
-
-        return paymentMapper.findPaymentById(paymentId);
+        return result;
+    }
+    
+    /**
+     * 计算退款比例
+     * @param now 当前时间
+     * @param scheduleStartTime 排班开始时间
+     * @return 退款比例 (0-1)
+     */
+    private BigDecimal calculateRefundRate(LocalDateTime now, LocalDateTime scheduleStartTime) {
+        // 计算时间差（小时）
+        Duration duration = Duration.between(now, scheduleStartTime);
+        BigDecimal hoursBefore = BigDecimal.valueOf(duration.toMinutes())
+                .divide(BigDecimal.valueOf(60), 2, RoundingMode.HALF_UP);
+        
+        if (hoursBefore.compareTo(BigDecimal.ZERO) <= 0) {
+            return BigDecimal.ZERO; // 已过期
+        }
+        
+        // 从数据库查询退款比例
+        BigDecimal rate = refundMapper.getRefundRateByHours(hoursBefore);
+        return rate != null ? rate : BigDecimal.ZERO;
     }
 }
