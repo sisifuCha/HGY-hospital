@@ -185,18 +185,37 @@ CREATE TABLE register_record (
 COMMENT ON TABLE register_record IS '挂号记录表';
 COMMENT ON COLUMN register_record.status IS '挂号状态: 排队中/待支付/已挂号/就诊中/已就诊/已取消等';
 
-/*==============================================================*/
-/* Table: alternate_record (候补记录表)                          */
-/*==============================================================*/
+
+-- 2. 候补记录表（持久化存储）
+DROP TABLE IF EXISTS alternate_record;
 CREATE TABLE alternate_record (
-   patient_ID           VARCHAR(20)          NOT NULL,  -- 修正拼写错误
-   sch_ID               VARCHAR(20)          NOT NULL,
-   register_time        TIMESTAMP            NULL,
-   status               VARCHAR(20)          NULL,
-   CONSTRAINT PK_ALTERNATE_RECORD PRIMARY KEY (patient_ID, sch_ID)
+    patient_id VARCHAR(20) NOT NULL,
+    sch_id VARCHAR(20) NOT NULL,
+    status VARCHAR(20) NOT NULL DEFAULT '候补中',
+    waiting_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    promoted_time TIMESTAMP,
+    expired_time TIMESTAMP,
+    position INTEGER,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (patient_id, sch_id),
+    CONSTRAINT FK_WAITING_PATIENT FOREIGN KEY (patient_id) REFERENCES patient(id) ON DELETE CASCADE,
+    CONSTRAINT FK_WAITING_SCHEDULE FOREIGN KEY (sch_id) REFERENCES doc_schedule_record(id) ON DELETE CASCADE,
+    CONSTRAINT CHK_WAITING_STATUS CHECK (status IN ('候补中', '已转正', '已过期', '已取消'))
 );
 
-COMMENT ON TABLE alternate_record IS '候补挂号记录表';
+COMMENT ON TABLE alternate_record IS '候补记录表';
+COMMENT ON COLUMN alternate_record.status IS '候补状态: 候补中, 已转正, 已过期, 已取消';
+COMMENT ON COLUMN alternate_record.waiting_time IS '加入候补时间';
+COMMENT ON COLUMN alternate_record.promoted_time IS '转正时间';
+COMMENT ON COLUMN alternate_record.expired_time IS '过期时间';
+COMMENT ON COLUMN alternate_record.position IS '候补队列位置';
+
+-- 索引
+CREATE INDEX idx_waiting_patient ON alternate_record(patient_id);
+CREATE INDEX idx_waiting_schedule ON alternate_record(sch_id);
+CREATE INDEX idx_waiting_status ON alternate_record(status);
+CREATE INDEX idx_waiting_time ON alternate_record(waiting_time);
 
 /*==============================================================*/
 /* Table: add_number_source_record (加号申请记录表)              */
@@ -252,7 +271,7 @@ CREATE TABLE pay_record (
    ori_amount           NUMERIC(10,2)        NULL,
    ask_pay_amount       NUMERIC(10,2)        NULL,
    patient_ID           VARCHAR(20)          NULL,
-   doc_ID               VARCHAR(20)          NULL,
+   sch_ID               VARCHAR(20)          NULL,
    CONSTRAINT PK_PAY_RECORD PRIMARY KEY (id),
    CONSTRAINT CHK_amounts CHECK (ori_amount >= 0 AND ask_pay_amount >= 0)
 );

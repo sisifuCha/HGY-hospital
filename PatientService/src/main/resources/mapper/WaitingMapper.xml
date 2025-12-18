@@ -86,5 +86,121 @@
         SELECT left_source_count FROM doc_schedule_record WHERE id = #{scheduleRecordId}
     </select>
 
+    <!-- 新增规则相关SQL -->
+    <select id="getRuleValue" resultType="java.lang.Integer">
+        SELECT rule_value FROM waiting_rule WHERE rule_name = #{ruleName}
+    </select>
+
+    <select id="getWaitingCountBySchedule" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM alternate_record 
+        WHERE sch_id = #{schId} AND status = '候补中'
+    </select>
+
+    <select id="getPatientWaitingCount" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM alternate_record 
+        WHERE patient_id = #{patientId} AND status = '候补中'
+    </select>
+
+    <select id="checkDuplicateWaiting" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM alternate_record 
+        WHERE patient_id = #{patientId} AND sch_id = #{schId} AND status = '候补中'
+    </select>
+
+    <insert id="insertWaitingRecord">
+        INSERT INTO alternate_record (patient_id, sch_id, status, waiting_time, position)
+        VALUES (#{record.patientId}, #{record.schId}, #{record.status}, 
+                #{record.waitingTime}, #{record.position})
+    </insert>
+
+    <update id="updateWaitingRecordStatus">
+        UPDATE alternate_record 
+        SET status = #{status}, updated_at = #{updateTime}
+        <if test="status == '已转正'">
+            , promoted_time = #{updateTime}
+        </if>
+        <if test="status == '已过期'">
+            , expired_time = #{updateTime}
+        </if>
+        WHERE id = #{id}
+    </update>
+
+    <select id="getWaitingRecordsBySchedule" resultType="com.example.pojo.entity.WaitingRecord">
+        SELECT patient_id AS patientId, sch_id AS schId, status, 
+               waiting_time AS waitingTime, promoted_time AS promotedTime, 
+               expired_time AS expiredTime, position, created_at AS createdAt, 
+               updated_at AS updatedAt
+        FROM alternate_record
+        WHERE sch_id = #{schId}
+        <if test="status != null and status != ''">
+            AND status = #{status}
+        </if>
+        ORDER BY waiting_time ASC
+    </select>
+
+    <select id="getWaitingRecordsByPatient" resultType="com.example.pojo.entity.WaitingRecord">
+        SELECT patient_id AS patientId, sch_id AS schId, status, 
+               waiting_time AS waitingTime, promoted_time AS promotedTime, 
+               expired_time AS expiredTime, position, created_at AS createdAt, 
+               updated_at AS updatedAt
+        FROM alternate_record
+        WHERE patient_id = #{patientId}
+        ORDER BY waiting_time DESC
+    </select>
+
+    <update id="batchExpireWaitingRecords">
+        UPDATE alternate_record 
+        SET status = '已过期', expired_time = #{expiredTime}, updated_at = #{expiredTime}
+        WHERE sch_id = #{schId} AND status = '候补中'
+    </update>
+
+    <update id="cancelWaitingRecord">
+        UPDATE alternate_record 
+        SET status = '已取消', updated_at = CURRENT_TIMESTAMP
+        WHERE patient_id = #{patientId} AND sch_id = #{schId} AND status = '候补中'
+    </update>
+
+    <select id="getScheduleStartTime" resultType="java.time.LocalDateTime">
+        SELECT CONCAT(to_char(dsr.schedule_date, 'YYYY-MM-DD'), ' ', to_char(st.start_time, 'HH24:MI:SS'))::timestamp
+        FROM doc_schedule_record dsr
+        JOIN schedule_template st ON dsr.template_id = st.id
+        WHERE dsr.id = #{schId}
+    </select>
+
+    <select id="getNextWaitingPatient" resultType="com.example.pojo.entity.WaitingRecord">
+        SELECT id, patient_id AS patientId, sch_id AS schId, status, 
+               waiting_time AS waitingTime, position, created_at AS createdAt, 
+               updated_at AS updatedAt
+        FROM alternate_record
+        WHERE sch_id = #{schId} AND status = '候补中'
+        ORDER BY waiting_time ASC
+        LIMIT 1
+    </select>
+
+    <update id="promoteWaitingRecord">
+        UPDATE alternate_record 
+        SET status = '已转正', promoted_time = #{promotedTime}, updated_at = #{promotedTime}
+        WHERE patient_id = #{patientId} AND sch_id = #{schId} AND status = '候补中'
+    </update>
+
+    <select id="getWaitingPosition" resultType="java.lang.Integer">
+        SELECT COUNT(*) + 1
+        FROM alternate_record
+        WHERE sch_id = #{schId} 
+          AND status = '候补中'
+          AND waiting_time &lt; (
+              SELECT waiting_time FROM alternate_record 
+              WHERE patient_id = #{patientId} AND sch_id = #{schId}
+          )
+    </select>
+
+    <select id="getWaitingRecordByKey" resultType="com.example.pojo.entity.WaitingRecord">
+        SELECT id, patient_id AS patientId, sch_id AS schId, status, 
+               waiting_time AS waitingTime, promoted_time AS promotedTime, 
+               expired_time AS expiredTime, position, created_at AS createdAt, 
+               updated_at AS updatedAt
+        FROM alternate_record
+        WHERE patient_id = #{patientId} AND sch_id = #{schId}
+    </select>
+
 </mapper>
 

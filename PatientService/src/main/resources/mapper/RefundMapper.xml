@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.example.Mapper.RefundMapper">
+
+    <resultMap id="RefundRateMap" type="com.example.pojo.entity.RefundRate">
+        <id property="id" column="id"/>
+        <result property="hoursBefore" column="hours_before"/>
+        <result property="refundRate" column="refund_rate"/>
+        <result property="description" column="description"/>
+        <result property="sortOrder" column="sort_order"/>
+        <result property="createdAt" column="created_at"/>
+    </resultMap>
+
+    <select id="getAllRefundRates" resultMap="RefundRateMap">
+        SELECT id, hours_before, refund_rate, description, sort_order, created_at
+        FROM refund_rate
+        ORDER BY sort_order ASC
+    </select>
+
+    <select id="getRefundRateByHours" resultType="java.math.BigDecimal">
+        SELECT refund_rate
+        FROM refund_rate
+        WHERE hours_before &lt;= #{hoursBefore}
+        ORDER BY hours_before DESC
+        LIMIT 1
+    </select>
+
+</mapper>

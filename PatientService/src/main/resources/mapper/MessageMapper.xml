@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.example.Mapper.MessageMapper">
+
+    <insert id="insertMessage">
+        INSERT INTO message_record (
+            title, content, sender_type, receiver_type, receiver_id, 
+            status, read_status, over_time
+        ) VALUES (
+            #{message.title}, #{message.content}, #{message.senderType}, 
+            #{message.receiverType}, #{message.receiverId}, 
+            #{message.status}, #{message.readStatus}, #{message.overTime}
+        )
+    </insert>
+
+    <update id="updateMessageStatus">
+        UPDATE message_record 
+        SET status = #{status}, updated_time = CURRENT_TIMESTAMP
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateMessageReadStatus">
+        UPDATE message_record 
+        SET read_status = #{readStatus}, updated_time = CURRENT_TIMESTAMP
+        WHERE id = #{id}
+    </update>
+
+</mapper>

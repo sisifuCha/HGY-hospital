@@ -160,6 +160,12 @@
         WHERE patient_id = #{patientId} AND sch_id = #{scheduleRecordId}
     </update>
 
+    <update id="updateRegistrationStatusToConfirmed">
+        UPDATE register_record
+        SET status = '已挂号'
+        WHERE patient_id = #{patientId} AND sch_id = #{scheduleRecordId}
+    </update>
+
     <sql id="registrationQueryConditions">
         <where>
             rr.patient_id = #{query.patientId}

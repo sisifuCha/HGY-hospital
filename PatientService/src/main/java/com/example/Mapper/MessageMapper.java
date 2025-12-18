@@ -1,6 +1,7 @@
 package com.example.Mapper;
 
 import com.example.pojo.dto.MessageDto;
+import com.example.pojo.entity.MessageRecord;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
@@ -25,4 +26,14 @@ public interface MessageMapper {
     
     @Update("UPDATE message_record SET status = 'pushed_to_redis' WHERE id = #{id}")
     int markAsPushed(@Param("id") Long id);
+    
+    /**
+     * 插入消息记录
+     */
+    int insertMessage(@Param("message") MessageRecord message);
+    
+    /**
+     * 更新消息阅读状态
+     */
+    int updateMessageReadStatus(@Param("id") Integer id, @Param("readStatus") String readStatus);
 }
