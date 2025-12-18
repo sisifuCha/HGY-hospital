@@ -1,0 +1,12 @@
+<mapper namespace="com.example.Mapper.TriageMapper">
+
+    <select id="fetchHistory" resultType="com.example.dto.TriageResponse">
+        SELECT * FROM triage_record WHERE patient_id = #{patientId}
+    </select>
+
+    <insert id="generateSuggestions">
+        INSERT INTO triage_record (patient_id, symptoms, recommendations, suggested_actions, created_at)
+        VALUES (#{request.patientId}, #{request.symptoms}, #{request.recommendations}, #{request.suggestedActions}, NOW())
+    </insert>
+
+</mapper>
