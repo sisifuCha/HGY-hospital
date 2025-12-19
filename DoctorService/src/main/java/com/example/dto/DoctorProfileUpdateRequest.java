@@ -1,11 +1,19 @@
 package com.example.dto;
 
 public class DoctorProfileUpdateRequest {
+    private String doctorId;
     private String name;
-    private String email;
-    private String phone;
-    private String clinicId;
-    private String titleId;
+    private String department; // 可选：科室ID或名称
+    private String title;      // 可选：职称ID或名称
+    private String description; // 可选：医生描述
+
+    public String getDoctorId() {
+        return doctorId;
+    }
+
+    public void setDoctorId(String doctorId) {
+        this.doctorId = doctorId;
+    }
 
     public String getName() {
         return name;
@@ -15,35 +23,27 @@ public class DoctorProfileUpdateRequest {
         this.name = name;
     }
 
-    public String getEmail() {
-        return email;
+    public String getDepartment() {
+        return department;
     }
 
-    public void setEmail(String email) {
-        this.email = email;
+    public void setDepartment(String department) {
+        this.department = department;
     }
 
-    public String getPhone() {
-        return phone;
+    public String getTitle() {
+        return title;
     }
 
-    public void setPhone(String phone) {
-        this.phone = phone;
+    public void setTitle(String title) {
+        this.title = title;
     }
 
-    public String getClinicId() {
-        return clinicId;
+    public String getDescription() {
+        return description;
     }
 
-    public void setClinicId(String clinicId) {
-        this.clinicId = clinicId;
-    }
-
-    public String getTitleId() {
-        return titleId;
-    }
-
-    public void setTitleId(String titleId) {
-        this.titleId = titleId;
+    public void setDescription(String description) {
+        this.description = description;
     }
 }

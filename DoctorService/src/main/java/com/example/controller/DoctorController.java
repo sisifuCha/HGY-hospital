@@ -122,12 +122,16 @@ public class DoctorController {
         return toResponseEntity(result);
     }
 
-    @PutMapping("/{doctorId}/profile")
+    @PutMapping("/profile")
     public ResponseEntity<Map<String, Object>> updateDoctorProfile(
-            @PathVariable String doctorId,
             @RequestBody DoctorProfileUpdateRequest profileData) {
-        Result<Void> result = doctorService.updateDoctorProfile(doctorId, profileData);
-        return toResponseEntity(result);
+        Result<DoctorProfileDto> result = doctorService.updateDoctorProfile(profileData);
+        if (result.isSuccess() && result.getData() != null) {
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("doctor", result.getData());
+            return ResponseEntity.ok(Result.success(payload).toMap());
+        }
+        return toResponseEntity(Result.fail(result.getCode(), result.getMsg()));
     }
 
     private ResponseEntity<Map<String, Object>> toResponseEntity(Result<?> result) {

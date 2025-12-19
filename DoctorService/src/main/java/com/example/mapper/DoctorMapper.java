@@ -80,6 +80,25 @@ public interface DoctorMapper {
                                                  @Param("titleId") String titleId);
 
     /**
+     * 更新医生档案信息（包含描述字段）
+     */
+    @Update({
+            "<script>",
+            "UPDATE \"doctor\"",
+            "<set>",
+            "  <if test='clinicId != null'>\"clinic_id\" = #{clinicId},</if>",
+            "  <if test='titleId != null'>\"doc_title_id\" = #{titleId},</if>",
+            "  <if test='description != null'>\"details\" = #{description},</if>",
+            "</set>",
+            "WHERE \"id\" = #{doctorId}",
+            "</script>"
+    })
+    int updateDoctorProfileWithDescription(@Param("doctorId") String doctorId,
+                                          @Param("clinicId") String clinicId,
+                                          @Param("titleId") String titleId,
+                                          @Param("description") String description);
+
+    /**
      * 查询所有医生ID
      */
     @Select("SELECT \"id\" FROM \"doctor\"")

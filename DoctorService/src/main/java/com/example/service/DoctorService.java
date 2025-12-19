@@ -51,7 +51,7 @@ public interface DoctorService {
     Result<Void> updatePatientStatus(PatientStatusRequest request);
 
     // 修改医生个人信息
-    Result<Void> updateDoctorProfile(String doctorId, DoctorProfileUpdateRequest profileData);
+    Result<DoctorProfileDto> updateDoctorProfile(DoctorProfileUpdateRequest profileData);
 
     // 通知加号申请变更（供数据库监听器调用）
     void notifyAddNumberChange(String docId);

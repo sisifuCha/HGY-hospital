@@ -552,36 +552,51 @@ public class DoctorServiceImpl implements DoctorService {
 
     @Override
     @Transactional
-    public Result<Void> updateDoctorProfile(String doctorId, DoctorProfileUpdateRequest profileData) {
-        if (!StringUtils.hasText(doctorId)) {
-            return Result.fail(400, "医生id不能为空");
-        }
+    public Result<DoctorProfileDto> updateDoctorProfile(DoctorProfileUpdateRequest profileData) {
         if (profileData == null) {
             return Result.fail(400, "请求体不能为空");
         }
+        String doctorId = profileData.getDoctorId();
+        if (!StringUtils.hasText(doctorId)) {
+            return Result.fail(400, "医生id不能为空");
+        }
+        
         Doctor doctor = doctorMapper.getDoctorWithDetails(doctorId);
         if (doctor == null) {
             return Result.fail(404, "医生不存在");
         }
 
-        boolean hasUserFields = StringUtils.hasText(profileData.getName())
-                || StringUtils.hasText(profileData.getEmail())
-                || StringUtils.hasText(profileData.getPhone());
-        boolean hasDoctorFields = StringUtils.hasText(profileData.getClinicId())
-                || StringUtils.hasText(profileData.getTitleId());
+        boolean hasUserFields = StringUtils.hasText(profileData.getName());
+        boolean hasDescription = StringUtils.hasText(profileData.getDescription());
 
-        if (!hasUserFields && !hasDoctorFields) {
+        if (!hasUserFields && !hasDescription) {
             return Result.fail(400, "未提供任何可更新字段");
         }
 
+        // 只允许修改姓名和个人描述，科室和职称由管理员修改
         if (hasUserFields) {
-            doctorMapper.updateUserProfile(doctorId, profileData.getName(), profileData.getEmail(), profileData.getPhone());
+            doctorMapper.updateUserProfile(doctorId, profileData.getName(), null, null);
         }
-        if (hasDoctorFields) {
-            doctorMapper.updateDoctorProfile(doctorId, profileData.getClinicId(), profileData.getTitleId());
+        if (hasDescription) {
+            // 只更新 description，不修改 clinic_id 和 title_id
+            doctorMapper.updateDoctorProfileWithDescription(doctorId, null, null, profileData.getDescription());
         }
 
-        return Result.success(null, "医生信息已更新");
+        // 查询更新后的医生信息
+        Doctor updatedDoctor = doctorMapper.getDoctorWithDetails(doctorId);
+        if (updatedDoctor == null) {
+            return Result.fail(500, "更新成功但查询失败");
+        }
+
+        // 构建返回的 DTO
+        DoctorProfileDto updatedProfile = new DoctorProfileDto();
+        updatedProfile.setDoctorId(updatedDoctor.getId());
+        updatedProfile.setName(updatedDoctor.getName());
+        updatedProfile.setDepartment(updatedDoctor.getDepartmentName());
+        updatedProfile.setTitle(StringUtils.hasText(updatedDoctor.getTitleName()) ? updatedDoctor.getTitleName() : "");
+        updatedProfile.setDescription(updatedDoctor.getDetails());
+
+        return Result.success(updatedProfile, "医生信息已更新");
     }
 
     @Override
