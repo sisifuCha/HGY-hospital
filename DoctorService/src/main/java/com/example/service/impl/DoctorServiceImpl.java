@@ -414,17 +414,22 @@ public class DoctorServiceImpl implements DoctorService {
         }
 
         // 6. 插入变更记录
-        int affected = scheduleChangeRecordMapper.insertChangeRequest(
-            request.getDocId(),
-            originalSchedule.getId(),
-            targetSchId,
-            request.getReason(),
-            "待审核",
-            targetDate,
-            templateId,
-            request.getChangeType(),
-            leaveTimeLength
-        );
+        int affected;
+        try {
+            affected = scheduleChangeRecordMapper.insertChangeRequest(
+                request.getDocId(),
+                originalSchedule.getId(),
+                targetSchId,
+                request.getReason(),
+                "待审核",
+                targetDate,
+                templateId,
+                request.getChangeType(),
+                leaveTimeLength
+            );
+        } catch (org.springframework.dao.DuplicateKeyException e) {
+            return Result.fail(409, "该班次已有变更申请记录，暂不支持对同一班次多次提交申请");
+        }
 
         if (affected == 0) {
             return Result.fail(409, "插入变更记录失败，可能存在并发冲突");
