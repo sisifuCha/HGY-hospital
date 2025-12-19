@@ -46,6 +46,9 @@ public class RegistrationServiceImpl implements RegistrationService {
     @Autowired
     private MessageService messageService;
 
+    @Autowired
+    private SensitiveOperationService sensitiveOperationService;
+
     @Override
     public List<DoctorWithSchedulesDto> getDoctorsWithSchedulesByDepartment(String departmentId, LocalDate date) {
         List<DoctorWithSchedulesDto> doctors = registrationMapper.findDoctorsWithSchedulesByDepartmentAndDate(departmentId, date);
@@ -118,6 +121,12 @@ public class RegistrationServiceImpl implements RegistrationService {
     @Override
     @Transactional
     public RegistrationDto createRegistration(String patientId, String scheduleRecordId) {
+        // 黑名单检查
+        SensitiveOperationService.BlacklistCheckResult blacklistCheck = sensitiveOperationService.checkBlacklist(patientId);
+        if (blacklistCheck.isInBlacklist()) {
+            throw new IllegalArgumentException("您已被加入黑名单，无法进行挂号操作。解除时间: " + blacklistCheck.getReleaseTimeFormatted());
+        }
+        
         RegistrationDto dto = new RegistrationDto();
         dto.setPatientId(patientId);
         dto.setScheduleRecordId(scheduleRecordId);
@@ -196,9 +205,16 @@ public class RegistrationServiceImpl implements RegistrationService {
     public RegistrationDto cancelRegistration(String patientId, String scheduleRecordId) {
         String status = registrationMapper.getRegistrationStatusByKey(patientId, scheduleRecordId);
         if (status == null || "已取消".equals(status) || "已就诊".equals(status)) {
-            // 挂号不存在，或已是终态，无法取消
+            // 挂号不存在,或已是终态,无法取消
             return null;
         }
+        
+        // 检查是否为敏感操作(就诊前3小时内退号)
+        boolean isSensitive = sensitiveOperationService.checkAndRecordSensitiveOperation(patientId, scheduleRecordId);
+        if (isSensitive) {
+            log.warn("患者{}在敏感时间窗口内退号,已记录敏感操作", patientId);
+        }
+        
         int updated = registrationMapper.updateRegistrationStatusToCanceled(patientId, scheduleRecordId);
         if (updated > 0) {
             // 只有"已挂号"或"待支付"的状态才需要回补号源

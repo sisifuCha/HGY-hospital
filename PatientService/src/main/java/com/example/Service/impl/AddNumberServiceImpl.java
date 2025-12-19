@@ -3,6 +3,7 @@ package com.example.Service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.example.Mapper.AddNumberSourceRecordMapper;
 import com.example.Service.AddNumberService;
+import com.example.Service.SensitiveOperationService;
 import com.example.pojo.dto.AddNumberRequest;
 import com.example.pojo.dto.AddNumberStatusDto;
 import com.example.pojo.entity.AddNumberSourceRecord;
@@ -22,9 +23,19 @@ public class AddNumberServiceImpl implements AddNumberService {
     @Autowired
     private AddNumberSourceRecordMapper addNumberSourceRecordMapper;
 
+    @Autowired
+    private SensitiveOperationService sensitiveOperationService;
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public AddNumberStatusDto submitAddNumberRequest(AddNumberRequest request) {
+        // 0. 黑名单检查
+        SensitiveOperationService.BlacklistCheckResult blacklistCheck = 
+            sensitiveOperationService.checkBlacklist(request.getPatientId());
+        if (blacklistCheck.isInBlacklist()) {
+            throw new IllegalArgumentException("您已被加入黑名单，无法进行加号操作。解除时间: " + blacklistCheck.getReleaseTimeFormatted());
+        }
+        
         // 1. 检查是否已存在该排班的加号申请
         QueryWrapper<AddNumberSourceRecord> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("patient_id", request.getPatientId())
