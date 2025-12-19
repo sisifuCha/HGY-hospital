@@ -1,7 +1,7 @@
 package com.example.Service;
 
-import com.example.pojo.dto.FeedbackRequest;
-import com.example.pojo.dto.FeedbackResponse;
+import com.example.dto.FeedbackRequest;
+import com.example.dto.FeedbackResponse;
 
 public interface FeedbackService {
     void submitFeedback(String registrationId, FeedbackRequest request);

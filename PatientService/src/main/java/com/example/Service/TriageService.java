@@ -1,7 +1,7 @@
 package com.example.Service;
 
-import com.example.pojo.dto.TriageRequest;
-import com.example.pojo.dto.TriageResponse;
+import com.example.dto.TriageRequest;
+import com.example.dto.TriageResponse;
 import java.util.List;
 
 public interface TriageService {

@@ -1,8 +1,8 @@
 package com.example.Service;
 
 import com.example.Mapper.FeedbackMapper;
-import com.example.pojo.dto.FeedbackRequest;
-import com.example.pojo.dto.FeedbackResponse;
+import com.example.dto.FeedbackRequest;
+import com.example.dto.FeedbackResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
