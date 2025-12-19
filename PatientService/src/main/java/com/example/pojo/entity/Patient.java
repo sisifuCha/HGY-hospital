@@ -31,4 +31,8 @@ public class Patient {
 
     // 关联的报销类型ID
     private String reimbId;
+
+    // 激活状态，默认false未激活
+    @TableField("status")
+    private Boolean status;
 }

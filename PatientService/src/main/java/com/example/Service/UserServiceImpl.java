@@ -108,6 +108,7 @@ public class UserServiceImpl implements UserService {
         newPatient.setPatientId(newPatId);
         newPatient.setBirthday(registerRequest.getBirthday());
         newPatient.setIdentificationId(registerRequest.getIdentificationId());
+        newPatient.setStatus(false); // 新注册用户默认未激活
         patientMapper.insert(newPatient);
 
 

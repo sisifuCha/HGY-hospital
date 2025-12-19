@@ -1,0 +1,109 @@
+### 账户激活功能 API 测试
+
+### 1. 发送激活验证码
+POST http://localhost:8082/user/activation/send-code
+Content-Type: application/json
+
+{
+  "identificationId": "110101199001010011",
+  "userName": "测试用户",
+  "email": "test@example.com"
+}
+
+### 2. 验证激活码（请替换为实际收到的验证码）
+POST http://localhost:8082/user/activation/verify
+Content-Type: application/json
+
+{
+  "identificationId": "110101199001010011",
+  "verificationCode": "123456"
+}
+
+### 3. 查询激活状态
+GET http://localhost:8082/user/activation/status?identificationId=110101199001010011
+
+### 测试场景
+
+### 场景1：正常激活流程
+# 1. 先注册用户（如果还没有）
+POST http://localhost:8082/user/register
+Content-Type: application/json
+
+{
+  "userAccount": "testuser@example.com",
+  "userPassword": "password123",
+  "userName": "测试用户",
+  "userGender": "男",
+  "userEmail": "test@example.com",
+  "userPhone": "13800138000",
+  "birthday": "1990-01-01",
+  "identificationId": "110101199001010011"
+}
+
+# 2. 发送验证码
+POST http://localhost:8082/user/activation/send-code
+Content-Type: application/json
+
+{
+  "identificationId": "110101199001010011",
+  "userName": "测试用户",
+  "email": "test@example.com"
+}
+
+# 3. 验证并激活
+POST http://localhost:8082/user/activation/verify
+Content-Type: application/json
+
+{
+  "identificationId": "110101199001010011",
+  "verificationCode": "从邮箱中获取的验证码"
+}
+
+### 场景2：验证码错误
+POST http://localhost:8082/user/activation/verify
+Content-Type: application/json
+
+{
+  "identificationId": "110101199001010011",
+  "verificationCode": "000000"
+}
+
+### 场景3：重复激活
+# 对已激活的账户再次发送验证码
+POST http://localhost:8082/user/activation/send-code
+Content-Type: application/json
+
+{
+  "identificationId": "110101199001010011",
+  "userName": "测试用户",
+  "email": "test@example.com"
+}
+
+### 场景4：身份证号不存在
+POST http://localhost:8082/user/activation/send-code
+Content-Type: application/json
+
+{
+  "identificationId": "999999999999999999",
+  "userName": "不存在的用户",
+  "email": "test@example.com"
+}
+
+### 场景5：邮箱格式错误
+POST http://localhost:8082/user/activation/send-code
+Content-Type: application/json
+
+{
+  "identificationId": "110101199001010011",
+  "userName": "测试用户",
+  "email": "invalid-email"
+}
+
+### 场景6：验证码格式错误
+POST http://localhost:8082/user/activation/verify
+Content-Type: application/json
+
+{
+  "identificationId": "110101199001010011",
+  "verificationCode": "12345"
+}
