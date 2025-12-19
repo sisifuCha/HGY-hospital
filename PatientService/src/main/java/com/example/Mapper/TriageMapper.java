@@ -1,7 +1,6 @@
 package com.example.Mapper;
 
-import com.example.pojo.dto.TriageRequest;
-import com.example.pojo.dto.TriageResponse;
+import com.example.dto.TriageRecordRow;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -9,6 +8,9 @@ import java.util.List;
 
 @Mapper
 public interface TriageMapper {
-    TriageResponse generateSuggestions(@Param("request") TriageRequest request);
-    List<TriageResponse> fetchHistory(@Param("patientId") String patientId);
+    int insertTriageRecord(@Param("record") TriageRecordRow record);
+
+    TriageRecordRow selectByTriageId(@Param("triageId") String triageId);
+
+    List<TriageRecordRow> fetchHistory(@Param("patientId") String patientId);
 }

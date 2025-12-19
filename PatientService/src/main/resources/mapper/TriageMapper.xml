@@ -1,14 +1,50 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.example.Mapper.TriageMapper">
 
-    <select id="fetchHistory" resultType="com.example.pojo.dto.TriageResponse">
-        SELECT * FROM triage_record WHERE patient_id = #{patientId}
+    <resultMap id="TriageRecordRowMap" type="com.example.dto.TriageRecordRow">
+        <id column="triage_id" property="triageId"/>
+        <result column="patient_id" property="patientId"/>
+        <result column="symptoms" property="symptoms"/>
+        <result column="recommendations" property="recommendations"/>
+        <result column="suggested_actions" property="suggestedActions"/>
+        <result column="mode" property="mode"/>
+        <result column="created_at" property="createdAt"/>
+    </resultMap>
+
+    <insert id="insertTriageRecord">
+        INSERT INTO triage_record (
+            triage_id,
+            patient_id,
+            symptoms,
+            recommendations,
+            suggested_actions,
+            mode,
+            created_at
+        ) VALUES (
+            #{record.triageId},
+            #{record.patientId},
+            CAST(#{record.symptoms} AS jsonb),
+            CAST(#{record.recommendations} AS jsonb),
+            CAST(#{record.suggestedActions} AS jsonb),
+            #{record.mode},
+            NOW()
+        )
+    </insert>
+
+    <select id="selectByTriageId" resultMap="TriageRecordRowMap">
+        SELECT triage_id, patient_id, symptoms, recommendations, suggested_actions, mode, created_at
+        FROM triage_record
+        WHERE triage_id = #{triageId}
     </select>
 
-    <insert id="generateSuggestions">
-        INSERT INTO triage_record (patient_id, symptoms, recommendations, suggested_actions, created_at)
-        VALUES (#{request.patientId}, #{request.symptoms}, #{request.recommendations}, #{request.suggestedActions}, NOW())
-    </insert>
+    <select id="fetchHistory" resultMap="TriageRecordRowMap">
+        SELECT triage_id, patient_id, symptoms, recommendations, suggested_actions, mode, created_at
+        FROM triage_record
+        WHERE patient_id = #{patientId}
+        ORDER BY created_at DESC
+    </select>
 
 </mapper>
