@@ -26,15 +26,21 @@ public class ScheduleIdGenerator {
     }
 
     public void initCounter() { // 改为实例方法
-        String maxId = scheduleMapper.getMaxId();
         //获取所有的ID
         List<String> IdList = scheduleMapper.getIdList();
         //获取所有ID的数字部分
         List<Integer> IdValueList = new ArrayList<>();
         for(String Id:IdList) {
-            String value = Id.substring(3);
-            int extractValue = Integer.parseInt(value);
-            IdValueList.add(extractValue);
+            if (Id != null && Id.length() > 3) {
+                try {
+                    String value = Id.substring(3);
+                    int extractValue = Integer.parseInt(value);
+                    IdValueList.add(extractValue);
+                } catch (NumberFormatException e) {
+                    // 跳过无法转换为数字的ID，如"SCH_NO_SOURCE"
+                    continue;
+                }
+            }
         }
         Integer max = 0;
         for (Integer value:IdValueList) {
