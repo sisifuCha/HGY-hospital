@@ -12,5 +12,6 @@ public class PatientProfileVo {
     private String address;
     private String medicalHistory;
     private String allergies;
+    private Boolean status; // 激活状态
 }
 

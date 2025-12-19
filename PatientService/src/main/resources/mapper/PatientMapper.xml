@@ -27,7 +27,8 @@
             phone,
             address,
             medical_history AS "medicalHistory",
-            allergies
+            allergies,
+            status
         FROM patient
         WHERE id = #{patientId}
     </select>
