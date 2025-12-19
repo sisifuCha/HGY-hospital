@@ -39,14 +39,33 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(IllegalArgumentException.class)
     public Result<Void> handleIllegalArg(IllegalArgumentException ex) {
-        String raw = ex.getMessage() != null ? ex.getMessage() : "";
-        if ("记录不存在".equals(raw)) {
-            return Result.fail(404, "未找到");
+        String msg = ex.getMessage() != null ? ex.getMessage() : "非法参数";
+        
+        // 记录不存在相关
+        if (msg.contains("记录不存在") || msg.contains("排班记录不存在")) {
+            return Result.fail(404, msg);
         }
-        if ("当前状态不可取消".equals(raw)) {
-            return Result.fail(409, "状态不允许操作");
+        
+        // 状态相关
+        if (msg.contains("当前状态不可取消")) {
+            return Result.fail(409, msg);
         }
-        return Result.fail(400, "非法参数");
+        
+        // 候补规则相关 - 返回具体错误信息
+        if (msg.contains("候补人数已达上限") || msg.contains("该排班候补人数已达上限")) {
+            return Result.fail(409, msg);  // 排班候补已满（MAX_WAITING_COUNT=100）
+        }
+        
+        if (msg.contains("候补数量已达上限") || msg.contains("您的候补数量已达上限")) {
+            return Result.fail(409, msg);  // 患者候补已满（MAX_PATIENT_WAITING=5）
+        }
+        
+        if (msg.contains("已停止候补") || msg.contains("该排班已停止候补")) {
+            return Result.fail(409, msg);  // 就诊前3小时停止候补（STOP_HOURS_BEFORE=3）
+        }
+        
+        // 其他参数错误
+        return Result.fail(400, msg);
     }
 
     @ExceptionHandler(Exception.class)
