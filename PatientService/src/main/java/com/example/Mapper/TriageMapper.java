@@ -1,7 +1,7 @@
 package com.example.Mapper;
 
-import com.example.dto.TriageRequest;
-import com.example.dto.TriageResponse;
+import com.example.pojo.dto.TriageRequest;
+import com.example.pojo.dto.TriageResponse;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 

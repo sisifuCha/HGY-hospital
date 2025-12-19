@@ -1,8 +1,8 @@
 package com.example.Controller;
 
 import com.example.Service.FeedbackService;
-import com.example.dto.FeedbackRequest;
-import com.example.dto.FeedbackResponse;
+import com.example.pojo.dto.FeedbackRequest;
+import com.example.pojo.dto.FeedbackResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

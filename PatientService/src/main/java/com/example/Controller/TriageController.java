@@ -1,8 +1,8 @@
 package com.example.Controller;
 
 import com.example.Service.TriageService;
-import com.example.dto.TriageRequest;
-import com.example.dto.TriageResponse;
+import com.example.pojo.dto.TriageRequest;
+import com.example.pojo.dto.TriageResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

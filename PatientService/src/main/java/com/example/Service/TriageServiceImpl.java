@@ -1,8 +1,8 @@
 package com.example.Service;
 
 import com.example.Mapper.TriageMapper;
-import com.example.dto.TriageRequest;
-import com.example.dto.TriageResponse;
+import com.example.pojo.dto.TriageRequest;
+import com.example.pojo.dto.TriageResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

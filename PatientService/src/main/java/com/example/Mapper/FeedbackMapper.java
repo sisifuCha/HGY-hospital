@@ -1,7 +1,7 @@
 package com.example.Mapper;
 
-import com.example.dto.FeedbackRequest;
-import com.example.dto.FeedbackResponse;
+import com.example.pojo.dto.FeedbackRequest;
+import com.example.pojo.dto.FeedbackResponse;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
