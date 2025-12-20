@@ -7,9 +7,7 @@
     <update id="updateProfile">
         UPDATE patient
         <set>
-            <if test="profile.name != null">name = #{profile.name},</if>
-            <if test="profile.gender != null">gender = #{profile.gender},</if>
-            <if test="profile.birthDate != null">birth_date = #{profile.birthDate}::date,</if>
+            <if test="profile.birthDate != null">birth = #{profile.birthDate}::date,</if>
             <if test="profile.phone != null">phone = #{profile.phone},</if>
             <if test="profile.address != null">address = #{profile.address},</if>
             <if test="profile.medicalHistory != null">medical_history = #{profile.medicalHistory},</if>
@@ -21,15 +19,33 @@
     <select id="findProfileById" resultType="com.example.pojo.vo.PatientProfileVo">
         SELECT
             id AS "patientId",
-            name,
-            gender,
-            birth_date AS "birthDate",
+            NULL::text AS "name",
+            NULL::text AS "gender",
+            birth::text AS "birthDate",
             phone,
             address,
             medical_history AS "medicalHistory",
             allergies
         FROM patient
         WHERE id = #{patientId}
+    </select>
+
+    <select id="findPatientDetailById" resultType="com.example.pojo.vo.PatientDetailVo">
+        SELECT
+            u.id AS "patientId",
+            u.account AS "account",
+            u.name AS "name",
+            u.sex AS "gender",
+            p.birth::text AS "birthday",
+            u.email AS "email",
+            COALESCE(p.phone, u.phone_num) AS "phone",
+            p.address AS "address",
+            p.medical_history AS "medicalHistory",
+            p.allergies AS "allergies"
+        FROM "user" u
+        LEFT JOIN patient p ON p.id = u.id
+        WHERE u.id = #{patientId}
+          AND u.user_type = 'PAT'
     </select>
 
 </mapper>

@@ -1,9 +1,31 @@
 # 接口文档（精简版）
 
-本文件仅包含：
-- 已经实现的接口（3个）
-- 待实现的最小核心“挂号”接口（4个）
+> 重要：本服务依赖 PostgreSQL 数据库。
+>
+> - 基础表结构来自 `dataBaseSolution/hospital_register_postgresql_17.sql`
+> - 患者端 v2.0.0 扩展能力（档案扩展字段、实名认证、评价、导诊、导航、消息偏好）需要额外执行：
+>   - `scripts/patient_service_extension_tables.sql`
+>
+> 执行顺序建议：先执行基础脚本，再执行扩展脚本。
 
+本文件仅包含：
+- 已经实现的接口（若干）
+- 待实现/补齐的核心接口（挂号/候补/评价/认证/导诊/导航/消息）
+
+## 0. 数据字段对齐说明（关键）
+
+### 0.1 patient 档案字段与展示优先级
+
+扩展脚本执行后，`patient` 表会新增：
+- `patient.phone`：患者档案电话（优先展示）
+- `patient.address`
+- `patient.medical_history`
+- `patient.allergies`
+
+接口中 `phone` 字段为“展示用电话”，规则：
+- `phone = COALESCE(patient.phone, user.phone_num)`
+
+---
 ## 1. 已实现接口
 
 ### 1.1 获取科室列表
@@ -101,6 +123,33 @@
     ```json
     { "code": 400, "msg": "该账号不是患者类型", "data": null }
     ```
+
+### 1.5 获取患者详情（账号信息 + 档案聚合，新增加）
+- URL: `/api/patients/{patientId}`
+- Method: `GET`
+- Description: 获取患者的账号信息（来自 `user` 表）与档案信息（来自 `patient` 表）并聚合返回。
+  - 电话展示优先级：优先返回档案电话 `patient.phone`；若为空，则回退返回账号电话 `user.phone_num`。
+  - 调用者需校验对该 `patientId` 的访问权限（后续接入身份认证/鉴权）。
+- Path Params:
+  - `patientId` (string, required)
+- Success Response (200):
+  ```json
+  {
+    "patientId": "PAT0001",
+    "account": "zhangsan",
+    "name": "张三",
+    "gender": "男",
+    "birthday": "1985-06-15",
+    "email": "zhangsan@example.com",
+    "phone": "13800138000",
+    "address": "北京市朝阳区某小区",
+    "medicalHistory": "无",
+    "allergies": "青霉素"
+  }
+  ```
+- Notes:
+  - `phone` 字段为“展示用电话”，按优先级合并后输出：`COALESCE(patient.phone, user.phone_num)`。
+  - `birthday` 来自 `patient.birth`（基础脚本字段名）。
 
 ---
 ## 2. 待实现的最小核心“挂号”接口

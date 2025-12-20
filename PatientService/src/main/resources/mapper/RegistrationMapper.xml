@@ -138,39 +138,39 @@
 
     <select id="findRegistrationByKey" resultType="com.example.pojo.dto.RegistrationDto">
         SELECT
-            rr.patient_id AS "patientId",
-            rr.sch_id AS "scheduleRecordId",
+            rr.patient_ID AS "patientId",
+            rr.sch_ID AS "scheduleRecordId",
             rr.register_time AS "registerTime",
             CASE WHEN rr.status = '已挂号' OR rr.status = '待支付' THEN true ELSE false END AS "status"
         FROM
             register_record rr
         WHERE
-            rr.patient_id = #{patientId} AND rr.sch_id = #{scheduleRecordId}
+            rr.patient_ID = #{patientId} AND rr.sch_ID = #{scheduleRecordId}
     </select>
 
     <select id="getRegistrationStatusByKey" resultType="string">
         SELECT status
         FROM register_record
-        WHERE patient_id = #{patientId} AND sch_id = #{scheduleRecordId}
+        WHERE patient_ID = #{patientId} AND sch_ID = #{scheduleRecordId}
     </select>
 
     <update id="updateRegistrationStatusToCanceled">
         UPDATE register_record
         SET status = '已取消'
-        WHERE patient_id = #{patientId} AND sch_id = #{scheduleRecordId}
+        WHERE patient_ID = #{patientId} AND sch_ID = #{scheduleRecordId}
     </update>
 
     <update id="updateRegistrationStatusToConfirmed">
         UPDATE register_record
         SET status = '已挂号'
-        WHERE patient_id = #{patientId} AND sch_id = #{scheduleRecordId}
+        WHERE patient_ID = #{patientId} AND sch_ID = #{scheduleRecordId}
     </update>
 
     <sql id="registrationQueryConditions">
         <where>
-            rr.patient_id = #{query.patientId}
+            rr.patient_ID = #{query.patientId}
             <if test="query.date != null">
-                AND dsr.schedule_date = #{query.date}
+                AND dsr.schedule_date &gt;= #{query.date}
             </if>
             <if test="query.fromDate != null">
                 AND dsr.schedule_date &gt;= #{query.fromDate}
@@ -188,14 +188,13 @@
                 </foreach>
             </if>
         </where>
-        ORDER BY dsr.schedule_date DESC, st.start_time
     </sql>
 
     <select id="findRegistrationsByQuery" resultType="com.example.pojo.vo.RegistrationVo">
         SELECT
-            rr.patient_id AS "patientId",
+            rr.patient_ID AS "patientId",
             p.name AS "patientName",
-            rr.sch_id AS "scheduleRecordId",
+            rr.sch_ID AS "scheduleRecordId",
             doc.id AS "doctorId",
             u.name AS "doctorName",
             d.id AS "departmentId",
@@ -213,7 +212,7 @@
             JOIN department d ON doc.depart_id = d.id
             JOIN schedule_template st ON dsr.template_id = st.id
         <include refid="registrationQueryConditions"/>
-        ORDER BY rr.register_time DESC
+        ORDER BY dsr.schedule_date DESC, st.start_time
         LIMIT #{limit} OFFSET #{offset}
     </select>
 
@@ -221,7 +220,7 @@
         SELECT count(*)
         FROM
             register_record rr
-            JOIN doc_schedule_record dsr ON rr.sch_id = dsr.id
+            JOIN doc_schedule_record dsr ON rr.sch_ID = dsr.id
         <include refid="registrationQueryConditions"/>
     </select>
 
