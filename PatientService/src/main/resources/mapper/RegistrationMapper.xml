@@ -110,10 +110,10 @@
     <select id="findRegistrationByPatientAndSchedule" resultType="com.example.pojo.vo.RegistrationVo">
         SELECT
             rr.patient_ID AS "patientId",
-            p.name AS "patientName",
+            patient_user.name AS "patientName",
             rr.sch_ID AS "scheduleRecordId",
             doc.id AS "doctorId",
-            u.name AS "doctorName",
+            doc_user.name AS "doctorName",
             d.id AS "departmentId",
             d.name AS "departmentName",
             doc.clinic_id AS "clinicId",
@@ -126,9 +126,10 @@
         FROM
             register_record rr
                 JOIN patient p ON rr.patient_ID = p.id
+                JOIN "user" patient_user ON p.id = patient_user.id
                 JOIN doc_schedule_record dsr ON rr.sch_ID = dsr.id
                 JOIN doctor doc ON dsr.doc_id = doc.id
-                JOIN "user" u ON doc.id = u.id
+                JOIN "user" doc_user ON doc.id = doc_user.id
                 JOIN department d ON doc.depart_id = d.id
                 LEFT JOIN clinic c ON doc.clinic_id = c.id
                 JOIN schedule_template st ON dsr.template_id = st.id
@@ -188,16 +189,15 @@
                 </foreach>
             </if>
         </where>
-        ORDER BY dsr.schedule_date DESC, st.start_time
     </sql>
 
     <select id="findRegistrationsByQuery" resultType="com.example.pojo.vo.RegistrationVo">
         SELECT
             rr.patient_id AS "patientId",
-            p.name AS "patientName",
+            patient_user.name AS "patientName",
             rr.sch_id AS "scheduleRecordId",
             doc.id AS "doctorId",
-            u.name AS "doctorName",
+            doc_user.name AS "doctorName",
             d.id AS "departmentId",
             d.name AS "departmentName",
             dsr.schedule_date AS "registrationDate",
@@ -206,10 +206,11 @@
             rr.register_time AS "registerTime"
         FROM
             register_record rr
-            JOIN patient p ON rr.patient_ID = p.id
-            JOIN doc_schedule_record dsr ON rr.sch_ID = dsr.id
+            JOIN patient p ON rr.patient_id = p.id
+            JOIN "user" patient_user ON p.id = patient_user.id
+            JOIN doc_schedule_record dsr ON rr.sch_id = dsr.id
             JOIN doctor doc ON dsr.doc_id = doc.id
-            JOIN "user" u ON doc.id = u.id
+            JOIN "user" doc_user ON doc.id = doc_user.id
             JOIN department d ON doc.depart_id = d.id
             JOIN schedule_template st ON dsr.template_id = st.id
         <include refid="registrationQueryConditions"/>

@@ -28,9 +28,9 @@
 
     <!-- 插入支付记录 -->
     <insert id="insertPayment">
-        INSERT INTO pay_record (id, pay_time, pay_status, ori_amount, ask_pay_amount, patient_id, doc_id, sch_id)
-        VALUES (#{payment.id}, #{payment.payTime}, #{payment.payStatus}, #{payment.oriAmount}, 
-                #{payment.askPayAmount}, #{payment.patientId}, #{payment.docId}, #{payment.schId})
+        INSERT INTO pay_record (id, pay_time, pay_status, ori_amount, ask_pay_amount, patient_id, sch_id)
+        VALUES (#{payment.id}, #{payment.payTime,jdbcType=TIMESTAMP}, #{payment.payStatus}, #{payment.oriAmount},
+                #{payment.askPayAmount}, #{payment.patientId}, #{payment.schId})
     </insert>
 
     <!-- 查询患者的所有支付记录 -->
@@ -39,7 +39,7 @@
             pr.id AS "paymentId",
             pr.patient_id AS "patientId",
             pr.sch_id AS "scheduleRecordId",
-            pr.doc_id AS "doctorId",
+            dsr.doc_id AS "doctorId",
             u.name AS "doctorName",
             d.name AS "departmentName",
             pr.pay_time AS "payTime",
@@ -49,7 +49,8 @@
             rt.percent AS "reimbursePercent",
             rt.type AS "reimburseType"
         FROM pay_record pr
-        LEFT JOIN doctor doc ON pr.doc_id = doc.id
+        LEFT JOIN doc_schedule_record dsr ON pr.sch_id = dsr.id
+        LEFT JOIN doctor doc ON dsr.doc_id = doc.id
         LEFT JOIN "user" u ON doc.id = u.id
         LEFT JOIN department d ON doc.depart_id = d.id
         LEFT JOIN patient p ON pr.patient_id = p.id
@@ -64,7 +65,7 @@
             pr.id AS "paymentId",
             pr.patient_id AS "patientId",
             pr.sch_id AS "scheduleRecordId",
-            pr.doc_id AS "doctorId",
+            dsr.doc_id AS "doctorId",
             u.name AS "doctorName",
             d.name AS "departmentName",
             pr.pay_time AS "payTime",
@@ -74,7 +75,8 @@
             rt.percent AS "reimbursePercent",
             rt.type AS "reimburseType"
         FROM pay_record pr
-        LEFT JOIN doctor doc ON pr.doc_id = doc.id
+        LEFT JOIN doc_schedule_record dsr ON pr.sch_id = dsr.id
+        LEFT JOIN doctor doc ON dsr.doc_id = doc.id
         LEFT JOIN "user" u ON doc.id = u.id
         LEFT JOIN department d ON doc.depart_id = d.id
         LEFT JOIN patient p ON pr.patient_id = p.id
@@ -109,7 +111,7 @@
     <select id="findPaymentByPatientAndSchedule" resultType="com.example.pojo.entity.PayRecord">
         SELECT id, pay_time AS "payTime", pay_status AS "payStatus", 
                ori_amount AS "oriAmount", ask_pay_amount AS "askPayAmount",
-               patient_id AS "patientId", doc_id AS "docId", sch_id AS "schId"
+               patient_id AS "patientId", sch_id AS "schId"
         FROM pay_record
         WHERE patient_id = #{patientId} AND sch_id = #{scheduleRecordId}
     </select>
