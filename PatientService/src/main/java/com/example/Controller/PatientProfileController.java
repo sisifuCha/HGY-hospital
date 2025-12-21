@@ -4,6 +4,7 @@ import com.example.Service.PatientProfileService;
 import com.example.conmon.result.Result;
 import com.example.pojo.dto.PatientProfileDto;
 import com.example.pojo.vo.PatientProfileVo;
+import com.example.security.Authz;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,17 +17,18 @@ public class PatientProfileController {
 
     @PostMapping("/{patientId}/profile")
     public Result<?> uploadProfile(@PathVariable String patientId, @RequestBody PatientProfileDto profile) {
+        Authz.assertPatient(patientId);
         patientProfileService.uploadProfile(patientId, profile);
         return Result.success("档案上传成功");
     }
 
     @GetMapping("/{patientId}/profile")
     public Result<PatientProfileVo> getProfile(@PathVariable String patientId) {
+        Authz.assertPatient(patientId);
         PatientProfileVo profile = patientProfileService.getProfile(patientId);
         if (profile == null) {
-            return Result.error("患者不存在");
+            return Result.fail(404, "患者不存在");
         }
         return Result.success(profile);
     }
 }
-

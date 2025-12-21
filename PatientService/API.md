@@ -103,6 +103,110 @@
     ```
 
 ---
+
+## 1.5 邮箱验证码（注册用，当前分支优先实现）
+
+约定：
+- 本分支先不做鉴权。
+- 验证码为 6 位数字字符串。
+- 验证码有效期：默认 5 分钟（后端可配置）。
+- 同一邮箱发送频率限制：默认 60 秒内只能发一次（后端可配置）。
+
+实现说明：
+- 当前已接入 SMTP 真发送能力（`spring-boot-starter-mail`）。
+- 是否真的发邮件由配置开关控制：`patient.emailVerification.realSendEnabled`。
+  - `false`：不实际发邮件（方便本地没 SMTP 时调通流程，验证码仍会生成并保存）。
+  - `true`：调用 SMTP 发送验证码邮件（发送失败会返回 500 并回滚删除验证码）。
+- **不要把 `spring.mail.password` 提交到 git**，建议用环境变量或 `application-local.properties` 管理。
+
+### 1.5.1 发送邮箱验证码
+- URL: `/api/email-verification/send`
+- Method: `POST`
+- Request Body:
+  ```json
+  {
+    "email": "test@example.com",
+    "scene": "REGISTER"
+  }
+  ```
+- 字段说明：
+  - `email`：必填，邮箱地址
+  - `scene`：可选，业务场景枚举：`REGISTER`（默认）
+
+- Success Response (200)：发送成功
+  ```json
+  {
+    "code": 200,
+    "msg": "success",
+    "data": {
+      "email": "test@example.com",
+      "scene": "REGISTER",
+      "expireSeconds": 300
+    }
+  }
+  ```
+
+- Error Responses：
+  - 参数错误（邮箱为空/格式不合法）
+    ```json
+    { "code": 400, "msg": "邮箱格式不正确", "data": null }
+    ```
+  - 触发频率限制
+    ```json
+    { "code": 429, "msg": "发送过于频繁，请稍后再试", "data": null }
+    ```
+  - 发送失败（SMTP/配置问题等）
+    ```json
+    { "code": 500, "msg": "验证码发送失败", "data": null }
+    ```
+
+### 1.5.2 校验邮箱验证码
+- URL: `/api/email-verification/verify`
+- Method: `POST`
+- Request Body:
+  ```json
+  {
+    "email": "test@example.com",
+    "scene": "REGISTER",
+    "code": "123456"
+  }
+  ```
+- 字段说明：
+  - `email`：必填
+  - `scene`：可选，默认 `REGISTER`
+  - `code`：必填，6 位数字
+
+- Success Response (200)：校验通过
+  ```json
+  {
+    "code": 200,
+    "msg": "success",
+    "data": {
+      "verified": true,
+      "email": "test@example.com",
+      "scene": "REGISTER"
+    }
+  }
+  ```
+
+- Error Responses：
+  - 校验失败（验证码错误）
+    ```json
+    { "code": 400, "msg": "验证码错误", "data": { "verified": false } }
+    ```
+  - 验证码过期/不存在
+    ```json
+    { "code": 410, "msg": "验证码已过期或不存在", "data": { "verified": false } }
+    ```
+  - 参数错误
+    ```json
+    { "code": 400, "msg": "验证码格式不正确", "data": null }
+    ```
+
+- Notes：
+  - 校验成功后，后端应立即使验证码失效（防止重复使用）。
+
+---
 ## 2. 待实现的最小核心“挂号”接口
 说明：使用 patientId + scheduleRecordId 作为复合键唯一定位一条挂号记录。状态统一使用中文枚举：预约中 / 已预约 / 已取消 / 已过期 / 已就诊（预留）。
 
@@ -198,7 +302,6 @@
 
 ### 2.5 读取单条挂号（按挂号ID）
 - URL: `/api/registrations/{registrationId}`
-- Method: `GET`
 - Path Params:
   - `registrationId` (string, required)  // 对应数据库表 `register_record` 的主键（或唯一标识）
 - Description: 按挂号表的内部 ID 读取单条挂号记录，适用于前端在列表中点击某条记录查看详情的场景。与 `/api/registrations/by-key` 不同，本接口以挂号表的主键为索引，便于运维和内部引用。请求应校验调用者对该 patientId 的访问权限（仅患者本人或有权限的管理/业务系统）。

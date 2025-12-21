@@ -4,6 +4,7 @@ import com.example.Service.PaymentService;
 import com.example.conmon.result.Result;
 import com.example.pojo.dto.CreatePaymentRequest;
 import com.example.pojo.dto.PaymentDto;
+import com.example.security.Authz;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -26,6 +27,7 @@ public class PaymentController {
      */
     @GetMapping
     public Result<?> getPayments(@RequestParam String patientId) {
+        Authz.assertPatient(patientId);
         try {
             List<PaymentDto> payments = paymentService.getPaymentsByPatient(patientId);
             Map<String, Object> response = new HashMap<>();

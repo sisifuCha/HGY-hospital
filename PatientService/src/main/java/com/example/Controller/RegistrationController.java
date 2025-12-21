@@ -9,6 +9,7 @@ import com.example.pojo.dto.RegistrationDto;
 import com.example.pojo.dto.RegistrationQueryDto;
 import com.example.pojo.entity.Doctor;
 import com.example.pojo.vo.RegistrationVo;
+import com.example.security.Authz;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -64,6 +65,7 @@ public class RegistrationController {
 
     @GetMapping("/registrations")
     public Result<?> getRegistrations(RegistrationQueryDto queryDto) {
+        Authz.assertPatient(queryDto.getPatientId());
         return Result.success(registrationService.getRegistrations(queryDto));
     }
 
@@ -74,6 +76,7 @@ public class RegistrationController {
      */
     @PostMapping("/registrations")
     public Result<?> createRegistration(@RequestBody @Valid CreateRegistrationRequest req) {
+        Authz.assertPatient(req.getPatientId());
         RegistrationDto dto = registrationService.createRegistration(req.getPatientId(), req.getScheduleRecordId());
         return Result.success(dto);
     }
@@ -87,6 +90,7 @@ public class RegistrationController {
     @GetMapping("/registrations/by-key")
     public Result<?> getRegistrationByKey(@RequestParam String patientId,
                                                         @RequestParam String scheduleRecordId) {
+        Authz.assertPatient(patientId);
         return Result.success(registrationService.getRegistrationByKey(patientId, scheduleRecordId));
     }
 
@@ -99,6 +103,7 @@ public class RegistrationController {
     @DeleteMapping("/registrations")
     public Result<RegistrationDto> cancelRegistration(@RequestParam String patientId,
                                                        @RequestParam String scheduleRecordId) {
+        Authz.assertPatient(patientId);
         return Result.success(registrationService.cancelRegistration(patientId, scheduleRecordId));
     }
 }
