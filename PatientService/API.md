@@ -207,6 +207,113 @@
   - 校验成功后，后端应立即使验证码失效（防止重复使用）。
 
 ---
+
+## 1.6 忘记密码（邮箱验证码找回，v1）
+
+约定：
+- 本阶段先不做鉴权。
+- 验证码为 6 位数字字符串。
+- 验证码有效期：默认 5 分钟（可配置）。
+- 同一邮箱发送频率限制：默认 60 秒内只能发一次（可配置）。
+- 忘记密码场景使用 `scene = RESET_PASSWORD`。
+- **重置密码必须先校验验证码通过**；校验通过后验证码立即失效。
+
+实现说明：
+- 复用邮箱验证码模块（Redis 存储 + 可选 SMTP 真发送）。
+- 密码字段当前系统为明文 `user.pass`（与现有登录/注册保持一致）；如后续要改为加密存储，可在该接口统一升级。
+
+### 1.6.1 发送“重置密码”邮箱验证码
+- URL: `/api/password-reset/send`
+- Method: `POST`
+- Description: 向指定邮箱发送 6 位验证码，用于后续重置密码。
+- Request Body:
+  ```json
+  {
+    "email": "test@example.com"
+  }
+  ```
+
+- Success Response (200)：
+  ```json
+  {
+    "code": 200,
+    "msg": "success",
+    "data": {
+      "email": "test@example.com",
+      "scene": "RESET_PASSWORD",
+      "expireSeconds": 300
+    }
+  }
+  ```
+
+- Error Responses：
+  - 邮箱格式不合法 / 为空
+    ```json
+    { "code": 400, "msg": "邮箱格式不正确", "data": null }
+    ```
+  - 发送过于频繁
+    ```json
+    { "code": 429, "msg": "发送过于频繁，请稍后再试", "data": null }
+    ```
+  - 邮箱未注册（可选策略：为了避免枚举攻击，也可统一返回 success；本项目先返回 404 以便前端提示）
+    ```json
+    { "code": 404, "msg": "该邮箱未注册", "data": null }
+    ```
+  - SMTP 发送失败
+    ```json
+    { "code": 500, "msg": "验证码发送失败", "data": null }
+    ```
+
+### 1.6.2 校验验证码并重置密码
+- URL: `/api/password-reset/confirm`
+- Method: `POST`
+- Description: 校验邮箱验证码，校验通过后将该邮箱对应账号的密码更新为新密码。
+- Request Body:
+  ```json
+  {
+    "email": "test@example.com",
+    "code": "123456",
+    "newPassword": "newPass123",
+    "confirmPassword": "newPass123"
+  }
+  ```
+
+- Success Response (200)：
+  ```json
+  {
+    "code": 200,
+    "msg": "success",
+    "data": {
+      "reset": true,
+      "email": "test@example.com"
+    }
+  }
+  ```
+
+- Error Responses：
+  - 参数错误（验证码格式 / 新密码为空 / 两次密码不一致）
+    ```json
+    { "code": 400, "msg": "两次密码不一致", "data": { "reset": false } }
+    ```
+  - 验证码错误
+    ```json
+    { "code": 400, "msg": "验证码错误", "data": { "reset": false } }
+    ```
+  - 验证码过期/不存在
+    ```json
+    { "code": 410, "msg": "验证码已过期或不存在", "data": { "reset": false } }
+    ```
+  - 邮箱未注册
+    ```json
+    { "code": 404, "msg": "该邮箱未注册", "data": { "reset": false } }
+    ```
+  - 更新密码失败
+    ```json
+    { "code": 500, "msg": "重置密码失败", "data": { "reset": false } }
+    ```
+
+---
+
 ## 2. 待实现的最小核心“挂号”接口
 说明：使用 patientId + scheduleRecordId 作为复合键唯一定位一条挂号记录。状态统一使用中文枚举：预约中 / 已预约 / 已取消 / 已过期 / 已就诊（预留）。
 
