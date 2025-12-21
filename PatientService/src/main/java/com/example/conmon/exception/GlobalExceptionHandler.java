@@ -1,12 +1,36 @@
 package com.example.conmon.exception;
 
 import com.example.conmon.result.Result;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    // 处理请求体为空或格式错误
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public Result<Void> handleHttpMessageNotReadable(HttpMessageNotReadableException ex) {
+        System.err.println("Request body error: " + ex.getMessage());
+        return Result.fail(400, "请求参数格式错误，请检查JSON格式是否正确");
+    }
+
+    // 处理请求方法不支持
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public Result<Void> handleMethodNotSupported(HttpRequestMethodNotSupportedException ex) {
+        System.err.println("Method not supported: " + ex.getMessage());
+        return Result.fail(405, "请求方法不支持: " + ex.getMethod());
+    }
+
+    // 处理必需参数缺失
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public Result<Void> handleMissingParams(MissingServletRequestParameterException ex) {
+        System.err.println("Missing parameter: " + ex.getMessage());
+        return Result.fail(400, "缺少必需参数: " + ex.getParameterName());
+    }
 
     @ExceptionHandler(DuplicateRegistrationException.class)
     public Result<Void> handleDuplicate(DuplicateRegistrationException ex) {

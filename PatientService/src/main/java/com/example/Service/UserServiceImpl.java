@@ -31,52 +31,63 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Result<String> login(LoginRequest loginRequest) {
-        // 1. 根据账号查询用户
+        // 1. 参数校验
+        if (loginRequest == null) {
+            return Result.fail(400, "请求参数不能为空");
+        }
+        if (loginRequest.getAccount() == null || loginRequest.getAccount().trim().isEmpty()) {
+            return Result.fail(400, "账号不能为空");
+        }
+        if (loginRequest.getPassword() == null || loginRequest.getPassword().trim().isEmpty()) {
+            return Result.fail(400, "密码不能为空");
+        }
+
+        // 2. 根据账号查询用户
         User user = userMapper.findByAccount(loginRequest.getAccount());
 
-        // 2. 判断用户是否存在
+        // 3. 判断用户是否存在
         if (user == null) {
-            return Result.error("用户不存在");
+            return Result.fail(404, "用户不存在，请检查账号是否正确");
         }
 
-        // 3. 验证密码
+        // 4. 验证密码
         if (!user.getUserPassword().equals(loginRequest.getPassword())) {
-            return Result.error("密码错误");
+            return Result.fail(401, "密码错误，请重新输入");
         }
 
-        // 4. 密码正确，生成JWT令牌
+        // 5. 密码正确，生成JWT令牌
         Map<String, Object> claims = new HashMap<>();
         claims.put("userId", user.getUserId());
         claims.put("userAccount", user.getUserAccount());
         String token = jwtUtil.generateToken(claims);
 
-        // 5. 返回成功结果，包含token
+        // 6. 返回成功结果，包含token
         return Result.success(token);
     }
 
     @Override
     @Transactional
     public Result<String> register(RegisterRequest registerRequest) {
-        // 1. 检查身份证号是否已存在
-        if (patientMapper.countByIdentificationId(registerRequest.getIdentificationId()) > 0) {
-            return Result.error("该身份证号已被注册");
-        }
-
-        // 1.1 检查身份证号长度
+        // 1. 检查身份证号长度（先校验格式）
         if (registerRequest.getIdentificationId() == null || registerRequest.getIdentificationId().length() != 18) {
-            return Result.error("身份证号必须为18位");
+            return Result.fail(400, "身份证号必须为18位");
         }
 
-        // 2. 检查用户是否已存在
+        // 2. 检查身份证号是否已存在
+        if (patientMapper.countByIdentificationId(registerRequest.getIdentificationId()) > 0) {
+            return Result.fail(409, "该身份证号已被注册");
+        }
+
+        // 3. 检查用户账号是否已存在
         User existingUser = userMapper.findByAccount(registerRequest.getUserAccount());
         if (existingUser != null) {
-            return Result.error("用户已存在");
+            return Result.fail(409, "该账号已被注册");
         }
 
-        // 3. 创建新用户对象
+        // 4. 创建新用户对象
         User newUser = new User();
 
-        // 3.1 生成新的患者ID
+        // 4.1 生成新的患者ID
         String maxPatId = userMapper.findMaxPatId();
         int newIdNum = 1;
         if (maxPatId != null && maxPatId.startsWith("PAT")) {
@@ -100,18 +111,17 @@ public class UserServiceImpl implements UserService {
         // 设置用户类型为患者
         newUser.setUserType("PAT");
 
-        // 4. 插入数据库
+        // 5. 插入数据库
         userMapper.insert(newUser);
 
-        // 5. 创建Patient对象并插入数据库
+        // 6. 创建Patient对象并插入数据库
         Patient newPatient = new Patient();
         newPatient.setPatientId(newPatId);
         newPatient.setBirthday(registerRequest.getBirthday());
         newPatient.setIdentificationId(registerRequest.getIdentificationId());
         patientMapper.insert(newPatient);
 
-
-        // 6. 返回成功结果
+        // 7. 返回成功结果
         return Result.success("注册成功");
     }
 

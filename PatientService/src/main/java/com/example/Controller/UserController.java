@@ -21,24 +21,12 @@ public class UserController {
 
     @PostMapping("/login")
     public Result<String> login(@RequestBody LoginRequest loginRequest) {
-        try {
-            return userService.login(loginRequest);
-        } catch (IllegalArgumentException ex) {
-            return Result.fail(401, "密码错误");
-        } catch (Exception ex) {
-            return Result.fail(404, "用户不存在");
-        }
+        return userService.login(loginRequest);
     }
 
     @PostMapping("/register")
     public Result<String> register(@RequestBody RegisterRequest registerRequest) {
-        try {
-            return userService.register(registerRequest);
-        } catch (IllegalArgumentException ex) {
-            return Result.fail(409, "账户已存在");
-        } catch (Exception ex) {
-            return Result.fail(400, "注册失败");
-        }
+        return userService.register(registerRequest);
     }
 
     @GetMapping("/patient-id")
