@@ -20,7 +20,4 @@ public interface PatientMapper extends BaseMapper<Patient> {
     int updateProfile(@Param("patientId") String patientId, @Param("profile") PatientProfileDto profile);
 
     PatientProfileVo findProfileById(@Param("patientId") String patientId);
-
-    @Select("SELECT * FROM \"patient\" WHERE identification_id = #{identificationId}")
-    Patient findByIdentificationId(@Param("identificationId") String identificationId);
 }
