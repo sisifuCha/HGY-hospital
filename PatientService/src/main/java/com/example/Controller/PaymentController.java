@@ -4,6 +4,7 @@ import com.example.Service.PaymentService;
 import com.example.conmon.result.Result;
 import com.example.pojo.dto.CreatePaymentRequest;
 import com.example.pojo.dto.PaymentDto;
+import com.example.pojo.dto.PaymentQuoteDto;
 import com.example.security.Authz;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -87,6 +88,27 @@ public class PaymentController {
             return Result.fail(400, e.getMessage());
         } catch (Exception e) {
             return Result.fail(500, "取消订单失败：" + e.getMessage());
+        }
+    }
+
+    /**
+     * 支付试算（报销优惠）：不落库，仅用于支付页展示
+     */
+    @GetMapping("/quote")
+    public Result<?> getPaymentQuote(@RequestParam String patientId, @RequestParam String scheduleRecordId) {
+        Authz.assertPatient(patientId);
+        try {
+            PaymentQuoteDto quote = paymentService.getPaymentQuote(patientId, scheduleRecordId);
+            return Result.success(quote);
+        } catch (IllegalArgumentException e) {
+            // 按文档：排班/患者不存在等
+            String msg = e.getMessage();
+            if (msg != null && (msg.contains("排班") || msg.contains("患者"))) {
+                return Result.fail(404, msg);
+            }
+            return Result.fail(400, msg);
+        } catch (Exception e) {
+            return Result.fail(500, "支付试算失败：" + e.getMessage());
         }
     }
 }

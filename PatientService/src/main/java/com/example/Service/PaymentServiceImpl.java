@@ -4,6 +4,7 @@ import com.example.Mapper.PaymentMapper;
 import com.example.Mapper.RegistrationMapper;
 import com.example.conmon.exception.CreateFailedException;
 import com.example.pojo.dto.PaymentDto;
+import com.example.pojo.dto.PaymentQuoteDto;
 import com.example.pojo.entity.MedicalInsurance;
 import com.example.pojo.entity.PayRecord;
 import com.example.pojo.entity.ReimburseType;
@@ -197,5 +198,41 @@ public class PaymentServiceImpl implements PaymentService {
         log.info("Order cancelled: {}", paymentId);
 
         return paymentMapper.findPaymentById(paymentId);
+    }
+
+    @Override
+    public PaymentQuoteDto getPaymentQuote(String patientId, String scheduleRecordId) {
+        PaymentQuoteDto quote = paymentMapper.getPaymentQuote(patientId, scheduleRecordId);
+        if (quote == null || quote.getOriAmount() == null) {
+            throw new IllegalArgumentException("排班不存在或无法获取挂号费");
+        }
+
+        BigDecimal oriAmount = quote.getOriAmount();
+
+        BigDecimal reimbursePercent = quote.getReimbursePercent();
+        if (reimbursePercent == null) {
+            reimbursePercent = BigDecimal.ZERO;
+            quote.setReimbursePercent(reimbursePercent);
+        }
+
+        // askPayAmount = ori * (1 - percent/100)
+        BigDecimal reimburseFactor = BigDecimal.ONE.subtract(
+                reimbursePercent.divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP)
+        );
+        BigDecimal askPayAmount = oriAmount.multiply(reimburseFactor).setScale(2, RoundingMode.HALF_UP);
+        quote.setAskPayAmount(askPayAmount);
+
+        BigDecimal reimburseAmount = oriAmount.subtract(askPayAmount).setScale(2, RoundingMode.HALF_UP);
+        quote.setReimburseAmount(reimburseAmount);
+
+        // 医保余额是否足够（未绑定医保则视为不够，交给前端提示）
+        BigDecimal medicalOverage = quote.getMedicalInsuranceOverage();
+        if (medicalOverage == null) {
+            quote.setInsuranceEnough(false);
+        } else {
+            quote.setInsuranceEnough(medicalOverage.compareTo(askPayAmount) >= 0);
+        }
+
+        return quote;
     }
 }

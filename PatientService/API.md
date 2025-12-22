@@ -40,7 +40,10 @@
       "doctorId": "DOC001",
       "doctorName": "张三",
       "doctorTitle": "主任医师",
+      "clinicId": "CLIN001",
+      "clinicName": "一诊室",
       "specialty": "高血压、冠心病等心血管疾病",
+      "details": "从业20年，擅长心血管常见病与慢病管理",
       "schedules": [
         {
           "scheduleId": "101",
@@ -54,6 +57,10 @@
     }
   ]
   ```
+- 字段说明：
+  - `clinicId/clinicName`：医生所属诊室（用于挂号页展示“诊室名称”）。
+  - `specialty`：治病专长/擅长方向。
+  - `details`：医生简介（可用于列表页或详情页摘要展示）。
 
 ### 1.3 获取医生详情
 - URL: `/api/doctors/{doctorId}`
@@ -71,9 +78,12 @@
     "details": "从业20年，经验丰富",
     "departId": "DEP101",
     "clinicId": "CLIN001",
+    "clinicName": "一诊室",
     "status": "在职"
   }
   ```
+- 字段说明：
+  - `clinicName`：诊室名称（由 doctor.clinic_id 关联 clinic 表得到）。
 
 ### 1.4 根据账号获取患者ID（新增）
 - URL: `/user/patient-id`
@@ -520,6 +530,99 @@
     ```json
     { "code": 400, "message": "patientId 不能为空", "data": null }
     ```
+
+---
+
+## 2.8 支付试算（报销优惠）
+
+> 场景：患者“预约成功 -> 跳转支付页”时，前端需要展示：
+> - 原始挂号费（oriAmount）
+> - 报销类型与比例（reimburseType / reimbursePercent）
+> - 报销金额（reimburseAmount）
+> - 仍需支付金额（askPayAmount）
+> - 医保余额（medicalInsuranceOverage）以及是否足够（insuranceEnough）
+>
+> 数据来源：
+> - 挂号费：`doc_schedule_record -> doctor -> title_number_source.ori_cost`
+> - 报销比例：`patient.reimburse_id -> reimburse_type.percent/type`
+> - 医保余额：`patient.medical_insuranceid -> medical_insurance.overage`
+>
+> 说明：本接口仅做金额“试算/展示”，不修改数据库、不产生支付记录。
+
+### 2.8.1 试算支付金额
+- URL: `/api/payments/quote`
+- Method: `GET`
+- Query Params:
+  - `patientId` (string, required)
+  - `scheduleRecordId` (string, required)
+
+- Success Response (200):
+  ```json
+  {
+    "code": 200,
+    "msg": "success",
+    "data": {
+      "patientId": "PAT0001",
+      "scheduleRecordId": "SCH20251218001",
+      "oriAmount": 100.00,
+      "reimburseType": "职工医保",
+      "reimbursePercent": 30.00,
+      "reimburseAmount": 30.00,
+      "askPayAmount": 70.00,
+      "medicalInsuranceOverage": 120.50,
+      "insuranceEnough": true
+    }
+  }
+  ```
+
+- Error Responses:
+  - 排班不存在/无法获取挂号费：
+    ```json
+    { "code": 404, "msg": "排班不存在或无法获取挂号费", "data": null }
+    ```
+  - 患者不存在：
+    ```json
+    { "code": 404, "msg": "患者不存在", "data": null }
+    ```
+  - 患者未绑定医保账户（仍可试算出 askPayAmount，但余额为空）：
+    ```json
+    { "code": 200, "msg": "success", "data": { "insuranceEnough": false, "medicalInsuranceOverage": null, "askPayAmount": 70.00 } }
+    ```
+
+- 计算规则：
+  - `askPayAmount = oriAmount × (1 - reimbursePercent/100)`
+  - `reimburseAmount = oriAmount - askPayAmount`
+  - 金额统一保留 2 位小数（HALF_UP）
+
+---
+
+## 2.9 支付超时与候补自动转正（规则说明）
+
+> 已确认规则：**待支付超过 15 分钟自动超时取消**；如存在候补队列，则**候补自动转正**并**生成新的支付订单**。
+
+### 2.9.1 状态流（核心）
+- 创建挂号：
+  - `register_record.status = 待支付`
+  - 同步创建支付订单：`pay_record.pay_status = 待支付`
+- 15 分钟内未支付：
+  - 支付订单自动置为：`pay_record.pay_status = 已取消`
+  - 原挂号记录自动置为：`register_record.status = 已取消`
+  - 号源处理：
+    - 若候补队列存在排队中患者：
+      - 候补第 1 位自动转正：插入（或更新）该患者的 `register_record.status = 待支付`
+      - 给该候补患者自动创建 `pay_record` 新订单（返回新的 `paymentId`）
+      - 号源不回补（直接给到候补者）
+    - 若无候补：
+      - `doc_schedule_record.left_source_count + 1`（回补号源）
+
+### 2.9.2 关于候补队列
+- 候补转正后，候补记录状态从 `排队中` 变更为 `待支付`（并记录关联的挂号/订单信息，具体以实现为准）。
+
+### 2.9.3 对前端的影响
+- 原订单在超时后将无法继续支付（payStatus=已取消）。
+- 候补转正后会产生新的订单号 `paymentId`，支付页需要刷新并展示新的 quote/订单信息。
+
+---
 
 ## 3. 业务与校验要点
 - 身份校验：patientId 归属、黑名单、当日限额。
