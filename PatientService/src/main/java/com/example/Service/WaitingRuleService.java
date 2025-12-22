@@ -11,7 +11,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.UUID;
 
 @Service
 @Slf4j
@@ -88,7 +87,6 @@ public class WaitingRuleService {
         
         // 创建候补记录
         WaitingRecord record = new WaitingRecord();
-        record.setId(UUID.randomUUID().toString());
         record.setPatientId(patientId);
         record.setSchId(schId);
         record.setStatus("候补中");

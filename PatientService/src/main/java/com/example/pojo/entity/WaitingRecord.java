@@ -5,7 +5,7 @@ import java.time.LocalDateTime;
 
 @Data
 public class WaitingRecord {
-    private String id;
+    // 注意：alternate_record 表使用 (patient_id, sch_id) 复合主键，没有 id 列
     private String patientId;
     private String schId;
     private String status;  // 候补中, 已转正, 已过期, 已取消

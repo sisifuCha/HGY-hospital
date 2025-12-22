@@ -113,7 +113,7 @@
     </insert>
 
     <update id="updateWaitingRecordStatus">
-        UPDATE alternate_record 
+        UPDATE alternate_record
         SET status = #{status}, updated_at = #{updateTime}
         <if test="status == '已转正'">
             , promoted_time = #{updateTime}
@@ -121,7 +121,7 @@
         <if test="status == '已过期'">
             , expired_time = #{updateTime}
         </if>
-        WHERE id = #{id}
+        WHERE patient_id = #{patientId} AND sch_id = #{schId}
     </update>
 
     <select id="getWaitingRecordsBySchedule" resultType="com.example.pojo.entity.WaitingRecord">
@@ -167,8 +167,8 @@
     </select>
 
     <select id="getNextWaitingPatient" resultType="com.example.pojo.entity.WaitingRecord">
-        SELECT id, patient_id AS patientId, sch_id AS schId, status, 
-               waiting_time AS waitingTime, position, created_at AS createdAt, 
+        SELECT patient_id AS patientId, sch_id AS schId, status,
+               waiting_time AS waitingTime, position, created_at AS createdAt,
                updated_at AS updatedAt
         FROM alternate_record
         WHERE sch_id = #{schId} AND status = '候补中'
@@ -194,9 +194,9 @@
     </select>
 
     <select id="getWaitingRecordByKey" resultType="com.example.pojo.entity.WaitingRecord">
-        SELECT id, patient_id AS patientId, sch_id AS schId, status, 
-               waiting_time AS waitingTime, promoted_time AS promotedTime, 
-               expired_time AS expiredTime, position, created_at AS createdAt, 
+        SELECT patient_id AS patientId, sch_id AS schId, status,
+               waiting_time AS waitingTime, promoted_time AS promotedTime,
+               expired_time AS expiredTime, position, created_at AS createdAt,
                updated_at AS updatedAt
         FROM alternate_record
         WHERE patient_id = #{patientId} AND sch_id = #{schId}

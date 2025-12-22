@@ -99,6 +99,7 @@ public class RegistrationController {
     @DeleteMapping("/registrations")
     public Result<RegistrationDto> cancelRegistration(@RequestParam String patientId,
                                                        @RequestParam String scheduleRecordId) {
+        System.out.println("1111");
         return Result.success(registrationService.cancelRegistration(patientId, scheduleRecordId));
     }
 }

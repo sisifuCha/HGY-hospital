@@ -14,7 +14,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 @Slf4j
 @Service
@@ -86,23 +85,22 @@ public class WaitingServiceImpl implements WaitingService {
         
         // 9. 插入候补记录到数据库
         WaitingRecord record = new WaitingRecord();
-        record.setId(UUID.randomUUID().toString());
         record.setPatientId(patientId);
         record.setSchId(scheduleRecordId);
         record.setStatus("候补中");
         record.setWaitingTime(LocalDateTime.now());
-        
+
         int inserted = waitingMapper.insertWaitingRecord(record);
         if (inserted == 0) {
             throw new RuntimeException("候补记录插入失败");
         }
-        
+
         // 10. 计算候补位置
         Integer position = waitingMapper.getWaitingPosition(patientId, scheduleRecordId);
-        
-        // 11. 构造返回对象
+
+        // 11. 构造返回对象（使用复合主键组合作为 waitingId）
         WaitingDto dto = new WaitingDto();
-        dto.setWaitingId(record.getId());
+        dto.setWaitingId(patientId + "_" + scheduleRecordId);
         dto.setPatientId(patientId);
         dto.setScheduleRecordId(scheduleRecordId);
         dto.setApplyTime(record.getWaitingTime().toString());
@@ -129,7 +127,7 @@ public class WaitingServiceImpl implements WaitingService {
         for (int i = 0; i < records.size(); i++) {
             WaitingRecord record = records.get(i);
             WaitingDto dto = new WaitingDto();
-            dto.setWaitingId(record.getId());
+            dto.setWaitingId(record.getPatientId() + "_" + record.getSchId());
             dto.setPatientId(record.getPatientId());
             dto.setScheduleRecordId(record.getSchId());
             dto.setApplyTime(record.getWaitingTime().toString());
@@ -148,7 +146,7 @@ public class WaitingServiceImpl implements WaitingService {
         
         for (WaitingRecord record : records) {
             WaitingDto dto = new WaitingDto();
-            dto.setWaitingId(record.getId());
+            dto.setWaitingId(record.getPatientId() + "_" + record.getSchId());
             dto.setPatientId(record.getPatientId());
             dto.setScheduleRecordId(record.getSchId());
             dto.setApplyTime(record.getWaitingTime().toString());
@@ -187,7 +185,7 @@ public class WaitingServiceImpl implements WaitingService {
         
         // 3. 构造返回对象
         WaitingDto dto = new WaitingDto();
-        dto.setWaitingId(record.getId());
+        dto.setWaitingId(record.getPatientId() + "_" + record.getSchId());
         dto.setPatientId(patientId);
         dto.setScheduleRecordId(scheduleRecordId);
         dto.setApplyTime(record.getWaitingTime().toString());

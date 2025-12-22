@@ -50,7 +50,7 @@ public interface WaitingMapper {
     /**
      * 更新候补记录状态
      */
-    int updateWaitingRecordStatus(@Param("id") String id, @Param("status") String status, @Param("updateTime") LocalDateTime updateTime);
+    int updateWaitingRecordStatus(@Param("patientId") String patientId, @Param("schId") String schId, @Param("status") String status, @Param("updateTime") LocalDateTime updateTime);
     
     /**
      * 获取排班的所有候补记录
