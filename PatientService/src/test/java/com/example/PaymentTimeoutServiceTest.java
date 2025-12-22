@@ -22,7 +22,9 @@ import java.util.List;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-@SpringBootTest(classes = com.example.PatientServiceApplication.class)
+@SpringBootTest(classes = com.example.PatientServiceApplication.class, properties = {
+        "patient.payment.timeoutScanEnabled=true"
+})
 @ActiveProfiles("test")
 @Import(TestMailConfig.class)
 class PaymentTimeoutServiceTest {

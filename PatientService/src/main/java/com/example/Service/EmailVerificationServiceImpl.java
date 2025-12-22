@@ -49,7 +49,7 @@ public class EmailVerificationServiceImpl implements EmailVerificationService {
 
         // 发送冷却：cooldownSeconds 内不允许重复发送
         if (!codeStore.tryAcquireCooldown(key, sendCooldownSeconds)) {
-            return Result.fail(429, "发送过于频繁，请稍后再试");
+            return Result.fail(429, "发送过于频繁，请稍后再试（冷却" + sendCooldownSeconds + "秒）");
         }
 
         String code = random6Digits();
@@ -111,4 +111,3 @@ public class EmailVerificationServiceImpl implements EmailVerificationService {
         return email.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$");
     }
 }
-
