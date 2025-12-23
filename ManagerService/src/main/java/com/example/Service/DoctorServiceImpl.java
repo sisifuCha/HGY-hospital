@@ -7,12 +7,14 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.example.Mapper.DepartmentMapper;
 import com.example.Mapper.DoctorMapper;
+import com.example.Mapper.TitleNumberSourceMapper;
 import com.example.Conmon.result.Result;
 import com.example.pojo.dto.DoctorDTO;
 import com.example.pojo.dto.DoctorsRequestDTO;
 import com.example.pojo.entity.Department;
 import com.example.pojo.entity.Doctor;
 import com.example.pojo.entity.DoctorSchedule;
+import com.example.pojo.vo.DoctorDetailVO;
 import com.example.pojo.vo.FinalScheduleVO;
 import com.example.pojo.vo.FinalScheduleWeekVO;
 import com.example.pojo.vo.ScheduleWeekVO;
@@ -28,31 +30,36 @@ import java.util.List;
 public class DoctorServiceImpl implements DoctorService {
 
     @Autowired
-    private DoctorMapper DoctorMapper;
+    private DoctorMapper doctorMapper;
     @Autowired
-    private DepartmentMapper DepartmentMapper;
+    private DepartmentMapper departmentMapper;
+
+    @Autowired
+    private TitleNumberSourceMapper titleNumberSourceMapper;
 
     @Override
     //@Transactional(rollbackFor = Exception.class)
     public Result<String> updateDoctor(DoctorDTO doctorDTO) {
         try {
             // 1. 检查医生是否存在
-            Doctor existingDoctor = DoctorMapper.selectById(doctorDTO.getUserId());
+            Doctor existingDoctor = doctorMapper.selectById(doctorDTO.getUserId());
             if (existingDoctor == null) {
                 return Result.fail(404, "医生信息不存在");
             }
 
             // 2. 检查账号名是否重复
-            int count = DoctorMapper.checkAccountNameExists(doctorDTO.getUserAccount(),doctorDTO.getUserId());
+            int count = doctorMapper.checkAccountNameExists(doctorDTO.getUserAccount(),doctorDTO.getUserId());
             if (count > 0) {
                 return Result.fail(400, "账号名已存在");
             }
 
             // 3. DTO转Entity
             Doctor doctor = convertToEntity(doctorDTO);
+            // 设置用户ID（确保更新的是正确的医生）
+            doctor.setUserId(doctorDTO.getUserId());
 
             // 4. 执行更新
-            int result = DoctorMapper.updateDoctor(doctor);
+            int result = doctorMapper.updateDoctor(doctor);
             if (result > 0) {
                 System.out.println("医生信息更新成功，ID: {}"+ doctorDTO.getUserId());
                 return Result.success("医生信息更新成功", null);
@@ -67,8 +74,29 @@ public class DoctorServiceImpl implements DoctorService {
     }
 
     @Override
-    public Result<Doctor> getDoctorById(String id) {
-        return Result.success(DoctorMapper.selectById(id));
+    public Result<DoctorDetailVO> getDoctorById(String id) {
+        Doctor doctor = doctorMapper.selectById(id);
+        if (doctor == null) {
+            return Result.fail(404, "医生信息不存在");
+        }
+        
+        // 转换为VO对象
+        DoctorDetailVO doctorDetailVO = new DoctorDetailVO();
+        doctorDetailVO.setUserName(doctor.getUserName());
+        doctorDetailVO.setUserId(doctor.getUserId());
+        doctorDetailVO.setUserGender(doctor.getUserGender());
+        doctorDetailVO.setUserAccount(doctor.getUserAccount());
+        doctorDetailVO.setUserEmail(doctor.getUserEmail());
+        doctorDetailVO.setUserPassword(doctor.getUserPassword());
+        doctorDetailVO.setUserPhone(doctor.getUserPhone());
+        doctorDetailVO.setTitle(doctor.getTitle());
+        doctorDetailVO.setClinicId(doctor.getClinicId());
+        doctorDetailVO.setDoctorStatus(doctor.getDoctorStatus());
+        doctorDetailVO.setDoctorDepart(doctor.getDoctorDepart());
+        doctorDetailVO.setDoctorDetails(doctor.getDoctorDetails());
+        doctorDetailVO.setDoctorSpeciality(doctor.getDoctorSpeciality());
+        
+        return Result.success(doctorDetailVO);
     }
 
     @Override
@@ -86,19 +114,36 @@ public class DoctorServiceImpl implements DoctorService {
         }
         queryWrapper.orderByDesc("id");
 
-        return Result.success(DoctorMapper.selectDoctorPage(pageParam, queryWrapper));
+        IPage<Doctor> doctorPage = doctorMapper.selectDoctorPage(pageParam, queryWrapper);
+        
+        // 由于API文档中医生列表返回的数据结构仍然包含titleId字段，我们暂时不修改此处的返回类型
+        // 但需要确保查询结果中包含title字段（职称名称）
+        
+        return Result.success(doctorPage);
     }
 
     @Override
     public List<Department> getDepartmentOptions() {
         // 使用 MyBatis-Plus 查询 Department 表中的所有数据
         // (null) 表示没有查询条件
-        return DepartmentMapper.selectList(null);
+        return departmentMapper.selectList(null);
     }
 
     private Doctor convertToEntity(DoctorDTO dto) {
         Doctor doctor = new Doctor();
-        BeanUtils.copyProperties(dto, doctor);
+        // 复制名称一致的字段
+        BeanUtils.copyProperties(dto, doctor, "doctorDepart", "title");
+        // 手动映射字段名不一致的情况
+        // 将科室名称转换为ID
+        if (dto.getDoctorDepart() != null && !dto.getDoctorDepart().isEmpty()) {
+            String departId = departmentMapper.getIdByName(dto.getDoctorDepart());
+            doctor.setDoctorDepartId(departId);
+        }
+        // 将职称名称转换为ID
+        if (dto.getTitle() != null && !dto.getTitle().isEmpty()) {
+            String titleId = titleNumberSourceMapper.getIdByName(dto.getTitle());
+            doctor.setTitleId(titleId);
+        }
         return doctor;
     }
 
@@ -108,7 +153,7 @@ public class DoctorServiceImpl implements DoctorService {
         LocalDate monday;
         LocalDate sunday;
 
-        String departId = DepartmentMapper.getIdByName(departName);
+        String departId = departmentMapper.getIdByName(departName);
         // 获取当前日期是星期几（1-7，1代表星期一，7代表星期日）
         int dayOfWeek = currentDate.getDayOfWeek().getValue();
 
@@ -117,7 +162,7 @@ public class DoctorServiceImpl implements DoctorService {
             monday = currentDate.minusDays(dayOfWeek - 1); // 本周一
             sunday = monday.plusDays(6); // 本周日
             //TODO 把这个函数改了
-            List<FinalScheduleVO> doctorSchedules = DoctorMapper.selectDoctorSchedule(monday,sunday,departId);
+            List<FinalScheduleVO> doctorSchedules = doctorMapper.selectDoctorSchedule(monday,sunday,departId);
             //处理VO
             return Result.success(getScheduleWeekVO(doctorSchedules));
         } else if (week == 1) {
@@ -125,7 +170,7 @@ public class DoctorServiceImpl implements DoctorService {
             LocalDate nextMonday = currentDate.plusDays(8 - dayOfWeek); // 下周一
             monday = nextMonday;
             sunday = nextMonday.plusDays(6); // 下周日
-            List<FinalScheduleVO> doctorSchedules = DoctorMapper.selectDoctorSchedule(monday,sunday,departId);
+            List<FinalScheduleVO> doctorSchedules = doctorMapper.selectDoctorSchedule(monday,sunday,departId);
             //处理VO
             return Result.success(getScheduleWeekVO(doctorSchedules));
         } else {

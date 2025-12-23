@@ -1,37 +1,20 @@
-package com.example.pojo.dto;
+package com.example.pojo.vo;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
-public class DoctorDTO {
-
+public class DoctorDetailVO {
     private String userName;
-
     private String userId;
-
     private String userGender;
-
     private String userAccount;
-
     private String userEmail;
-
     private String userPassword;
-
     private String userPhone;
-
     private String title;
-
     private String clinicId;
-
     private String doctorStatus;
-
-    private String doctorDetails;
-
-    private String doctorSpeciality;
-
     private String doctorDepart;
+    private String doctorDetails;
+    private String doctorSpeciality;
 }

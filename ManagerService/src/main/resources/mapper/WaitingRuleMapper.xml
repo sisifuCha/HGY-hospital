@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.example.Mapper.WaitingRuleMapper">
+
+    <resultMap id="WaitingRuleMap" type="com.example.pojo.entity.WaitingRule">
+        <id column="id" property="id"/>
+        <result column="rule_name" property="ruleName"/>
+        <result column="rule_value" property="ruleValue"/>
+        <result column="description" property="description"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+    </resultMap>
+
+    <select id="getAllWaitingRules" resultMap="WaitingRuleMap">
+        SELECT id, rule_name, rule_value, description, created_at, updated_at
+        FROM waiting_rule
+        ORDER BY id ASC
+    </select>
+
+    <update id="updateRuleValueById">
+        UPDATE waiting_rule
+        SET rule_value = #{ruleValue},
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = #{id}
+    </update>
+
+</mapper>

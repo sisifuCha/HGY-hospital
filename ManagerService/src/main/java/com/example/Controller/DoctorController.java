@@ -7,13 +7,16 @@ import com.example.pojo.dto.DoctorDTO;
 import com.example.pojo.dto.DoctorsRequestDTO;
 import com.example.pojo.entity.Department;
 import com.example.pojo.entity.Doctor;
+import com.example.pojo.vo.DoctorDetailVO;
 import com.example.pojo.vo.FinalScheduleVO;
 import com.example.pojo.vo.FinalScheduleWeekVO;
 import com.example.pojo.vo.ScheduleWeekVO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/admin")
@@ -23,16 +26,20 @@ public class DoctorController {
     private DoctorService doctorService;
 
     @GetMapping("/getDoctor")
-    public Result<Doctor> getDoctor(@RequestParam String doctorId) {
+    public Result<DoctorDetailVO> getDoctor(@RequestParam String doctorId) {
         return doctorService.getDoctorById(doctorId);
     }
 
     @PostMapping("/getDoctors")
-    public Result<IPage<Doctor>> getDoctors(@RequestBody DoctorsRequestDTO doctorsRequestDTO) {
-        System.out.println(doctorService.getDoctorListWithPlus(doctorsRequestDTO.getPage(),
-                doctorsRequestDTO.getNum(),doctorsRequestDTO.getFilter_name(),doctorsRequestDTO.getFilter_value()));
-        return doctorService.getDoctorListWithPlus(doctorsRequestDTO.getPage(),
+    public Result<Map<String, Object>> getDoctors(@RequestBody DoctorsRequestDTO doctorsRequestDTO) {
+        Result<IPage<Doctor>> result = doctorService.getDoctorListWithPlus(doctorsRequestDTO.getPage(),
                 doctorsRequestDTO.getNum(),doctorsRequestDTO.getFilter_name(),doctorsRequestDTO.getFilter_value());
+        
+        // 构造符合API文档要求的响应结构
+        Map<String, Object> response = new HashMap<>();
+        response.put("doctorList", result.getData().getRecords());
+        
+        return Result.success(response);
     }
     @GetMapping("/options/departments")
     public Result<List<Department>> getDepartmentOptions() {

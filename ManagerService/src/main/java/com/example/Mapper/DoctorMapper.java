@@ -31,6 +31,10 @@ public interface DoctorMapper extends BaseMapper<Doctor> {
     // 检查账号名是否存在
     int checkAccountNameExists(@Param("accountName") String accountName, String userId);
 
+    // 根据职称名称查询职称ID
+    @Select("SELECT id FROM title_number_source WHERE name = #{name}")
+    String getTitleIdByName(@Param("name") String name);
+
     //分页获取医生信息
     IPage<Doctor> selectDoctorPage(IPage<Doctor> page, @Param("ew") QueryWrapper<Doctor> queryWrapper);
 

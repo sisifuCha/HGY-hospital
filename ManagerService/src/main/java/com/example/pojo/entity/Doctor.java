@@ -28,4 +28,11 @@ public class Doctor extends User { // 继承 BaseUser
     @TableField("depart_id")
     private String doctorDepartId;
 
+    // 以下字段用于返回给前端，不直接映射数据库表
+    @TableField(exist = false)
+    private String title;
+
+    @TableField(exist = false)
+    private String doctorDepart;
+
 }

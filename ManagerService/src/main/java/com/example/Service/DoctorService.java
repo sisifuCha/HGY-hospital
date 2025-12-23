@@ -6,6 +6,7 @@ import com.example.pojo.dto.DoctorDTO;
 import com.example.pojo.dto.DoctorsRequestDTO;
 import com.example.pojo.entity.Department;
 import com.example.pojo.entity.Doctor;
+import com.example.pojo.vo.DoctorDetailVO;
 import com.example.pojo.vo.FinalScheduleVO;
 import com.example.pojo.vo.FinalScheduleWeekVO;
 import com.example.pojo.vo.ScheduleWeekVO;
@@ -23,7 +24,7 @@ public interface DoctorService {
     /**
      * 根据ID获取医生信息
      */
-    Result<Doctor> getDoctorById(String id);
+    Result<DoctorDetailVO> getDoctorById(String id);
 
     /**
      * 分页查询医生信息

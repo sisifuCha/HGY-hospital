@@ -329,6 +329,20 @@ doc_schedule_change_record中type=0为调班（调到空位置），1为请假�
 - add_number_notify_trigger: 插入或更新后执行notify_add_number_change()
 - trg_add_number_insert_message: 插入后执行fn_add_number_insert_message()
 
+### 3.20 waiting_rule表
+
+**功能**：记录候补规则信息
+
+| 列名 | 数据类型 | 约束 | 说明 |
+|------|---------|------|------|
+| id | integer | PRIMARY KEY | 规则ID |
+| rule_name | varchar(100) | NULL | 规则名称 |
+| rule_value | integer | NULL | 规则值 |
+| description | varchar(500) | NULL | 规则描述 |
+| created_at | timestamp | NULL | 创建时间 |
+| updated_at | timestamp | NULL | 更新时间 |
+
+
 ## 4. 表间依赖关系
 
 ### 4.1 核心依赖链

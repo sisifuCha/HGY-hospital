@@ -6,11 +6,10 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
 @Data
-@TableName("`user`") // 指定此类映射到数据库中的 user 表
+@TableName("\"user\"") // PostgreSQL中user是关键字，需要用双引号包裹
 public class User {
     // 用户公共属性
-    @TableId // 主键
-    @TableField("id")
+    @TableId(value = "id") // 主键，指定数据库列名为id
     private String userId;
     @TableField("name")
     private String userName;
