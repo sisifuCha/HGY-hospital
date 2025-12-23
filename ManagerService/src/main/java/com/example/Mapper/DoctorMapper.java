@@ -12,6 +12,7 @@ import org.apache.ibatis.annotations.Select;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 
 public interface DoctorMapper extends BaseMapper<Doctor> {
@@ -37,12 +38,19 @@ public interface DoctorMapper extends BaseMapper<Doctor> {
 
     //分页获取医生信息
     IPage<Doctor> selectDoctorPage(IPage<Doctor> page, @Param("ew") QueryWrapper<Doctor> queryWrapper);
+    
+    @Select("select d.id as userId, u.name as userName, dep.name as department " +
+            "from doctor d left join \"user\" u on d.id = u.id " +
+            "left join department dep on d.depart_id = dep.id")
+    List<Map<String, String>> getDoctorOptions();
 
     //根据时间范围和科室获取排班信息
     @Select("SELECT" +
             " u.name AS doc_name," +
             "ds.left_source_count AS left_source_count," +
             "t.name AS title_name," +
+            "ds.doc_id AS doc_id," +
+            "ds.id AS id," +
             "ds.template_id AS template_id," +
             "ds.schedule_date AS schedule_date," +
             "dp.name AS depart_name " +

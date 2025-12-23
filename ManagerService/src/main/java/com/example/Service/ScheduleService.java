@@ -4,13 +4,13 @@ import com.example.Conmon.result.Result;
 import com.example.pojo.dto.DelayBatchDTO;
 import com.example.pojo.dto.NextWeekScheduleDTO;
 import com.example.pojo.dto.ScheduleDTO;
+import com.example.pojo.dto.ShiftAdjustmentRequestDTO;
 import com.example.pojo.dto.StopBatchScheduleDTO;
 import com.example.pojo.entity.DoctorSchedule;
 import com.example.pojo.vo.AdjustItemsVO;
 import com.example.pojo.vo.FinalScheduleWeekVO;
 import com.example.pojo.vo.HistoryScheduleWeekVO;
 import com.example.pojo.vo.ScheduleWeekVO;
-import org.springframework.web.bind.annotation.RequestParam;
 
 import java.time.LocalDate;
 
@@ -39,4 +39,12 @@ public interface ScheduleService {
             LocalDate targetDateTo, Integer type, Integer page, Integer pageSize);
 
     public Result<Void> updateShiftRequest(String id,String action);
+    
+    /**
+     * 提交医生班次变更申请
+     * @param requestDTO 班次变更申请参数
+     * @return 操作结果
+     */
+    public Result<Void> submitShiftAdjustment(ShiftAdjustmentRequestDTO requestDTO);
+
 }

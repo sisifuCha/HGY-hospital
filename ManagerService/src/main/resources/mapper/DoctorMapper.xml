@@ -29,6 +29,8 @@
 
     <resultMap id="FinalScheduleVOMap" type="com.example.pojo.vo.FinalScheduleVO">
         <result column="doc_name" property="doc_name"/>
+        <result column="doc_id" property="doc_id"/>
+        <result column="id" property="id"/>
         <result column="left_source_count" property="left_source_count"/>
         <result column="depart_name" property="depart"/>
         <result column="title_name" property="title"/>

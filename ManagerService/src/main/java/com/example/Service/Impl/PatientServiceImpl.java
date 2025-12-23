@@ -7,6 +7,7 @@ import com.example.Mapper.PatientMapper;
 import com.example.Mapper.UserMapper;
 import com.example.Service.PatientService;
 import com.example.pojo.dto.PatientDTO;
+import com.example.pojo.dto.PatientPageRequest;
 import com.example.pojo.entity.Patient;
 import com.example.pojo.entity.User;
 import com.example.pojo.vo.PatientDetailVO;
@@ -15,6 +16,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
@@ -27,41 +31,49 @@ public class PatientServiceImpl implements PatientService {
     private PatientMapper patientMapper;
 
     @Override
-    public Result<Page<PatientDetailVO>> getPatientListWithPlus(Integer pageNum, Integer pageSize) {
+    public Result<List<PatientDetailVO>> getPatientList(PatientPageRequest pageRequest) {
         try {
-            // 创建分页对象
-            Page<User> userPage = new Page<>(pageNum, pageSize);
+            // 解析分页参数
+            Integer pageNum = pageRequest.getPageNum() != null ? pageRequest.getPageNum() : 0;
+            Integer pageSize = pageRequest.getPageSize() != null ? Integer.parseInt(pageRequest.getPageSize()) : 10;
             
-            // 查询用户列表并分页
-            Page<User> userResult = userMapper.selectPage(userPage, null);
+            // 创建分页对象
+            Page<Patient> patientPage = new Page<>(pageNum, pageSize);
+            
+            // 先查询患者表，这样能确保只获取患者记录
+            Page<Patient> patientResult = patientMapper.selectPage(patientPage, null);
             
             // 转换为VO列表
-            Page<PatientDetailVO> patientPage = new Page<>();
-            patientPage.setTotal(userResult.getTotal());
-            patientPage.setPages(userResult.getPages());
-            patientPage.setCurrent(userResult.getCurrent());
-            patientPage.setSize(userResult.getSize());
-            patientPage.setRecords(userResult.getRecords().stream().map(user -> {
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+            List<PatientDetailVO> patientList = patientResult.getRecords().stream().map(patient -> {
                 PatientDetailVO vo = new PatientDetailVO();
-                vo.setId(user.getUserId());
-                vo.setName(user.getUserName());
-                vo.setSex(user.getUserGender());
-                vo.setPhoneNum(user.getUserPhone());
-                vo.setEmail(user.getUserEmail());
                 
-                // 查询患者信息
-                Patient patient = patientMapper.selectById(user.getUserId());
-                if (patient != null) {
-                    vo.setBirth(patient.getBirth());
-                    vo.setIdNum(patient.getIdNum());
-                    vo.setMedicalInsuranceId(patient.getMedicalInsuranceId());
-                    vo.setReimburseId(patient.getReimburseId());
+                // 查询对应的用户信息
+                User user = userMapper.selectById(patient.getId());
+                if (user != null) {
+                    vo.setId(user.getUserId());
+                    vo.setName(user.getUserName());
+                    vo.setSex(user.getUserGender());
+                    vo.setAccount(user.getUserAccount());
+                    vo.setEmail(user.getUserEmail());
+                    vo.setPass(user.getUserPassword());
+                    vo.setPhone_num(user.getUserPhone());
+                    vo.setUser_type(user.getUserType());
                 }
                 
+                // 设置患者信息
+                if (patient.getBirth() != null) {
+                    vo.setBirth(sdf.format(patient.getBirth()));
+                }
+                vo.setId_num(patient.getIdNum());
+                vo.setMedical_insuranceid(patient.getMedicalInsuranceId());
+                vo.setReimburse_id(patient.getReimburseId());
+                vo.setStatus("正常"); // 默认状态
+                
                 return vo;
-            }).collect(java.util.stream.Collectors.toList()));
+            }).collect(Collectors.toList());
             
-            return Result.success(patientPage);
+            return Result.success(patientList);
         } catch (Exception e) {
             e.printStackTrace();
             return Result.fail(500, "获取患者列表失败");
@@ -71,27 +83,36 @@ public class PatientServiceImpl implements PatientService {
     @Override
     public Result<PatientDetailVO> getPatientById(String id) {
         try {
-            // 查询用户信息
-            User user = userMapper.selectById(id);
-            if (user == null) {
+            // 先查询患者信息，确保只有患者能被查询到
+            Patient patient = patientMapper.selectById(id);
+            if (patient == null) {
                 return Result.fail(404, "患者不存在");
             }
             
             PatientDetailVO vo = new PatientDetailVO();
-            vo.setId(user.getUserId());
-            vo.setName(user.getUserName());
-            vo.setSex(user.getUserGender());
-            vo.setPhoneNum(user.getUserPhone());
-            vo.setEmail(user.getUserEmail());
             
-            // 查询患者信息
-            Patient patient = patientMapper.selectById(id);
-            if (patient != null) {
-                vo.setBirth(patient.getBirth());
-                vo.setIdNum(patient.getIdNum());
-                vo.setMedicalInsuranceId(patient.getMedicalInsuranceId());
-                vo.setReimburseId(patient.getReimburseId());
+            // 查询用户信息
+            User user = userMapper.selectById(id);
+            if (user != null) {
+                vo.setId(user.getUserId());
+                vo.setName(user.getUserName());
+                vo.setSex(user.getUserGender());
+                vo.setAccount(user.getUserAccount());
+                vo.setEmail(user.getUserEmail());
+                vo.setPass(user.getUserPassword());
+                vo.setPhone_num(user.getUserPhone());
+                vo.setUser_type(user.getUserType());
             }
+            
+            // 设置患者信息
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+            if (patient.getBirth() != null) {
+                vo.setBirth(sdf.format(patient.getBirth()));
+            }
+            vo.setId_num(patient.getIdNum());
+            vo.setMedical_insuranceid(patient.getMedicalInsuranceId());
+            vo.setReimburse_id(patient.getReimburseId());
+            vo.setStatus("正常"); // 默认状态
             
             return Result.success(vo);
         } catch (Exception e) {

@@ -1,18 +1,18 @@
 package com.example.Service;
 
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.example.pojo.dto.PatientDTO;
+import com.example.pojo.dto.PatientPageRequest;
 import com.example.pojo.vo.PatientDetailVO;
 import com.example.Conmon.result.Result;
+
+import java.util.List;
 
 public interface PatientService {
     /**
      * 分页获取患者列表
-     * @param pageNum 当前页码
-     * @param pageSize 每页数量
+     * @param pageRequest 分页请求参数
      * @return 分页结果
      */
-    Result<Page<PatientDetailVO>> getPatientListWithPlus(Integer pageNum, Integer pageSize);
+    Result<List<PatientDetailVO>> getPatientList(PatientPageRequest pageRequest);
 
     /**
      * 根据ID获取患者详情
@@ -27,5 +27,5 @@ public interface PatientService {
      * @param dto 患者信息
      * @return 更新结果
      */
-    Result<?> updatePatient(String id, PatientDTO dto);
+    Result<?> updatePatient(String id, com.example.pojo.dto.PatientDTO dto);
 }

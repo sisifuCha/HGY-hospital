@@ -25,6 +25,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class DoctorServiceImpl implements DoctorService {
@@ -127,6 +128,18 @@ public class DoctorServiceImpl implements DoctorService {
         // 使用 MyBatis-Plus 查询 Department 表中的所有数据
         // (null) 表示没有查询条件
         return departmentMapper.selectList(null);
+    }
+    
+    @Override
+    public Result<List<Map<String, String>>> getDoctorOptions() {
+        try {
+            // 查询所有医生及其所属科室信息
+            List<Map<String, String>> doctorOptions = doctorMapper.getDoctorOptions();
+            return Result.success(doctorOptions);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Result.fail(500, "获取医生选项失败: " + e.getMessage());
+        }
     }
 
     private Doctor convertToEntity(DoctorDTO dto) {

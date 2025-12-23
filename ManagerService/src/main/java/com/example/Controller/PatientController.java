@@ -1,43 +1,31 @@
 package com.example.Controller;
 
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.example.Service.PatientService;
 import com.example.Conmon.result.Result;
-import com.example.pojo.dto.PatientDTO;
+import com.example.pojo.dto.PatientPageRequest;
 import com.example.pojo.vo.PatientDetailVO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/admin/patient")
 public class PatientController {
 
     @Autowired
     private PatientService patientService;
 
     /**
-     * 分页获取患者列表
+     * 分页获取患者表
      */
-    @GetMapping("/list")
-    public Result<Page<PatientDetailVO>> getPatientListWithPlus(
-            @RequestParam Integer pageNum,
-            @RequestParam Integer pageSize) {
-        return patientService.getPatientListWithPlus(pageNum, pageSize);
+    @PostMapping("/admin/getPatients")
+    public Result<?> getPatientList(@RequestBody PatientPageRequest pageRequest) {
+        return patientService.getPatientList(pageRequest);
     }
 
     /**
-     * 根据ID获取患者详情
+     * 查看某个患者的详细信息
      */
-    @GetMapping("/detail/{id}")
-    public Result<PatientDetailVO> getPatientById(@PathVariable String id) {
+    @GetMapping("/admin/getPatient")
+    public Result<PatientDetailVO> getPatient(@RequestParam(required = false) String id) {
         return patientService.getPatientById(id);
-    }
-
-    /**
-     * 更新患者信息
-     */
-    @PutMapping("/update/{id}")
-    public Result<?> updatePatient(@PathVariable String id, @RequestBody PatientDTO patientDTO) {
-        return patientService.updatePatient(id, patientDTO);
     }
 }

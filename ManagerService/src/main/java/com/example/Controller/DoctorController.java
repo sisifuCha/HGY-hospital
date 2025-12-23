@@ -59,4 +59,15 @@ public class DoctorController {
         System.out.println("收到请求，周次和科室名字分别为"+week+"  "+departName);
         return doctorService.getScheduleWeek(week,departName);
     }
+    
+    @GetMapping("/getDoctorOptions")
+    public Result<Map<String, List<Map<String, String>>>> getDoctorOptions() {
+        Result<List<Map<String, String>>> result = doctorService.getDoctorOptions();
+        
+        // 构造符合API文档要求的响应结构
+        Map<String, List<Map<String, String>>> response = new HashMap<>();
+        response.put("options", result.getData());
+        
+        return Result.success(response);
+    }
 }

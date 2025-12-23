@@ -249,6 +249,8 @@ CREATE TABLE doc_schedule_change_record (
    target_sch_ID        VARCHAR(20)          NOT NULL,
    reason_text          TEXT                 NULL,
    status               VARCHAR(20)          NULL,
+   target_date          DATE                 NULL,
+   type                 INTEGER              NULL,
    CONSTRAINT PK_DOC_SCHEDULE_CHANGE_RECORD PRIMARY KEY (doc_ID, ori_sch_ID, target_sch_ID)
 );
 

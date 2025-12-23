@@ -75,9 +75,6 @@ public interface ScheduleMapper extends BaseMapper<DoctorSchedule> {
                         "FROM doc_schedule_change_record " +
                         "INNER JOIN \"user\" u ON u.id=doc_schedule_change_record.doc_id " +
                         "WHERE (status = #{status}::varchar(20) OR #{status}::varchar(20) IS NULL) " +
-                        "AND (doc_id = #{doc_id}::varchar(20) OR #{doc_id}::varchar(20) IS NULL) " +
-                        "AND (target_date >= #{targetDateFrom}::date OR #{targetDateFrom}::date IS NULL) " +
-                        "AND (target_date <= #{targetDateTo}::date OR #{targetDateTo}::date IS NULL) " +
                         "AND (type = #{type}::integer OR #{type}::integer IS NULL) " +
                         "ORDER BY ori_sch_id DESC " +
                         "LIMIT #{pageSize} OFFSET #{pageSize} * (#{page} - 1)")
@@ -136,4 +133,32 @@ public interface ScheduleMapper extends BaseMapper<DoctorSchedule> {
          */
         @Delete("DELETE FROM doc_schedule_record WHERE schedule_id = #{scheduleId}")
         int deleteScheduleById(String scheduleId);
+
+        /**
+     * 检查医生在特定日期和时间段是否已有排班
+     * 
+     * @param docId 医生ID
+     * @param date 日期
+     * @param templateId 时间段模板ID
+     * @param excludeId 排除的排班ID（用于更新时）
+     * @return 冲突的排班数量
+     */
+    @Select("SELECT COUNT(*) FROM doc_schedule_record WHERE doc_id = #{docId} AND schedule_date = #{date} AND template_id = #{templateId} AND id != #{excludeId}")
+    int checkScheduleConflict(@Param("docId") String docId, @Param("date") LocalDate date, @Param("templateId") String templateId, @Param("excludeId") String excludeId);
+
+    /**
+     * 插入排班变更申请记录
+     * 
+     * @param docId 医生ID
+     * @param oriSchId 原排班记录ID
+     * @param targetSchId 目标排班时间段ID
+     * @param reason 变更原因
+     * @param status 申请状态
+     * @param targetDate 目标日期
+     * @param type 变更类型
+     * @return 插入结果（影响行数）
+     */
+    @Insert("INSERT INTO doc_schedule_change_record (doc_id, ori_sch_id, template_id, reason_text, status, target_date, type) VALUES (#{docId}, #{oriSchId}, #{templateId}, #{reason}, #{status}, #{targetDate}, #{type})")
+    int insertShiftAdjustment(@Param("docId") String docId, @Param("oriSchId") String oriSchId, @Param("templateId") String templateId, @Param("reason") String reason, @Param("status") String status, @Param("targetDate") LocalDate targetDate, @Param("type") Integer type);
+
 }

@@ -14,6 +14,7 @@ import com.example.pojo.vo.ScheduleWeekVO;
 import javax.print.Doc;
 import java.util.List;
 //import com.example.pojo.entity.Doctor;
+import java.util.Map;
 
 public interface DoctorService {
     /**
@@ -38,4 +39,5 @@ public interface DoctorService {
 
     List<Department> getDepartmentOptions();
     Result<FinalScheduleWeekVO> getScheduleWeek(Integer week, String departName);
+    Result<List<Map<String, String>>> getDoctorOptions();
 }

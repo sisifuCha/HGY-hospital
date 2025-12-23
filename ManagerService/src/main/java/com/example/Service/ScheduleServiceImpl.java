@@ -3,7 +3,10 @@ package com.example.Service;
 import com.example.Conmon.result.Result;
 import com.example.Mapper.DepartmentMapper;
 import com.example.Mapper.DoctorMapper;
+import com.example.Mapper.MessageRecordMapper;
 import com.example.Mapper.ScheduleMapper;
+import com.example.pojo.entity.MessageRecord;
+import java.time.LocalDateTime;
 import com.example.pojo.dto.*;
 import com.example.pojo.entity.DoctorSchedule;
 import com.example.pojo.vo.AdjustItemsVO;
@@ -33,9 +36,23 @@ public class ScheduleServiceImpl implements ScheduleService {
     private DoctorMapper doctorMapper;
     @Autowired
     private ScheduleIdGenerator scheduleIdGenerator;
+    @Autowired
+    private MessageRecordMapper messageRecordMapper;
 
     @Override
     public Result<Void> createSchedule(DoctorSchedule schedule) {
+        // 检查时段冲突
+        int conflictCount = scheduleMapper.checkScheduleConflict(
+            schedule.getDoctor_id(), 
+            schedule.getDate(), 
+            schedule.getSchedule_time_id(), 
+            schedule.getSchedule_id() != null ? schedule.getSchedule_id() : ""
+        );
+        
+        if (conflictCount > 0) {
+            return Result.fail("该医生在该日期和时间段已有排班，无法重复创建");
+        }
+        
         // 调用MyBatis-Plus的insert方法
         int result = scheduleMapper.insert(schedule);
         if (result > 0) {
@@ -97,13 +114,28 @@ public class ScheduleServiceImpl implements ScheduleService {
             return Result.fail("遍历对象属性时发生错误");
         }
         try {
+            // 先检查所有排班是否有冲突
+            for (DoctorSchedule item : schedules) {
+                int conflictCount = scheduleMapper.checkScheduleConflict(
+                    item.getDoctor_id(), 
+                    item.getDate(), 
+                    item.getSchedule_time_id(), 
+                    item.getSchedule_id() != null ? item.getSchedule_id() : ""
+                );
+                
+                if (conflictCount > 0) {
+                    return Result.fail("医生" + item.getDoctor_id() + "在" + item.getDate() + "的时间段" + item.getSchedule_time_id() + "已有排班，无法创建");
+                }
+            }
+            
+            // 所有排班都没有冲突，批量创建
             for (DoctorSchedule item : schedules) {
                 createSchedule(item);
             }
             return Result.success("插入成功", null);
         } catch (Exception e) {
             e.printStackTrace();
-            return Result.fail("新排班插入数据库错误");
+            return Result.fail("新排班插入数据库错误: " + e.getMessage());
         }
     }
 
@@ -238,6 +270,8 @@ public class ScheduleServiceImpl implements ScheduleService {
 
     }
 
+
+
     /******************************************************/
     private void executeScheduleDate(DoctorSchedule doctorSchedule, String date, Integer code) {
         // 创建日期缩写与DayOfWeek的映射关系
@@ -328,7 +362,10 @@ public class ScheduleServiceImpl implements ScheduleService {
                 return Result.fail(500, "更新申请状态失败");
             }
 
-            // 4. 如果是拒绝操作，不需要修改原排班，直接返回成功
+            // 4. 创建并插入通知信息
+            createAndInsertMessageRecord(requestDetail, newStatus);
+            
+            // 5. 如果是拒绝操作，不需要修改原排班，直接返回成功
             if ("REJECTED".equals(newStatus)) {
                 return Result.success("拒绝成功", null);
             }
@@ -342,9 +379,24 @@ public class ScheduleServiceImpl implements ScheduleService {
                 scheduleMapper.updateScheduleStatus(oriScheId, "1");
             } else if (type == 0) {
                 // 调班类型：更新原排班记录的时间和模板（type=0表示调班到目标时段）
-                String targetDate = String.valueOf(requestDetail.get("target_date"));
+                String targetDateStr = String.valueOf(requestDetail.get("target_date"));
                 String templateId = String.valueOf(requestDetail.get("template_id"));
-                scheduleMapper.updateScheduleTime(oriScheId, targetDate, templateId);
+                String docId = String.valueOf(requestDetail.get("doc_id"));
+                LocalDate targetDate = LocalDate.parse(targetDateStr);
+                
+                // 检查调班目标时段是否与其他排班冲突
+                int conflictCount = scheduleMapper.checkScheduleConflict(
+                    docId, 
+                    targetDate, 
+                    templateId, 
+                    oriScheId
+                );
+                
+                if (conflictCount > 0) {
+                    return Result.fail("该医生在调班目标日期和时间段已有排班，调班失败");
+                }
+                
+                scheduleMapper.updateScheduleTime(oriScheId, targetDateStr, templateId);
             }
 
             // 6. 返回操作成功的结果
@@ -354,5 +406,116 @@ public class ScheduleServiceImpl implements ScheduleService {
             e.printStackTrace();
             return Result.fail(500, "操作失败: " + e.getMessage());
         }
+    }
+
+    @Override
+    public Result<Void> submitShiftAdjustment(ShiftAdjustmentRequestDTO requestDTO) {
+        try {
+            // 1. 参数校验
+            if (requestDTO.getId() == null || requestDTO.getId().isEmpty()) {
+                return Result.fail(400, "班次ID不能为空");
+            }
+            
+            if (requestDTO.getChangeType() == null) {
+                return Result.fail(400, "变更类型不能为空");
+            }
+            
+            if (requestDTO.getChangeType() != 0 && requestDTO.getChangeType() != 1) {
+                return Result.fail(400, "无效的变更类型：只能是0（调班）或1（请假）");
+            }
+            
+            // 2. 调班类型时的额外参数校验
+            if (requestDTO.getChangeType() == 0) {
+                if (requestDTO.getTargetDate() == null || requestDTO.getTargetDate().isEmpty()) {
+                    return Result.fail(400, "调班时目标日期不能为空");
+                }
+                
+                if (requestDTO.getTargetTime() == null) {
+                    return Result.fail(400, "调班时目标时段不能为空");
+                }
+            }
+            
+            // 3. 请假类型时的额外参数校验
+            if (requestDTO.getChangeType() == 1) {
+                // 请假时reason可以为空，但建议填写
+            }
+            
+            // 4. 查询原班次信息
+            DoctorSchedule originalSchedule = scheduleMapper.selectById(requestDTO.getId());
+            if (originalSchedule == null) {
+                return Result.fail(404, "原班次不存在");
+            }
+            
+            // 5. 生成目标时段ID
+            String targetTemplateId = "";
+            LocalDate targetDate = null;
+            
+            if (requestDTO.getChangeType() == 0) {
+                // 调班类型：设置目标日期和时段
+                targetTemplateId = requestDTO.getTargetTime().equals("TIME0001") ? "TIME0001" : "TIME0002";
+                targetDate = LocalDate.parse(requestDTO.getTargetDate());
+            } else {
+                // 请假类型：使用原日期
+                targetDate = originalSchedule.getDate();
+            }
+            
+            // 6. 插入调班申请记录到doc_schedule_change_record表
+            int insertResult = scheduleMapper.insertShiftAdjustment(
+                requestDTO.getDoc_id(), // 医生ID（从请求中获取）
+                requestDTO.getId(), // 原班次ID
+                requestDTO.getTargetTime(), // 目标排班时间段ID
+                requestDTO.getReason(), // 变更原因
+                "PENDING", // 初始状态为待处理
+                targetDate, // 目标日期
+                requestDTO.getChangeType() // 变更类型
+            );
+            
+            if (insertResult <= 0) {
+                return Result.fail(500, "插入排班变更申请记录失败");
+            }
+            
+            // 7. 返回成功结果
+            return Result.success("班次变更申请提交成功", null);
+            
+        } catch (Exception e) {
+            // 8. 异常处理
+            e.printStackTrace();
+            return Result.fail(500, "提交班次变更申请失败: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * 创建并插入调班审批通知信息
+     * 
+     * @param requestDetail 调班申请详情
+     * @param newStatus 新的审批状态
+     */
+    private void createAndInsertMessageRecord(Map<String, Object> requestDetail, String newStatus) {
+        MessageRecord messageRecord = new MessageRecord();
+        
+        // 设置发送方类型
+        messageRecord.setSenderType("system");
+        // 设置接收方类型
+        messageRecord.setReceiverType("specific_doctor");
+        // 设置接收者ID为发起调班的医生ID
+        messageRecord.setReceiverId(String.valueOf(requestDetail.get("doc_id")));
+        // 设置状态为未发送
+        messageRecord.setStatus("unsent");
+        // 设置阅读状态为未确认
+        messageRecord.setReadStatus("unconfirmed");
+        // 设置创建时间
+        messageRecord.setCreatedTime(LocalDateTime.now());
+        
+        // 根据审批结果设置标题和内容
+        if ("APPROVED".equals(newStatus)) {
+            messageRecord.setTitle("调班审核通过");
+            messageRecord.setContent("您已成功调班");
+        } else if ("REJECTED".equals(newStatus)) {
+            messageRecord.setTitle("调班审核驳回");
+            messageRecord.setContent("您的调班请求被驳回");
+        }
+        
+        // 插入通知信息
+        messageRecordMapper.insertMessage(messageRecord);
     }
 }

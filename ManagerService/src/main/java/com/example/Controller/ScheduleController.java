@@ -5,6 +5,7 @@ import com.example.Service.ScheduleService;
 import com.example.pojo.dto.DelayBatchDTO;
 import com.example.pojo.dto.HistoryScheduleDTO;
 import com.example.pojo.dto.NextWeekScheduleDTO;
+import com.example.pojo.dto.ShiftAdjustmentRequestDTO;
 import com.example.pojo.dto.StopBatchScheduleDTO;
 import com.example.pojo.vo.AdjustItemsVO;
 import com.example.pojo.vo.FinalScheduleWeekVO;
@@ -67,6 +68,13 @@ public class ScheduleController {
     public Result<Void> batchDelay(@RequestBody() DelayBatchDTO delayBatchDTO) {
         return scheduleService.delayBatch(delayBatchDTO);
     }
+
+    // 提交排班变更申请
+    @PostMapping("/schedule_change_request")
+    public Result<Void> submitShiftAdjustment(@RequestBody ShiftAdjustmentRequestDTO requestDTO) {
+        return scheduleService.submitShiftAdjustment(requestDTO);
+    }
+
 
     @GetMapping("/shift-requests")
     public Result<AdjustItemsVO> getShiftRequests(@RequestParam() Integer page,
