@@ -2,7 +2,6 @@ package com.example.Controller;
 
 import com.example.conmon.result.Result;
 import com.example.pojo.dto.MessageDto;
-import com.example.security.Authz;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.bind.annotation.*;
@@ -23,7 +22,6 @@ public class MessageController {
 
     @PostMapping("/{patientId}/messages")
     public Result<?> getUnsentMessages(@PathVariable String patientId) {
-        Authz.assertPatient(patientId);
         String key = REDIS_KEY_PREFIX + patientId;
         List<Object> allMessages = redisTemplate.opsForList().range(key, 0, -1);
         

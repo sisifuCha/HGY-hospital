@@ -4,7 +4,6 @@ import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -14,16 +13,9 @@ public class MyContextListener {
     @Autowired
     private SSHConnection sshConnection;
 
-    @Value("${patient.sshTunnel.enabled:true}")
-    private boolean sshTunnelEnabled;
-
     @PostConstruct
     public void init() {
         log.info("Application context initialized");
-        if (!sshTunnelEnabled) {
-            log.info("SSH tunnel disabled by config (patient.sshTunnel.enabled=false)");
-            return;
-        }
         try {
             sshConnection.connect();
             log.info("SSH连接已建立");

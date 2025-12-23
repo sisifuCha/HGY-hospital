@@ -26,16 +26,7 @@ public class UserController {
 
     @PostMapping("/register")
     public Result<String> register(@RequestBody RegisterRequest registerRequest) {
-        try {
-            return userService.register(registerRequest);
-        } catch (IllegalArgumentException ex) {
-            log.warn("注册失败-账户已存在 | account={}", registerRequest.getUserAccount());
-            return Result.fail(409, "账户已存在");
-        } catch (Exception ex) {
-            log.error("注册失败 | account={}, 异常类型={}, 异常信息={}",
-                    registerRequest.getUserAccount(), ex.getClass().getName(), ex.getMessage(), ex);
-            return Result.fail(400, "注册失败: " + ex.getMessage());
-        }
+        return userService.register(registerRequest);
     }
 
     @GetMapping("/patient-id")

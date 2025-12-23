@@ -20,21 +20,6 @@ public interface UserMapper extends BaseMapper<User> {
     User findByAccount(String account);
 
     /**
-     * 根据邮箱查询用户信息
-     * @param email 邮箱
-     * @return 用户实体，不存在返回 null
-     */
-    User findByEmail(String email);
-
-    /**
-     * 更新用户密码（明文存储：与现有登录/注册保持一致）
-     * @param userId 用户ID
-     * @param newPassword 新密码
-     * @return 影响行数
-     */
-    int updatePasswordByUserId(String userId, String newPassword);
-
-    /**
      * 查询患者类型的最大ID
      * @return 最大ID字符串，如 "PAT0012"
      */

@@ -148,45 +148,4 @@
         WHERE id = #{medicalInsuranceId}
     </update>
 
-    <!-- 支付试算：挂号费 + 报销比例 + 医保余额 -->
-    <select id="getPaymentQuote" resultType="com.example.pojo.dto.PaymentQuoteDto">
-        SELECT
-            #{patientId} AS "patientId",
-            #{scheduleRecordId} AS "scheduleRecordId",
-            tns.ori_cost AS "oriAmount",
-            rt.type AS "reimburseType",
-            rt.percent AS "reimbursePercent",
-            mi.overage AS "medicalInsuranceOverage"
-        FROM doc_schedule_record dsr
-            JOIN doctor d ON dsr.doc_id = d.id
-            JOIN title_number_source tns ON d.doc_title_id = tns.id
-            LEFT JOIN patient p ON p.id = #{patientId}
-            LEFT JOIN reimburse_type rt ON p.reimburse_id = rt.id
-            LEFT JOIN medical_insurance mi ON p.medical_insuranceid = mi.id
-        WHERE dsr.id = #{scheduleRecordId}
-    </select>
-
-    <!-- 查询超时未支付订单（pay_status=待支付 AND pay_time <= now - timeoutMinutes） -->
-    <select id="findExpiredUnpaidPayments" resultType="com.example.pojo.entity.PayRecord">
-        SELECT
-            id,
-            pay_time AS "payTime",
-            pay_status AS "payStatus",
-            patient_id AS "patientId",
-            sch_id AS "schId"
-        FROM pay_record
-        WHERE pay_status = '待支付'
-          AND pay_time IS NOT NULL
-          AND pay_time &lt;= (NOW() - (#{timeoutMinutes} || ' minutes')::interval)
-        ORDER BY pay_time ASC
-    </select>
-
-    <!-- 幂等取消：仅当仍为待支付时才更新为已取消 -->
-    <update id="cancelPaymentIfUnpaid">
-        UPDATE pay_record
-        SET pay_status = '已取消'
-        WHERE id = #{paymentId}
-          AND pay_status = '待支付'
-    </update>
-
 </mapper>

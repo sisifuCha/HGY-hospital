@@ -4,7 +4,6 @@ import com.example.Service.WaitingService;
 import com.example.conmon.result.Result;
 import com.example.pojo.dto.CreateWaitingRequest;
 import com.example.pojo.dto.WaitingDto;
-import com.example.security.Authz;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -22,7 +21,6 @@ public class WaitingController {
 
     @PostMapping
     public Result<?> createWaiting(@RequestBody @Valid CreateWaitingRequest req) {
-        Authz.assertPatient(req.getPatientId());
         WaitingDto dto = waitingService.createWaiting(req.getPatientId(), req.getScheduleRecordId());
         return Result.success(dto);
     }
@@ -39,7 +37,6 @@ public class WaitingController {
 
     @GetMapping("/patient")
     public Result<?> getWaitingByPatient(@RequestParam String patientId, @RequestParam(required = false) String date) {
-        Authz.assertPatient(patientId);
         List<WaitingDto> list = waitingService.getWaitingListByPatient(patientId, date);
         Map<String, Object> resp = new HashMap<>();
         resp.put("patientId", patientId);
@@ -48,9 +45,8 @@ public class WaitingController {
     }
 
     @DeleteMapping
-    public Result<?> cancelWaiting(@RequestParam String patientId, @RequestParam String scheduleRecordId) {
-        Authz.assertPatient(patientId);
-        WaitingDto dto = waitingService.cancelWaiting(patientId, scheduleRecordId);
+    public Result<?> cancelWaiting(@RequestParam String patientId, @RequestParam String waitingId) {
+        WaitingDto dto = waitingService.cancelWaiting(patientId, waitingId);
         return Result.success(dto);
     }
 
@@ -61,3 +57,4 @@ public class WaitingController {
         return Result.success(dto);
     }
 }
+
