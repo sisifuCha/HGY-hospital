@@ -1,12 +1,17 @@
 package com.example.dto;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
 import java.util.List;
 
 /**
  * 智能导诊请求
  */
 public class TriageRequest {
+    @NotBlank(message = "患者ID不能为空")
     private String patientId;
+
+    @NotEmpty(message = "症状不能为空")
     private List<String> symptoms;
 
     private Integer durationDays;

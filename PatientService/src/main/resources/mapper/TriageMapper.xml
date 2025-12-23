@@ -47,4 +47,12 @@
         ORDER BY created_at DESC
     </select>
 
+    <!-- 查询所有子科室（有父科室的科室）用于导诊匹配 -->
+    <select id="findAllSubDepartments" resultType="com.example.pojo.entity.Department">
+        SELECT id, name
+        FROM department
+        WHERE father_id IS NOT NULL AND father_id != ''
+        ORDER BY id
+    </select>
+
 </mapper>
