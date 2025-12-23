@@ -8,6 +8,7 @@ import java.time.ZonedDateTime;
 public class PayRecord {
     private String id;
     private ZonedDateTime payTime;
+    private ZonedDateTime initTime;  // 订单创建时间
     private String payStatus;
     private BigDecimal oriAmount;
     private BigDecimal askPayAmount;

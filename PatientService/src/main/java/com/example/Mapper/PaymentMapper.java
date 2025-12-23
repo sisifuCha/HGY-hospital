@@ -53,4 +53,10 @@ public interface PaymentMapper {
     
     // 退款到医保账户
     int refundToMedicalInsurance(@Param("medicalInsuranceId") String medicalInsuranceId, @Param("amount") BigDecimal amount);
+
+    // 查询接近超时的待支付订单（用于发送提醒，1分30秒到1分31秒之间）
+    List<PayRecord> findPendingPaymentsForTimeout();
+
+    // 查询已超时的待支付订单（超过2分钟）
+    List<PayRecord> findTimeoutPendingPayments();
 }

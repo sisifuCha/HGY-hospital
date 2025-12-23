@@ -28,4 +28,14 @@ public interface PaymentService {
      * 取消订单
      */
     PaymentDto cancelOrder(String paymentId);
+
+    /**
+     * 处理超时未支付的订单（定时任务调用）
+     */
+    void processTimeoutPayments();
+
+    /**
+     * 发送支付超时提醒（定时任务调用）
+     */
+    void sendPaymentTimeoutReminders();
 }

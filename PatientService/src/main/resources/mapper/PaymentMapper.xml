@@ -28,9 +28,9 @@
 
     <!-- 插入支付记录 -->
     <insert id="insertPayment">
-        INSERT INTO pay_record (id, pay_time, pay_status, ori_amount, ask_pay_amount, patient_id, sch_id)
-        VALUES (#{payment.id}, #{payment.payTime,jdbcType=TIMESTAMP}, #{payment.payStatus}, #{payment.oriAmount},
-                #{payment.askPayAmount}, #{payment.patientId}, #{payment.schId})
+        INSERT INTO pay_record (id, pay_time, init_time, pay_status, ori_amount, ask_pay_amount, patient_id, sch_id)
+        VALUES (#{payment.id}, #{payment.payTime,jdbcType=TIMESTAMP}, #{payment.initTime,jdbcType=TIMESTAMP},
+                #{payment.payStatus}, #{payment.oriAmount}, #{payment.askPayAmount}, #{payment.patientId}, #{payment.schId})
     </insert>
 
     <!-- 查询患者的所有支付记录 -->
@@ -147,5 +147,28 @@
         SET overage = overage + #{amount}
         WHERE id = #{medicalInsuranceId}
     </update>
+
+    <!-- 查询接近超时的待支付订单（1分30秒到1分31秒之间，用于发送提醒） -->
+    <select id="findPendingPaymentsForTimeout" resultType="com.example.pojo.entity.PayRecord">
+        SELECT id, patient_id AS "patientId", sch_id AS "schId",
+               pay_status AS "payStatus", init_time AS "initTime",
+               ask_pay_amount AS "askPayAmount"
+        FROM pay_record
+        WHERE pay_status = '待支付'
+          AND init_time IS NOT NULL
+          AND init_time &lt;= NOW() - INTERVAL '90 seconds'
+          AND init_time &gt; NOW() - INTERVAL '91 seconds'
+    </select>
+
+    <!-- 查询已超时的待支付订单（超过2分钟） -->
+    <select id="findTimeoutPendingPayments" resultType="com.example.pojo.entity.PayRecord">
+        SELECT id, patient_id AS "patientId", sch_id AS "schId",
+               pay_status AS "payStatus", init_time AS "initTime",
+               ask_pay_amount AS "askPayAmount"
+        FROM pay_record
+        WHERE pay_status = '待支付'
+          AND init_time IS NOT NULL
+          AND init_time &lt;= NOW() - INTERVAL '2 minutes'
+    </select>
 
 </mapper>

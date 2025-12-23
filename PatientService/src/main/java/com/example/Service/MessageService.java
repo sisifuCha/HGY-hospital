@@ -221,7 +221,7 @@ public class MessageService {
     public void sendPaymentTimeoutReminderMessage(String patientId, String doctorName, String scheduleTime, String timeLeft) {
         MessageRecord message = new MessageRecord();
         message.setTitle("订单即将超时");
-        message.setContent(String.format("您在 %s 医生 %s 的挂号订单还有 %s 未支付，请尽快完成支付，否则订单将自动取消。", 
+        message.setContent(String.format("您在 %s 医生 %s 的挂号订单还有 %s 未支付，请尽快完成支付，否则订单将自动取消。",
                                         doctorName, scheduleTime, timeLeft));
         message.setSenderType("system");
         message.setReceiverType("specific_patient");
@@ -229,10 +229,31 @@ public class MessageService {
         message.setStatus("unsent");
         message.setReadStatus("unconfirmed");
         message.setOverTime(LocalDateTime.now().plusHours(2));
-        
+
         int inserted = messageMapper.insertMessage(message);
         if (inserted > 0) {
             log.info("Payment timeout reminder message created for patient: {}", patientId);
+        }
+    }
+
+    /**
+     * 发送支付超时取消通知
+     */
+    @Transactional
+    public void sendPaymentTimeoutCancelMessage(String patientId) {
+        MessageRecord message = new MessageRecord();
+        message.setTitle("订单已超时取消");
+        message.setContent("您的挂号订单因超过2分钟未支付已被系统自动取消。如需挂号请重新申请。");
+        message.setSenderType("system");
+        message.setReceiverType("specific_patient");
+        message.setReceiverId(patientId);
+        message.setStatus("unsent");
+        message.setReadStatus("unconfirmed");
+        message.setOverTime(LocalDateTime.now().plusHours(24));
+
+        int inserted = messageMapper.insertMessage(message);
+        if (inserted > 0) {
+            log.info("Payment timeout cancel message created for patient: {}", patientId);
         }
     }
 }

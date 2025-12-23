@@ -86,6 +86,7 @@ public class PaymentServiceImpl implements PaymentService {
         PayRecord payment = new PayRecord();
         payment.setId(UUID.randomUUID().toString());
         payment.setPayTime(ZonedDateTime.now());
+        payment.setInitTime(ZonedDateTime.now());  // 记录订单创建时间
         payment.setPayStatus("待支付");
         payment.setOriAmount(oriAmount);
         payment.setAskPayAmount(askPayAmount);
@@ -295,6 +296,133 @@ public class PaymentServiceImpl implements PaymentService {
     }
     
     /**
+     * 处理超时未支付的订单（定时任务调用）
+     */
+    @Override
+    @Transactional
+    public void processTimeoutPayments() {
+        // 查询所有超时的待支付订单（超过2分钟）
+        List<PayRecord> timeoutPayments = paymentMapper.findTimeoutPendingPayments();
+
+        if (timeoutPayments == null || timeoutPayments.isEmpty()) {
+            return;
+        }
+
+        log.info("Found {} timeout pending payments, processing...", timeoutPayments.size());
+
+        for (PayRecord payment : timeoutPayments) {
+            try {
+                // 1. 更新支付状态为已取消
+                int updated = paymentMapper.updatePaymentStatus(payment.getId(), "已取消");
+                if (updated == 0) {
+                    log.warn("Failed to update payment status for timeout order: {}", payment.getId());
+                    continue;
+                }
+
+                // 2. 更新挂号记录状态为已取消
+                int regUpdated = registrationMapper.updateRegistrationStatusToCanceled(
+                        payment.getPatientId(), payment.getSchId());
+                if (regUpdated == 0) {
+                    log.warn("Failed to update registration status for timeout order: {}", payment.getId());
+                }
+
+                // 3. 查询是否有候补患者
+                com.example.pojo.entity.WaitingRecord nextWaiting =
+                        waitingMapper.getNextWaitingPatient(payment.getSchId());
+
+                if (nextWaiting != null) {
+                    // 有候补患者，直接转正（不回补号源）
+                    String nextPatientId = nextWaiting.getPatientId();
+                    log.info("Promoting waiting patient {} for timeout order, schedule {}",
+                            nextPatientId, payment.getSchId());
+
+                    // 插入挂号记录（待支付）
+                    int inserted = registrationMapper.insertRegistration(
+                            nextPatientId, payment.getSchId(), "待支付");
+
+                    if (inserted > 0) {
+                        try {
+                            // 创建支付订单
+                            PaymentDto promotedPayment = createPayment(nextPatientId, payment.getSchId());
+                            log.info("Payment order created for promoted patient {}", nextPatientId);
+
+                            // 更新候补状态为已转正
+                            waitingMapper.promoteWaitingRecord(
+                                    nextPatientId, payment.getSchId(), LocalDateTime.now());
+
+                            // 发送候补转正通知
+                            String doctorName = promotedPayment.getDoctorName() != null
+                                    ? promotedPayment.getDoctorName() : "医生";
+                            String timePeriod = "就诊时段";
+                            messageService.sendWaitingPromotedMessage(
+                                    nextPatientId, payment.getSchId(), doctorName, timePeriod);
+                        } catch (Exception e) {
+                            log.error("Failed to promote waiting patient {}: {}",
+                                    nextPatientId, e.getMessage());
+                        }
+                    }
+                } else {
+                    // 没有候补患者，回补号源
+                    registrationMapper.incrementScheduleLeftSource(payment.getSchId());
+                    log.info("Source restored for timeout order: {}, no waiting patient", payment.getId());
+                }
+
+                // 4. 发送订单超时取消通知
+                try {
+                    messageService.sendPaymentTimeoutCancelMessage(payment.getPatientId());
+                } catch (Exception e) {
+                    log.warn("Failed to send timeout cancel message for payment {}: {}",
+                            payment.getId(), e.getMessage());
+                }
+
+                log.info("Timeout order cancelled: {}, patient: {}",
+                        payment.getId(), payment.getPatientId());
+
+            } catch (Exception e) {
+                log.error("Failed to process timeout payment {}: {}", payment.getId(), e.getMessage());
+            }
+        }
+    }
+
+    /**
+     * 发送支付超时提醒（定时任务调用）
+     */
+    @Override
+    @Transactional
+    public void sendPaymentTimeoutReminders() {
+        // 查询接近超时的待支付订单（1分30秒到1分31秒之间）
+        List<PayRecord> pendingPayments = paymentMapper.findPendingPaymentsForTimeout();
+
+        if (pendingPayments == null || pendingPayments.isEmpty()) {
+            return;
+        }
+
+        log.info("Found {} payments near timeout, sending reminders...", pendingPayments.size());
+
+        for (PayRecord payment : pendingPayments) {
+            try {
+                // 获取支付订单详情（包含医生姓名等信息）
+                PaymentDto paymentDto = paymentMapper.findPaymentById(payment.getId());
+                String doctorName = paymentDto != null && paymentDto.getDoctorName() != null
+                        ? paymentDto.getDoctorName() : "医生";
+                String scheduleTime = "就诊时段";
+
+                messageService.sendPaymentTimeoutReminderMessage(
+                        payment.getPatientId(),
+                        doctorName,
+                        scheduleTime,
+                        "30秒");  // 剩余30秒
+
+                log.info("Sent timeout reminder for payment: {}, patient: {}",
+                        payment.getId(), payment.getPatientId());
+            } catch (Exception e) {
+                log.warn("Failed to send timeout reminder for payment {}: {}",
+                        payment.getId(), e.getMessage());
+            }
+        }
+    }
+
+    /**
      * 计算退款比例
      * @param now 当前时间
      * @param scheduleStartTime 排班开始时间
@@ -305,11 +433,11 @@ public class PaymentServiceImpl implements PaymentService {
         Duration duration = Duration.between(now, scheduleStartTime);
         BigDecimal hoursBefore = BigDecimal.valueOf(duration.toMinutes())
                 .divide(BigDecimal.valueOf(60), 2, RoundingMode.HALF_UP);
-        
+
         if (hoursBefore.compareTo(BigDecimal.ZERO) <= 0) {
             return BigDecimal.ZERO; // 已过期
         }
-        
+
         // 从数据库查询退款比例
         BigDecimal rate = refundMapper.getRefundRateByHours(hoursBefore);
         return rate != null ? rate : BigDecimal.ZERO;
