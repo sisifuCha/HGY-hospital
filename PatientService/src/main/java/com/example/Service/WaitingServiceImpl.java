@@ -25,13 +25,22 @@ public class WaitingServiceImpl implements WaitingService {
 
     @Autowired
     private RegistrationMapper registrationMapper;
-    
+
     @Autowired
     private MessageService messageService;
+
+    @Autowired
+    private SensitiveOperationService sensitiveOperationService;
 
     @Override
     @Transactional
     public WaitingDto createWaiting(String patientId, String scheduleRecordId) {
+        // 0. 黑名单检查
+        SensitiveOperationService.BlacklistCheckResult blacklistCheck = sensitiveOperationService.checkBlacklist(patientId);
+        if (blacklistCheck.isInBlacklist()) {
+            throw new IllegalArgumentException("您已被加入黑名单，无法进行候补操作。解除时间: " + blacklistCheck.getReleaseTimeFormatted());
+        }
+
         // 1. 获取候补规则
         Integer maxWaitingCount = waitingMapper.getRuleValue("MAX_WAITING_COUNT");
         Integer maxPatientWaiting = waitingMapper.getRuleValue("MAX_PATIENT_WAITING");
