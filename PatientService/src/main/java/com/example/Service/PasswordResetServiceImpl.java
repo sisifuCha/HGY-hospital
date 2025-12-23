@@ -48,7 +48,7 @@ public class PasswordResetServiceImpl implements PasswordResetService {
         if (user == null) {
             return Result.fail(404, "该邮箱未注册");
         }
-
+        System.out.println("后端准备发送验证码");
         // 复用已有模块：发送验证码（scene=RESET_PASSWORD）
         var sendReq = new com.example.pojo.dto.EmailVerificationSendRequest();
         sendReq.setEmail(email);
@@ -57,7 +57,7 @@ public class PasswordResetServiceImpl implements PasswordResetService {
         if (sendRes.getCode() != 200) {
             return Result.fail(sendRes.getCode(), sendRes.getMsg());
         }
-
+        System.out.println("后端成功发送验证码");
         return Result.success(new PasswordResetSendResponse(email, SCENE_RESET_PASSWORD, expireSeconds));
     }
 

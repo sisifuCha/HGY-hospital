@@ -12,23 +12,25 @@ import java.util.Date;
  * 包含患者的特有信息
  */
 @Data
-@TableName("\"patient\"")
+@TableName("patient")
 public class Patient {
     // 患者ID，同时也是外键，关联到 user 表的 id
-    @TableId("patient_id")
+    @TableId("id")
     private String patientId;
 
     // 出生日期
-    @TableField(value = "birthday", insertStrategy = FieldStrategy.ALWAYS)
+    @TableField(value = "birth", insertStrategy = FieldStrategy.ALWAYS)
     private Date birthday;
 
     // 身份证号
-    @TableField("identification_id")
+    @TableField("id_num")
     private String identificationId;
 
     // 关联的医保ID
+    @TableField("medical_insuranceid")
     private String patientInsurId;
 
     // 关联的报销类型ID
+    @TableField("reimburse_id")
     private String reimbId;
 }

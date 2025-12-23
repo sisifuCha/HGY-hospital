@@ -7,11 +7,13 @@ import com.example.pojo.dto.EmailVerificationVerifyRequest;
 import com.example.pojo.dto.EmailVerificationVerifyResponse;
 import com.example.utils.EmailVerificationCodeStore;
 import com.example.utils.EmailVerificationStore;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
 
+@Slf4j
 @Service
 public class EmailVerificationServiceImpl implements EmailVerificationService {
 
@@ -54,14 +56,16 @@ public class EmailVerificationServiceImpl implements EmailVerificationService {
 
         String code = random6Digits();
         codeStore.save(key, code, expireSeconds);
-
+        System.out.println("邮箱发送：验证码生成完毕"+code.toString());
         // SMTP 真发送：发送失败则删除已保存的验证码
         if (realSendEnabled) {
             try {
                 emailSender.sendVerificationCode(email, scene, code, expireSeconds);
             } catch (Exception e) {
+                log.error("邮件发送失败 | email={}, scene={}, 异常类型={}, 异常信息={}",
+                        email, scene, e.getClass().getName(), e.getMessage(), e);
                 codeStore.delete(key);
-                return Result.fail(500, "验证码发送失败");
+                return Result.fail(500, "验证码发送失败: " + e.getMessage());
             }
         }
 

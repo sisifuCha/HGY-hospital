@@ -36,7 +36,13 @@ public class SmtpEmailSender implements EmailSender {
     }
 
     private String buildBody(String scene, String code, long expireSeconds) {
-        return "您正在进行「" + scene + "」操作，验证码：" + code
+        String message="";
+        if(scene.equals("REGISTER")) {
+            message="注册";
+        }else{
+            message="找回密码";
+        }
+        return "您正在进行「" + message + "」操作，验证码：" + code
                 + "\n验证码有效期：" + expireSeconds + " 秒。"
                 + "\n如非本人操作，请忽略此邮件。";
     }
