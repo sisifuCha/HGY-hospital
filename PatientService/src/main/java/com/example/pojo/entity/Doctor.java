@@ -10,8 +10,8 @@ public class Doctor {
     private String title; // From title_number_source table
     private String status;
     private String clinicId;
+    private String clinicName;
     private String details;
     private String specialty;
     private String departId;
 }
-

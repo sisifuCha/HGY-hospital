@@ -47,10 +47,10 @@ public interface PaymentMapper {
     
     // 根据支付记录ID查询患者ID和排班ID
     PayRecord findPaymentInfoById(@Param("paymentId") String paymentId);
-    
+
     // 查询患者医保账户ID
     String findMedicalInsuranceIdByPatient(@Param("patientId") String patientId);
-    
+
     // 退款到医保账户
     int refundToMedicalInsurance(@Param("medicalInsuranceId") String medicalInsuranceId, @Param("amount") BigDecimal amount);
 }
