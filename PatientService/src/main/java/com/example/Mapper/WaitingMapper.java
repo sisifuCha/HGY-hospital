@@ -1,6 +1,7 @@
 package com.example.Mapper;
 
 import com.example.pojo.dto.WaitingDto;
+import com.example.pojo.dto.WaitingRuleDto;
 import com.example.pojo.entity.WaitingRecord;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -100,5 +101,10 @@ public interface WaitingMapper {
     // helpers
     Integer countScheduleRecordById(@Param("scheduleRecordId") String scheduleRecordId);
     Integer getScheduleLeftSource(@Param("scheduleRecordId") String scheduleRecordId);
+
+    /**
+     * 获取所有候补规则
+     */
+    List<WaitingRuleDto> getAllWaitingRules();
 }
 

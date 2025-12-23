@@ -8,6 +8,7 @@ import com.example.pojo.vo.RegistrationVo;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import com.example.pojo.dto.FeePreviewDto;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -29,4 +30,6 @@ public interface RegistrationMapper {
     RegistrationVo findRegistrationByPatientAndSchedule(@Param("patientId") String patientId, @Param("scheduleRecordId") String scheduleRecordId);
     
     Integer findScheduleLeftSource(@Param("scheduleRecordId") String scheduleRecordId);
+
+    FeePreviewDto findScheduleInfoForFeePreview(@Param("scheduleRecordId") String scheduleRecordId);
 }

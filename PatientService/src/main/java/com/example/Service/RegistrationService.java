@@ -2,6 +2,7 @@ package com.example.Service;
 
 import com.example.pojo.dto.DepartmentWithSubDepartmentsDto;
 import com.example.pojo.dto.DoctorWithSchedulesDto;
+import com.example.pojo.dto.FeePreviewDto;
 import com.example.pojo.dto.RegistrationDto;
 import com.example.pojo.dto.RegistrationQueryDto;
 import com.example.pojo.entity.Doctor;
@@ -23,4 +24,6 @@ public interface RegistrationService {
     PageVo<RegistrationVo> getRegistrations(RegistrationQueryDto queryDto);
 
     RegistrationVo getRegistrationByPatientAndSchedule(String patientId, String scheduleRecordId);
+
+    FeePreviewDto getFeePreview(String patientId, String scheduleRecordId);
 }

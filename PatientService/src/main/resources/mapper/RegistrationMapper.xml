@@ -226,4 +226,24 @@
         <include refid="registrationQueryConditions"/>
     </select>
 
+    <!-- 查询排班信息用于费用预览 -->
+    <select id="findScheduleInfoForFeePreview" resultType="com.example.pojo.dto.FeePreviewDto">
+        SELECT
+            dsr.id AS "scheduleRecordId",
+            doc.id AS "doctorId",
+            doc_user.name AS "doctorName",
+            tns.name AS "doctorTitle",
+            d.name AS "departmentName",
+            TO_CHAR(dsr.schedule_date, 'YYYY-MM-DD') AS "scheduleDate",
+            st.time_period_name || ' ' || TO_CHAR(st.start_time, 'HH24:MI') || '-' || TO_CHAR(st.end_time, 'HH24:MI') AS "timePeriod",
+            tns.ori_cost AS "registrationFee"
+        FROM doc_schedule_record dsr
+        JOIN doctor doc ON dsr.doc_id = doc.id
+        JOIN "user" doc_user ON doc.id = doc_user.id
+        JOIN department d ON doc.depart_id = d.id
+        JOIN schedule_template st ON dsr.template_id = st.id
+        LEFT JOIN title_number_source tns ON doc.doc_title_id = tns.id
+        WHERE dsr.id = #{scheduleRecordId}
+    </select>
+
 </mapper>

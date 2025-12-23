@@ -202,5 +202,12 @@
         WHERE patient_id = #{patientId} AND sch_id = #{schId}
     </select>
 
+    <!-- 获取所有候补规则 -->
+    <select id="getAllWaitingRules" resultType="com.example.pojo.dto.WaitingRuleDto">
+        SELECT rule_name AS ruleName, rule_value AS ruleValue, description
+        FROM waiting_rule
+        ORDER BY id
+    </select>
+
 </mapper>
 

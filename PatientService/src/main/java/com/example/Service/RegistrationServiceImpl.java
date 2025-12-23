@@ -1,17 +1,21 @@
 package com.example.Service;
 
 import com.example.Mapper.DepartmentMapper;
+import com.example.Mapper.PaymentMapper;
 import com.example.Mapper.RegistrationMapper;
 import com.example.Mapper.WaitingMapper;
 import com.example.conmon.exception.CreateFailedException;
 import com.example.conmon.exception.DuplicateRegistrationException;
 import com.example.pojo.dto.DepartmentWithSubDepartmentsDto;
 import com.example.pojo.dto.DoctorWithSchedulesDto;
+import com.example.pojo.dto.FeePreviewDto;
 import com.example.pojo.dto.PaymentDto;
 import com.example.pojo.dto.RegistrationDto;
 import com.example.pojo.dto.RegistrationQueryDto;
 import com.example.pojo.dto.ScheduleDto;
 import com.example.pojo.entity.Doctor;
+import com.example.pojo.entity.MedicalInsurance;
+import com.example.pojo.entity.ReimburseType;
 import com.example.pojo.entity.WaitingRecord;
 import com.example.pojo.vo.PageVo;
 import com.example.pojo.vo.RegistrationVo;
@@ -22,6 +26,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Arrays;
@@ -36,6 +42,9 @@ public class RegistrationServiceImpl implements RegistrationService {
 
     @Autowired
     private DepartmentMapper departmentMapper;
+
+    @Autowired
+    private PaymentMapper paymentMapper;
     
     @Autowired
     private PaymentService paymentService;
@@ -246,5 +255,64 @@ public class RegistrationServiceImpl implements RegistrationService {
     @Override
     public RegistrationVo getRegistrationByPatientAndSchedule(String patientId, String scheduleRecordId) {
         return registrationMapper.findRegistrationByPatientAndSchedule(patientId, scheduleRecordId);
+    }
+
+    @Override
+    public FeePreviewDto getFeePreview(String patientId, String scheduleRecordId) {
+        // 1. 获取排班基本信息（医生、科室、日期、时段、挂号费）
+        FeePreviewDto dto = registrationMapper.findScheduleInfoForFeePreview(scheduleRecordId);
+        if (dto == null) {
+            throw new IllegalArgumentException("排班记录不存在");
+        }
+
+        BigDecimal registrationFee = dto.getRegistrationFee();
+        if (registrationFee == null) {
+            registrationFee = BigDecimal.ZERO;
+        }
+
+        // 2. 获取患者的报销类型和比例
+        ReimburseType reimburseType = paymentMapper.getReimburseTypeByPatient(patientId);
+        if (reimburseType != null && reimburseType.getType() != null) {
+            dto.setReimburseType(reimburseType.getType());
+            BigDecimal percent = reimburseType.getPercent();
+            if (percent != null) {
+                dto.setReimbursePercent(percent);
+                // 计算报销金额 = 挂号费 × 报销比例 / 100
+                BigDecimal reimbursedAmount = registrationFee.multiply(percent)
+                        .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+                dto.setReimbursedAmount(reimbursedAmount);
+                // 实际支付 = 挂号费 - 报销金额
+                dto.setActualPayAmount(registrationFee.subtract(reimbursedAmount));
+            } else {
+                dto.setReimbursePercent(BigDecimal.ZERO);
+                dto.setReimbursedAmount(BigDecimal.ZERO);
+                dto.setActualPayAmount(registrationFee);
+            }
+        } else {
+            // 无医保
+            dto.setReimburseType("无医保");
+            dto.setReimbursePercent(BigDecimal.ZERO);
+            dto.setReimbursedAmount(BigDecimal.ZERO);
+            dto.setActualPayAmount(registrationFee);
+        }
+
+        // 3. 获取患者的医保账户余额
+        String medicalInsuranceId = paymentMapper.findMedicalInsuranceIdByPatient(patientId);
+        if (medicalInsuranceId != null) {
+            MedicalInsurance insurance = paymentMapper.getMedicalInsurance(medicalInsuranceId);
+            if (insurance != null && insurance.getOverage() != null) {
+                dto.setMedicalInsuranceBalance(insurance.getOverage());
+                // 判断余额是否足够
+                dto.setCanAfford(insurance.getOverage().compareTo(dto.getActualPayAmount()) >= 0);
+            } else {
+                dto.setMedicalInsuranceBalance(BigDecimal.ZERO);
+                dto.setCanAfford(false);
+            }
+        } else {
+            dto.setMedicalInsuranceBalance(BigDecimal.ZERO);
+            dto.setCanAfford(false);
+        }
+
+        return dto;
     }
 }

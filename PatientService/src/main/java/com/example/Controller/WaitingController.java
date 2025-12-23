@@ -4,6 +4,7 @@ import com.example.Service.WaitingService;
 import com.example.conmon.result.Result;
 import com.example.pojo.dto.CreateWaitingRequest;
 import com.example.pojo.dto.WaitingDto;
+import com.example.pojo.dto.WaitingRuleDto;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -55,6 +56,16 @@ public class WaitingController {
         String waitingId = body.get("waitingId");
         WaitingDto dto = waitingService.confirmWaiting(waitingId);
         return Result.success(dto);
+    }
+
+    /**
+     * 获取候补规则
+     * @return 候补规则列表
+     */
+    @GetMapping("/rules")
+    public Result<List<WaitingRuleDto>> getWaitingRules() {
+        List<WaitingRuleDto> rules = waitingService.getWaitingRules();
+        return Result.success(rules);
     }
 }
 

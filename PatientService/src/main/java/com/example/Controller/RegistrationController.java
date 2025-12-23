@@ -5,6 +5,7 @@ import com.example.conmon.result.Result;
 import com.example.pojo.dto.CreateRegistrationRequest;
 import com.example.pojo.dto.DepartmentWithSubDepartmentsDto;
 import com.example.pojo.dto.DoctorWithSchedulesDto;
+import com.example.pojo.dto.FeePreviewDto;
 import com.example.pojo.dto.RegistrationDto;
 import com.example.pojo.dto.RegistrationQueryDto;
 import com.example.pojo.entity.Doctor;
@@ -101,5 +102,22 @@ public class RegistrationController {
                                                        @RequestParam String scheduleRecordId) {
         System.out.println("1111");
         return Result.success(registrationService.cancelRegistration(patientId, scheduleRecordId));
+    }
+
+    /**
+     * 挂号费用预览（含医保报销计算）
+     * @param patientId 患者ID
+     * @param scheduleRecordId 排班记录ID
+     * @return 费用预览信息
+     */
+    @GetMapping("/registrations/fee-preview")
+    public Result<FeePreviewDto> getFeePreview(@RequestParam String patientId,
+                                                @RequestParam String scheduleRecordId) {
+        try {
+            FeePreviewDto preview = registrationService.getFeePreview(patientId, scheduleRecordId);
+            return Result.success(preview);
+        } catch (IllegalArgumentException ex) {
+            return Result.fail(404, ex.getMessage());
+        }
     }
 }

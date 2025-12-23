@@ -5,6 +5,7 @@ import com.example.Mapper.WaitingMapper;
 import com.example.conmon.exception.DuplicateRegistrationException;
 import com.example.conmon.exception.SourceFullException;
 import com.example.pojo.dto.WaitingDto;
+import com.example.pojo.dto.WaitingRuleDto;
 import com.example.pojo.entity.WaitingRecord;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -198,6 +199,11 @@ public class WaitingServiceImpl implements WaitingService {
     public WaitingDto confirmWaiting(String waitingId) {
         // 预留方法，当前不实现
         return null;
+    }
+
+    @Override
+    public List<WaitingRuleDto> getWaitingRules() {
+        return waitingMapper.getAllWaitingRules();
     }
 }
 
