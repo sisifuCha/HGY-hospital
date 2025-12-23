@@ -17,24 +17,5 @@
         from "user" where account = #{account}
     </select>
 
-    <select id="findByEmail" resultType="com.example.pojo.entity.User">
-        select
-            id as userId,
-            name as userName,
-            sex as userGender,
-            account as userAccount,
-            email as userEmail,
-            pass as userPassword,
-            phone_num as userPhone,
-            user_type as userType
-        from "user" where email = #{email}
-        limit 1
-    </select>
-
-    <update id="updatePasswordByUserId">
-        update "user"
-        set pass = #{newPassword}
-        where id = #{userId}
-    </update>
-
 </mapper>
+
