@@ -28,6 +28,13 @@ public class Result<T> {
         return new Result<>(code, msg, null);
     }
 
+    /**
+     * 带数据的失败返回（用于需要在失败时也返回结构化 data 的场景）
+     */
+    public static <T> Result<T> fail(Integer code, String msg, T data) {
+        return new Result<>(code, msg, data);
+    }
+
     public static <T> Result<T> fail(String msg) {
         return new Result<>(500, msg, null);
     }
