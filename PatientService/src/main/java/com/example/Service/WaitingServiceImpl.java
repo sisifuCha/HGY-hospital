@@ -80,7 +80,7 @@ public class WaitingServiceImpl implements WaitingService {
         LocalDateTime scheduleStartTime = waitingMapper.getScheduleStartTime(scheduleRecordId);
         LocalDateTime stopWaitingTime = scheduleStartTime.minusHours(stopHoursBefore);
         if (LocalDateTime.now().isAfter(stopWaitingTime)) {
-            throw new IllegalArgumentException("该排班已停止候补");
+            throw new IllegalArgumentException("该排班已停止候补，候补结束时间"+stopWaitingTime.toString()+"当前时间："+LocalDateTime.now().toString());
         }
         
         // 9. 插入候补记录到数据库

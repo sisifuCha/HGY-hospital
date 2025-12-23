@@ -14,7 +14,7 @@ import org.apache.ibatis.annotations.Select;
  */
 @Mapper
 public interface PatientMapper extends BaseMapper<Patient> {
-    @Select("SELECT count(*) FROM \"patient\" WHERE identification_id = #{identificationId}")
+    @Select("SELECT count(*) FROM patient WHERE id_num = #{identificationId}")
     int countByIdentificationId(String identificationId);
 
     int updateProfile(@Param("patientId") String patientId, @Param("profile") PatientProfileDto profile);
