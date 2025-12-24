@@ -28,5 +28,14 @@ public class PatientProfileController {
         }
         return Result.success(profile);
     }
+
+    @GetMapping("/{patientId}")
+    public Result<PatientProfileVo> getPatientInfo(@PathVariable String patientId) {
+        PatientProfileVo profile = patientProfileService.getProfile(patientId);
+        if (profile == null) {
+            return Result.error("患者不存在");
+        }
+        return Result.success(profile);
+    }
 }
 

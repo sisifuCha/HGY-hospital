@@ -5,31 +5,37 @@
 <mapper namespace="com.example.Mapper.PatientMapper">
 
     <update id="updateProfile">
-        UPDATE patient
+        <!-- 更新 user 表 -->
+        UPDATE "user"
         <set>
             <if test="profile.name != null">name = #{profile.name},</if>
-            <if test="profile.gender != null">gender = #{profile.gender},</if>
-            <if test="profile.birthDate != null">birth_date = #{profile.birthDate}::date,</if>
-            <if test="profile.phone != null">phone = #{profile.phone},</if>
-            <if test="profile.address != null">address = #{profile.address},</if>
-            <if test="profile.medicalHistory != null">medical_history = #{profile.medicalHistory},</if>
-            <if test="profile.allergies != null">allergies = #{profile.allergies},</if>
+            <if test="profile.gender != null">sex = #{profile.gender},</if>
+            <if test="profile.phone != null">phone_num = #{profile.phone},</if>
+            <if test="profile.address != null">email = #{profile.address},</if>
+        </set>
+        WHERE id = #{patientId};
+        
+        <!-- 更新 patient 表 -->
+        UPDATE patient
+        <set>
+            <if test="profile.birthDate != null">birth = #{profile.birthDate}::date,</if>
         </set>
         WHERE id = #{patientId}
     </update>
 
     <select id="findProfileById" resultType="com.example.pojo.vo.PatientProfileVo">
         SELECT
-            id AS "patientId",
-            name,
-            gender,
-            birth_date AS "birthDate",
-            phone,
-            address,
-            medical_history AS "medicalHistory",
-            allergies
-        FROM patient
-        WHERE id = #{patientId}
+            p.id AS "patientId",
+            u.name,
+            u.sex AS "gender",
+            p.birth AS "birthDate",
+            u.phone_num AS "phone",
+            u.email AS "address",
+            '' AS "medicalHistory",
+            '' AS "allergies"
+        FROM patient p
+        INNER JOIN "user" u ON p.id = u.id
+        WHERE p.id = #{patientId}
     </select>
 
 </mapper>
