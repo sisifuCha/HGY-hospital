@@ -501,37 +501,6 @@ public class DoctorServiceImpl implements DoctorService {
             return Result.fail(403, "无权更新该挂号记录");
         }
 
-        // 时间校验：检查当前时间是否在排班时段内
-        LocalDateTime now = LocalDateTime.now();
-        LocalDate today = now.toLocalDate();
-        java.time.LocalTime currentTime = now.toLocalTime();
-
-        // 检查日期
-        if (scheduleDetail.getScheduleDate().isAfter(today)) {
-            return Result.fail(400, "排班日期尚未到来，无法更新患者状态");
-        }
-        
-        // 如果是当天，检查时间段
-        if (scheduleDetail.getScheduleDate().isEqual(today)) {
-            if (scheduleDetail.getStartTime() != null && scheduleDetail.getEndTime() != null) {
-                if (currentTime.isBefore(scheduleDetail.getStartTime())) {
-                    String timePeriodName = scheduleDetail.getTimePeriodName() != null ? 
-                        scheduleDetail.getTimePeriodName() : "该时段";
-                    return Result.fail(400, String.format("%s尚未开始（开始时间：%s），无法更新患者状态", 
-                        timePeriodName, scheduleDetail.getStartTime()));
-                }
-                if (currentTime.isAfter(scheduleDetail.getEndTime())) {
-                    String timePeriodName = scheduleDetail.getTimePeriodName() != null ? 
-                        scheduleDetail.getTimePeriodName() : "该时段";
-                    return Result.fail(400, String.format("%s已结束（结束时间：%s），无法更新患者状态", 
-                        timePeriodName, scheduleDetail.getEndTime()));
-                }
-            }
-        } else if (scheduleDetail.getScheduleDate().isBefore(today)) {
-            // 如果是过去的日期，也视为已结束
-            return Result.fail(400, "排班日期已过，无法更新患者状态");
-        }
-
         // 使用 StatusConverter 工具类进行状态转换
         String patientStatusStr;
         String doctorStatusStr;
@@ -540,6 +509,40 @@ public class DoctorServiceImpl implements DoctorService {
             doctorStatusStr = com.example.utils.StatusConverter.convertDoctorStatus(request.getDoctorStatus());
         } catch (IllegalArgumentException ex) {
             return Result.fail(400, ex.getMessage());
+        }
+
+        // 时间校验：只在开始接诊时检查时间范围，完成接诊时不检查（允许医生完成正在进行的接诊）
+        // patientStatus: 1=就诊中(开始接诊), 2=已就诊(完成接诊)
+        if (request.getPatientStatus() == 1) {  // 开始接诊
+            LocalDateTime now = LocalDateTime.now();
+            LocalDate today = now.toLocalDate();
+            java.time.LocalTime currentTime = now.toLocalTime();
+
+            // 检查日期
+            if (scheduleDetail.getScheduleDate().isAfter(today)) {
+                return Result.fail(400, "排班日期尚未到来，无法开始接诊");
+            }
+            
+            // 如果是当天，检查时间段
+            if (scheduleDetail.getScheduleDate().isEqual(today)) {
+                if (scheduleDetail.getStartTime() != null && scheduleDetail.getEndTime() != null) {
+                    if (currentTime.isBefore(scheduleDetail.getStartTime())) {
+                        String timePeriodName = scheduleDetail.getTimePeriodName() != null ? 
+                            scheduleDetail.getTimePeriodName() : "该时段";
+                        return Result.fail(400, String.format("%s尚未开始（开始时间：%s），无法开始接诊", 
+                            timePeriodName, scheduleDetail.getStartTime()));
+                    }
+                    if (currentTime.isAfter(scheduleDetail.getEndTime())) {
+                        String timePeriodName = scheduleDetail.getTimePeriodName() != null ? 
+                            scheduleDetail.getTimePeriodName() : "该时段";
+                        return Result.fail(400, String.format("%s已结束（结束时间：%s），无法开始接诊", 
+                            timePeriodName, scheduleDetail.getEndTime()));
+                    }
+                }
+            } else if (scheduleDetail.getScheduleDate().isBefore(today)) {
+                // 如果是过去的日期，也视为已结束
+                return Result.fail(400, "排班日期已过，无法开始接诊");
+            }
         }
 
         int affected = registerRecordMapper.updateStatus(key.getPatientId(), key.getScheduleId(), patientStatusStr);
