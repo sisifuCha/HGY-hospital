@@ -9,6 +9,7 @@ import com.example.pojo.dto.PasswordResetSendResponse;
 import com.example.pojo.entity.User;
 import com.example.utils.EmailVerificationCodeStore;
 import com.example.utils.EmailVerificationStore;
+import com.example.utils.PasswordUtil;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,16 +22,19 @@ public class PasswordResetServiceImpl implements PasswordResetService {
     private final UserMapper userMapper;
     private final EmailVerificationCodeStore codeStore;
     private final EmailVerificationService emailVerificationService;
+    private final PasswordUtil passwordUtil;
 
     @Value("${patient.emailVerification.expireSeconds:300}")
     private long expireSeconds;
 
     public PasswordResetServiceImpl(UserMapper userMapper,
                                    EmailVerificationCodeStore codeStore,
-                                   EmailVerificationService emailVerificationService) {
+                                   EmailVerificationService emailVerificationService,
+                                   PasswordUtil passwordUtil) {
         this.userMapper = userMapper;
         this.codeStore = codeStore;
         this.emailVerificationService = emailVerificationService;
+        this.passwordUtil = passwordUtil;
     }
 
     @Override
@@ -101,7 +105,9 @@ public class PasswordResetServiceImpl implements PasswordResetService {
         // 验证码正确：立刻作废
         codeStore.delete(key);
 
-        int updated = userMapper.updatePasswordByUserId(user.getUserId(), newPassword);
+        // 加密新密码
+        String encryptedPassword = passwordUtil.encryptPassword(newPassword);
+        int updated = userMapper.updatePasswordByUserId(user.getUserId(), encryptedPassword);
         if (updated <= 0) {
             return Result.fail(500, "重置密码失败", new PasswordResetConfirmResponse(false, email));
         }

@@ -7,7 +7,9 @@ import com.example.pojo.dto.LoginRequest;
 import com.example.pojo.dto.RegisterRequest;
 import com.example.pojo.entity.Patient;
 import com.example.pojo.entity.User;
+import com.example.utils.EncryptionUtil;
 import com.example.utils.JwtUtil;
+import com.example.utils.PasswordUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,6 +29,12 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private JwtUtil jwtUtil;
+
+    @Autowired
+    private PasswordUtil passwordUtil;
+
+    @Autowired
+    private EncryptionUtil encryptionUtil;
 
 
     @Override
@@ -50,8 +58,8 @@ public class UserServiceImpl implements UserService {
             return Result.fail(404, "用户不存在，请检查账号是否正确");
         }
 
-        // 4. 验证密码
-        if (!user.getUserPassword().equals(loginRequest.getPassword())) {
+        // 4. 验证密码（支持加密密码和旧的明文密码）
+        if (!passwordUtil.verifyPassword(loginRequest.getPassword(), user.getUserPassword())) {
             return Result.fail(401, "密码错误，请重新输入");
         }
 
@@ -103,11 +111,15 @@ public class UserServiceImpl implements UserService {
         newUser.setUserId(newPatId);
 
         newUser.setUserAccount(registerRequest.getUserAccount());
-        newUser.setUserPassword(registerRequest.getUserPassword());
-        newUser.setUserName(registerRequest.getUserName());
+        // 加密密码
+        newUser.setUserPassword(passwordUtil.encryptPassword(registerRequest.getUserPassword()));
+        // 加密姓名
+        newUser.setUserName(encryptionUtil.encrypt(registerRequest.getUserName()));
         newUser.setUserGender(registerRequest.getUserGender());
-        newUser.setUserEmail(registerRequest.getUserEmail());
-        newUser.setUserPhone(registerRequest.getUserPhone());
+        // 加密邮箱
+        newUser.setUserEmail(encryptionUtil.encrypt(registerRequest.getUserEmail()));
+        // 加密手机号
+        newUser.setUserPhone(encryptionUtil.encrypt(registerRequest.getUserPhone()));
         // 设置用户类型为患者
         newUser.setUserType("PAT");
 
@@ -118,7 +130,8 @@ public class UserServiceImpl implements UserService {
         Patient newPatient = new Patient();
         newPatient.setPatientId(newPatId);
         newPatient.setBirthday(registerRequest.getBirthday());
-        newPatient.setIdentificationId(registerRequest.getIdentificationId());
+        // 加密身份证号
+        newPatient.setIdentificationId(encryptionUtil.encrypt(registerRequest.getIdentificationId()));
         patientMapper.insert(newPatient);
 
         // 7. 返回成功结果
