@@ -176,7 +176,13 @@ public class WaitingServiceImpl implements WaitingService {
 
     @Override
     @Transactional
-    public WaitingDto cancelWaiting(String patientId, String scheduleRecordId) {
+    public WaitingDto cancelWaiting(String patientId, String waitingIdOrSchId) {
+        // 解析 waitingId：格式为 "patientId_schId"，提取出真正的 scheduleRecordId
+        String scheduleRecordId = waitingIdOrSchId;
+        if (waitingIdOrSchId != null && waitingIdOrSchId.startsWith(patientId + "_")) {
+            scheduleRecordId = waitingIdOrSchId.substring(patientId.length() + 1);
+        }
+
         // 1. 查询候补记录
         WaitingRecord record = waitingMapper.getWaitingRecordByKey(patientId, scheduleRecordId);
         if (record == null) {
