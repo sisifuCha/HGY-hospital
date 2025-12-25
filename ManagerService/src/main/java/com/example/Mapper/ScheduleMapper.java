@@ -46,7 +46,7 @@ public interface ScheduleMapper extends BaseMapper<DoctorSchedule> {
         @Select("SELECT id FROM doc_schedule_record")
         List<String> getIdList();
 
-        @Update("UPDATE doc_schedule_record SET reason = #{reason},status = 1 WHERE id = #{schedule_id}")
+        @Update("UPDATE doc_schedule_record SET reason = #{reason},status = -1 WHERE id = #{schedule_id}")
         int stopSingle(String schedule_id, String reason);
 
         int stopBatch(@Param("doctorIds") List<String> doc_ids,

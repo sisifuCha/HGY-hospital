@@ -14,6 +14,7 @@ import com.example.pojo.vo.ScheduleWeekVO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -69,5 +70,14 @@ public class DoctorController {
         response.put("options", result.getData());
         
         return Result.success(response);
+    }
+    
+    @GetMapping("/getDoctorsByDepartment")
+    public Result<List<Map<String, String>>> getDoctorsByDepartment(@RequestParam(required = false) String departName) {
+        // 如果没有提供科室名称，返回空列表或者全部医生
+        if (departName == null || departName.isEmpty()) {
+            return Result.success(new ArrayList<>());
+        }
+        return doctorService.getDoctorsByDepartment(departName);
     }
 }

@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  doctorservice:
+    build: .
+    ports:
+      - "8081:8081"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/hgy_hospital
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=password
+      - SPRING_REDIS_HOST=localhost
+      - SPRING_REDIS_PORT=6379
+      - SPRING_REDIS_PASSWORD=
+    restart: unless-stopped

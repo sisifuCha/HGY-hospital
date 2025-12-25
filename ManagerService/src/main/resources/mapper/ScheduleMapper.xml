@@ -48,7 +48,7 @@
 
     <update id="stopBatch">
         UPDATE doc_schedule_record
-        SET status = 1,reason = #{reason}
+        SET status = -1,reason = #{reason}
         <where>
             <!-- 首先，ID集合是必须的 -->
                  <if test="doctorIds != null and !doctorIds.isEmpty()">

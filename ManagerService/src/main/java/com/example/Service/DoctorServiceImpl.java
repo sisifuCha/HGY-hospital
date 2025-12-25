@@ -141,6 +141,18 @@ public class DoctorServiceImpl implements DoctorService {
             return Result.fail(500, "获取医生选项失败: " + e.getMessage());
         }
     }
+    
+    @Override
+    public Result<List<Map<String, String>>> getDoctorsByDepartment(String departName) {
+        try {
+            // 根据科室名称查询医生信息
+            List<Map<String, String>> doctors = doctorMapper.getDoctorsByDepartment(departName);
+            return Result.success(doctors);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Result.fail(500, "获取科室医生列表失败: " + e.getMessage());
+        }
+    }
 
     private Doctor convertToEntity(DoctorDTO dto) {
         Doctor doctor = new Doctor();

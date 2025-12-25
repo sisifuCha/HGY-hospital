@@ -45,14 +45,14 @@ public interface DoctorMapper extends BaseMapper<Doctor> {
     List<Map<String, String>> getDoctorOptions();
 
     //根据时间范围和科室获取排班信息
-    @Select("SELECT" +
-            " u.name AS doc_name," +
+    @Select("SELECT u.name AS doc_name," +
             "ds.left_source_count AS left_source_count," +
             "t.name AS title_name," +
             "ds.doc_id AS doc_id," +
             "ds.id AS id," +
             "ds.template_id AS template_id," +
             "ds.schedule_date AS schedule_date," +
+            "ds.status AS status," +
             "dp.name AS depart_name " +
             "FROM " +
             "\"user\" u INNER JOIN doctor d ON d.id=u.id " +
@@ -64,4 +64,13 @@ public interface DoctorMapper extends BaseMapper<Doctor> {
     @ResultMap("FinalScheduleVOMap")
     // 或者如果MyBatis-Plus能自动找到，可直接写resultMap的id
     List<FinalScheduleVO> selectDoctorSchedule(@Param("startTime") LocalDate startTime, @Param("endTime") LocalDate endTime, @Param("departId") String departId);
+    
+    // 根据科室名称获取该科室的所有医生
+    @Select("SELECT u.id AS userid, u.name AS username, dep.name AS department " +
+            "FROM \"user\" u " +
+            "INNER JOIN \"doctor\" d ON u.id = d.id " +
+            "INNER JOIN \"department\" dep ON d.depart_id = dep.id " +
+            "WHERE dep.name = #{departName} " +
+            "ORDER BY u.name")
+    List<Map<String, String>> getDoctorsByDepartment(@Param("departName") String departName);
 }

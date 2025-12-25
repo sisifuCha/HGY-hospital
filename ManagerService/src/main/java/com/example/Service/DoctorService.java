@@ -40,4 +40,5 @@ public interface DoctorService {
     List<Department> getDepartmentOptions();
     Result<FinalScheduleWeekVO> getScheduleWeek(Integer week, String departName);
     Result<List<Map<String, String>>> getDoctorOptions();
+    Result<List<Map<String, String>>> getDoctorsByDepartment(String departName);
 }
