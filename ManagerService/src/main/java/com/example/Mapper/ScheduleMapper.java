@@ -108,8 +108,8 @@ public interface ScheduleMapper extends BaseMapper<DoctorSchedule> {
          * @param status     新状态
          * @return 更新结果（影响行数）
          */
-        @Update("UPDATE doc_schedule_record SET status = #{status} WHERE schedule_id = #{scheduleId}")
-        int updateScheduleStatus(@Param("scheduleId") String scheduleId, @Param("status") String status);
+        @Update("UPDATE doc_schedule_record SET status = #{status} WHERE id = #{scheduleId}")
+        int updateScheduleStatus(@Param("scheduleId") String scheduleId, @Param("status") Integer status);
 
         /**
          * 更新排班记录的日期和时间段
@@ -120,7 +120,7 @@ public interface ScheduleMapper extends BaseMapper<DoctorSchedule> {
          * @param templateId 新的时间模板ID
          * @return 更新结果（影响行数）
          */
-        @Update("UPDATE doc_schedule_record SET schedule_date = #{date}, template_id = #{templateId} WHERE schedule_id = #{oriScheId}")
+        @Update("UPDATE doc_schedule_record SET schedule_date = #{date}, template_id = #{templateId} WHERE id = #{oriScheId}")
         int updateScheduleTime(@Param("oriScheId") String oriScheId, @Param("date") String date,
                         @Param("templateId") String templateId);
 
@@ -131,7 +131,7 @@ public interface ScheduleMapper extends BaseMapper<DoctorSchedule> {
          * @param scheduleId 排班ID
          * @return 删除结果（影响行数）
          */
-        @Delete("DELETE FROM doc_schedule_record WHERE schedule_id = #{scheduleId}")
+        @Delete("DELETE FROM doc_schedule_record WHERE id = #{scheduleId}")
         int deleteScheduleById(String scheduleId);
 
         /**

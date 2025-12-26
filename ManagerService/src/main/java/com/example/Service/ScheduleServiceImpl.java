@@ -376,7 +376,7 @@ public class ScheduleServiceImpl implements ScheduleService {
 
             if (type == 1) {
                 // 请假类型：将原排班记录状态改为1
-                scheduleMapper.updateScheduleStatus(oriScheId, "1");
+                scheduleMapper.updateScheduleStatus(oriScheId, -1);
             } else if (type == 0) {
                 // 调班类型：更新原排班记录的时间和模板（type=0表示调班到目标时段）
                 String targetDateStr = String.valueOf(requestDetail.get("target_date"));

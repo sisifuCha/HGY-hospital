@@ -1,0 +1,12 @@
+version: '3.8'
+
+services:
+  managerservice:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://host.docker.internal:63333/hospital_new
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=HGY25qiu@shixun
+    restart: unless-stopped
