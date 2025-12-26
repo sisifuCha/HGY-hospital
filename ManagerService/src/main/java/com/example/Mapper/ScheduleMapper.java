@@ -121,7 +121,7 @@ public interface ScheduleMapper extends BaseMapper<DoctorSchedule> {
          * @return 更新结果（影响行数）
          */
         @Update("UPDATE doc_schedule_record SET schedule_date = #{date}, template_id = #{templateId} WHERE id = #{oriScheId}")
-        int updateScheduleTime(@Param("oriScheId") String oriScheId, @Param("date") String date,
+        int updateScheduleTime(@Param("oriScheId") String oriScheId, @Param("date") LocalDate date,
                         @Param("templateId") String templateId);
 
         /**

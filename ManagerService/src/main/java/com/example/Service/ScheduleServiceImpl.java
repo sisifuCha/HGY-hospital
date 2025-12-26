@@ -396,7 +396,7 @@ public class ScheduleServiceImpl implements ScheduleService {
                     return Result.fail("该医生在调班目标日期和时间段已有排班，调班失败");
                 }
                 
-                scheduleMapper.updateScheduleTime(oriScheId, targetDateStr, templateId);
+                scheduleMapper.updateScheduleTime(oriScheId, targetDate, templateId);
             }
 
             // 6. 返回操作成功的结果
