@@ -117,7 +117,7 @@
             d.id AS "departmentId",
             d.name AS "departmentName",
             doc.clinic_id AS "clinicId",
-            c.name AS "clinicName",
+            c.clinic_number AS "clinicName",
             dsr.schedule_date AS "registrationDate",
             st.time_period_name AS "timePeriodName",
             tns.ori_cost AS "registrationFee",
