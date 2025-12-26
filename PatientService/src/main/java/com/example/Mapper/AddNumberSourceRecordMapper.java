@@ -25,15 +25,16 @@ public interface AddNumberSourceRecordMapper extends BaseMapper<AddNumberSourceR
             "    ans.apply_time, " +
             "    ans.reason_text, " +
             "    ans.reason_pic, " +
-            "    d.name AS doctor_name, " +
+            "    u.name AS doctor_name, " +
             "    dept.name AS department_name, " +
-            "    dsr.date AS schedule_date, " +
-            "    tp.name AS time_period_name " +
+            "    dsr.schedule_date AS schedule_date, " +
+            "    st.time_period_name AS time_period_name " +
             "FROM add_number_source_record ans " +
             "INNER JOIN doc_schedule_record dsr ON ans.sch_id = dsr.id " +
             "INNER JOIN doctor d ON dsr.doc_id = d.id " +
-            "INNER JOIN department dept ON d.dep_id = dept.id " +
-            "INNER JOIN time_period tp ON dsr.time_period_id = tp.id " +
+            "INNER JOIN \"user\" u ON d.id = u.id " +
+            "INNER JOIN department dept ON d.depart_id = dept.id " +
+            "INNER JOIN schedule_template st ON dsr.template_id = st.id " +
             "WHERE ans.patient_id = #{patientId} " +
             "ORDER BY ans.apply_time DESC")
     List<AddNumberStatusDto> selectPatientAddNumberHistory(@Param("patientId") String patientId);
@@ -48,16 +49,17 @@ public interface AddNumberSourceRecordMapper extends BaseMapper<AddNumberSourceR
             "    ans.apply_time, " +
             "    ans.reason_text, " +
             "    ans.reason_pic, " +
-            "    d.name AS doctor_name, " +
+            "    u.name AS doctor_name, " +
             "    dept.name AS department_name, " +
-            "    dsr.date AS schedule_date, " +
-            "    tp.name AS time_period_name " +
+            "    dsr.schedule_date AS schedule_date, " +
+            "    st.time_period_name AS time_period_name " +
             "FROM add_number_source_record ans " +
             "INNER JOIN doc_schedule_record dsr ON ans.sch_id = dsr.id " +
             "INNER JOIN doctor d ON dsr.doc_id = d.id " +
-            "INNER JOIN department dept ON d.dep_id = dept.id " +
-            "INNER JOIN time_period tp ON dsr.time_period_id = tp.id " +
+            "INNER JOIN \"user\" u ON d.id = u.id " +
+            "INNER JOIN department dept ON d.depart_id = dept.id " +
+            "INNER JOIN schedule_template st ON dsr.template_id = st.id " +
             "WHERE ans.patient_id = #{patientId} AND ans.sch_id = #{scheduleRecordId}")
-    AddNumberStatusDto selectAddNumberDetail(@Param("patientId") String patientId, 
+    AddNumberStatusDto selectAddNumberDetail(@Param("patientId") String patientId,
                                              @Param("scheduleRecordId") String scheduleRecordId);
 }
