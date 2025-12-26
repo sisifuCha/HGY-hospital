@@ -62,4 +62,12 @@ public interface AddNumberSourceRecordMapper extends BaseMapper<AddNumberSourceR
             "WHERE ans.patient_id = #{patientId} AND ans.sch_id = #{scheduleRecordId}")
     AddNumberStatusDto selectAddNumberDetail(@Param("patientId") String patientId,
                                              @Param("scheduleRecordId") String scheduleRecordId);
+
+    /**
+     * 根据医生ID和日期查找排班记录ID
+     */
+    @Select("SELECT id FROM doc_schedule_record " +
+            "WHERE doc_id = #{doctorId} AND schedule_date = CAST(#{date} AS DATE) " +
+            "LIMIT 1")
+    String findScheduleIdByDoctorAndDate(@Param("doctorId") String doctorId, @Param("date") String date);
 }

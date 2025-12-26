@@ -21,7 +21,7 @@ public interface MessageMapper {
             "FROM message_record WHERE id = #{id}")
     MessageDto findMessageById(@Param("id") Long id);
 
-    @Update("UPDATE message_record SET status = #{status} WHERE id = #{id}")
+    // 定义在 MessageMapper.xml 中
     int updateMessageStatus(@Param("id") Long id, @Param("status") String status);
     
     @Update("UPDATE message_record SET status = 'pushed_to_redis' WHERE id = #{id}")

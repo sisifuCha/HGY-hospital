@@ -171,13 +171,13 @@
         <where>
             rr.patient_id = #{query.patientId}
             <if test="query.date != null">
-                AND dsr.schedule_date = #{query.date}
+                AND dsr.schedule_date = CAST(#{query.date} AS DATE)
             </if>
             <if test="query.fromDate != null">
-                AND dsr.schedule_date &gt;= #{query.fromDate}
+                AND dsr.schedule_date &gt;= CAST(#{query.fromDate} AS DATE)
             </if>
             <if test="query.toDate != null">
-                AND dsr.schedule_date &lt;= #{query.toDate}
+                AND dsr.schedule_date &lt;= CAST(#{query.toDate} AS DATE)
             </if>
             <if test="query.status != null and query.status != ''">
                 AND rr.status = #{query.status}

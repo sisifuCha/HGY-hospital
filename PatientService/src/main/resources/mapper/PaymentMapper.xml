@@ -123,12 +123,7 @@
         WHERE id = #{patientId}
     </select>
 
-    <!-- 根据支付记录ID查询患者ID和排班ID -->
-    <select id="findPaymentInfoById" resultType="com.example.pojo.entity.PayRecord">
-        SELECT id, patient_id AS "patientId", sch_id AS "schId", pay_status AS "payStatus"
-        FROM pay_record
-        WHERE id = #{paymentId}
-    </select>
+    <!-- 根据支付记录ID查询支付信息 -->
     <select id="findPaymentInfoById" resultType="com.example.pojo.entity.PayRecord">
         SELECT id, patient_id AS patientId, sch_id AS schId, doc_id AS docId,
                pay_status AS payStatus, ask_pay_amount AS askPayAmount
