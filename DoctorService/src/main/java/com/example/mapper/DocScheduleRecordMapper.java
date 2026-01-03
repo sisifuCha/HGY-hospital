@@ -7,6 +7,7 @@ import java.time.LocalDate;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.Update;
 
 import java.util.Date;
 import java.util.List;
@@ -103,4 +104,31 @@ public interface DocScheduleRecordMapper {
         "WHERE dsr.id = #{scheduleId}"
     })
     com.example.dto.ScheduleDetailDto getScheduleWithTemplateById(@Param("scheduleId") String scheduleId);
+
+    /**
+     * 更新已过期的排班状态为2（已结束）
+     * 根据当天日期和时间点，将符合条件的排班状态改为2
+     * 
+     * @param currentDate 当前日期
+     * @param currentTime 当前时间（格式：HH:mm:ss）
+     * @return 更新的记录数
+     */
+    @Update({
+        "UPDATE \"doc_schedule_record\" dsr",
+        "SET status = 2",
+        "WHERE dsr.status != 2",
+        "  AND (",
+        "    dsr.schedule_date < #{currentDate}",
+        "    OR (",
+        "      dsr.schedule_date = #{currentDate}",
+        "      AND EXISTS (",
+        "        SELECT 1 FROM \"schedule_template\" st",
+        "        WHERE st.id = dsr.template_id",
+        "        AND st.end_time < #{currentTime}",
+        "      )",
+        "    )",
+        "  )"
+    })
+    int updateExpiredScheduleStatus(@Param("currentDate") LocalDate currentDate, 
+                                    @Param("currentTime") String currentTime);
 }

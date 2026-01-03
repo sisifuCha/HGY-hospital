@@ -26,7 +26,7 @@ public interface RegisterRecordMapper {
               "JOIN \"patient\" p ON rr.\"patient_id\" = p.\"id\"",
               "JOIN \"user\" u ON p.\"id\" = u.\"id\"",
               "LEFT JOIN \"schedule_template\" st ON dsr.template_id = st.id",
-              "WHERE dsr.\"doc_id\" = #{docId} AND (rr.\"status\" = '已挂号' OR rr.\"status\" = '就诊中')",
+              "WHERE dsr.\"doc_id\" = #{docId} AND (rr.\"status\" = '已挂号' OR rr.\"status\" = '就诊中') AND dsr.status != 2",
               "ORDER BY dsr.schedule_date, st.start_time NULLS LAST, u.\"name\""
        })
        List<PatientSummaryRow> selectPatientSummaryRows(@Param("docId") String docId);
@@ -57,4 +57,8 @@ public interface RegisterRecordMapper {
     @org.apache.ibatis.annotations.Insert("INSERT INTO \"register_record\" (patient_id, sch_id, register_time, status) " +
            "VALUES (#{patientId}, #{schId}, #{registerTime}, #{status})")
     int insertRegisterRecord(com.example.entity.RegisterRecord record);
+
+    @Select("SELECT * FROM \"register_record\" WHERE \"patient_id\" = #{patientId} AND \"sch_id\" = #{schId}")
+    com.example.entity.RegisterRecord selectByPatientAndSchedule(@Param("patientId") String patientId, 
+                                                                   @Param("schId") String schId);
 }

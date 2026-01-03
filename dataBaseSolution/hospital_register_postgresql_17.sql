@@ -115,7 +115,6 @@ CREATE TABLE schedule_template (
    id                   VARCHAR(20)          NOT NULL,
    start_time           TIME                 NULL,
    end_time             TIME                 NULL,
-   clin_ID              VARCHAR(20)          NULL,
    time_period_name     VARCHAR(20)          NULL,
    CONSTRAINT PK_SCHEDULE_TEMPLATE PRIMARY KEY (id),
    CONSTRAINT CHK_time_range CHECK (end_time > start_time)
@@ -346,14 +345,6 @@ ALTER TABLE doctor
    ON DELETE SET NULL 
    ON UPDATE CASCADE;
 
--- Schedule template references
-ALTER TABLE schedule_template
-   ADD CONSTRAINT FK_SCHEDULE_TEMPLATE_CLINIC 
-   FOREIGN KEY (clin_ID)
-   REFERENCES clinic (id)
-   ON DELETE SET NULL 
-   ON UPDATE CASCADE;
-
 -- Doc schedule record references
 ALTER TABLE doc_schedule_record
    ADD CONSTRAINT FK_DOC_SCHEDULE_TEMPLATE 
@@ -542,7 +533,6 @@ CREATE INDEX idx_doctor_status ON doctor(status);
 -- Schedule indexes
 CREATE INDEX idx_schedule_record_date ON doc_schedule_record(schedule_date);
 CREATE INDEX idx_schedule_record_doctor ON doc_schedule_record(doc_ID);
-CREATE INDEX idx_schedule_template_clinic ON schedule_template(clin_ID);
 
 -- Patient indexes
 CREATE INDEX idx_patient_id_num ON patient(ID_num);

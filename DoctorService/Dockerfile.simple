@@ -1,0 +1,18 @@
+# 使用 Docker Desktop 内置的 JDK 运行 JAR
+# 这个方法不依赖外部镜像下载
+
+FROM mcr.microsoft.com/openjdk/jdk:21-distroless
+
+WORKDIR /app
+
+# 复制已构建的 jar 包
+COPY target/DoctorService-0.0.1-SNAPSHOT.jar app.jar
+
+# 暴露端口
+EXPOSE 8081
+
+# 环境变量
+ENV JAVA_OPTS="-Xms256m -Xmx512m"
+
+# 启动应用
+ENTRYPOINT ["java", "-jar", "app.jar"]

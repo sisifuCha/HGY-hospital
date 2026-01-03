@@ -67,7 +67,7 @@ BEGIN
         'system',
         'specific_doctor',
         v_doc_id,
-        'pending',
+        'unsent',
         NOW()
     );
     

@@ -2,12 +2,14 @@ package com.example.config;
 
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.Session;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 import jakarta.annotation.PreDestroy;
 import java.util.Properties;
 
 @Component
+@ConditionalOnProperty(name = "ssh.tunnel.enabled", havingValue = "true", matchIfMissing = true)
 public class SSHConnection {
 
     private final static int LOCAl_PORT = 63333;
@@ -35,8 +37,8 @@ public class SSHConnection {
         session.connect();
         System.out.println("SSH连接成功!");
 
-        System.out.println("建立端口转发: localhost:" + LOCAl_PORT + " -> " + DB_REMOTE_SERVER + ":" + REMOTE_PORT);
-        session.setPortForwardingL(LOCAl_PORT, DB_REMOTE_SERVER, REMOTE_PORT);
+        System.out.println("建立端口转发: 0.0.0.0:" + LOCAl_PORT + " -> " + DB_REMOTE_SERVER + ":" + REMOTE_PORT);
+        session.setPortForwardingL("0.0.0.0", LOCAl_PORT, DB_REMOTE_SERVER, REMOTE_PORT);
         System.out.println("端口转发建立成功!");
     }
 

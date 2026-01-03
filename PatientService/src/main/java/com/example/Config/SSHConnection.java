@@ -43,8 +43,8 @@ public class SSHConnection {
             log.info("SSH连接成功");
 
             // 端口转发
-            log.info("建立端口转发: localhost:{} -> {}:{}", LOCAl_PORT, DB_REMOTE_SERVER, REMOTE_PORT);
-            session.setPortForwardingL(LOCAl_PORT, DB_REMOTE_SERVER, REMOTE_PORT);
+            log.info("建立端口转发: 0.0.0.0:{} -> {}:{}", LOCAl_PORT, DB_REMOTE_SERVER, REMOTE_PORT);
+            session.setPortForwardingL("0.0.0.0", LOCAl_PORT, DB_REMOTE_SERVER, REMOTE_PORT);
             log.info("端口转发建立成功");
         } catch (Exception e) {
             log.error("SSH连接或端口转发失败: {}", e.getMessage(), e);
